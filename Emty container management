@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empty Container — Inspection & Barging</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--bg2:#0f1629;--bg3:#141d35;--bg4:#1a2440;
+  --cyan:#00d4ff;--cyan2:#00a8cc;--green:#00ff9d;--green2:#00cc7a;
+  --red:#ff4757;--yellow:#ffd32a;--orange:#ff6b35;--purple:#a855f7;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --border:#1e2d4a;--border2:#253558;
+  --card:#0f1629;
+}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);font-size:13px;overflow:hidden;height:100vh}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200}
+.login-wrap{width:380px}
+.login-badge{display:inline-block;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--cyan);font-size:10px;font-weight:700;letter-spacing:.12em;padding:4px 12px;border-radius:20px;margin-bottom:20px;text-transform:uppercase}
+.login-title{font-size:26px;font-weight:700;color:#fff;margin-bottom:4px}
+.login-title em{color:var(--cyan);font-style:normal}
+.login-sub{color:var(--text2);font-size:12px;margin-bottom:28px}
+.login-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;display:block}
+.login-inp{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-size:13px;border-radius:8px;font-family:inherit;margin-bottom:12px;transition:border .2s}
+.login-inp:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
+.login-btn{width:100%;padding:11px;background:var(--cyan);color:#0a0e1a;font-size:13px;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:4px}
+.login-btn:hover{background:var(--cyan2)}
+.login-err{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);color:var(--red);padding:8px 12px;border-radius:6px;font-size:12px;margin-top:8px;display:none}
+
+/* APP */
+#app{display:none;flex-direction:column;height:100vh}
+#app.visible{display:flex}
+
+/* TOPBAR */
+#topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;flex-shrink:0}
+.tb-brand{display:flex;align-items:center;gap:10px}
+.tb-logo{width:30px;height:30px;background:linear-gradient(135deg,var(--cyan),var(--purple));border-radius:7px;display:flex;align-items:center;justify-content:center}
+.tb-sub{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.tb-title{font-size:15px;font-weight:700;color:#fff}
+.tb-title em{color:var(--cyan);font-style:normal}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-user{font-size:11px;color:var(--text3)}
+.tb-user strong{color:var(--text)}
+.btn-logout{padding:5px 12px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.25);color:var(--red);font-size:11px;border-radius:6px;cursor:pointer;font-family:inherit}
+.btn-logout:hover{background:rgba(255,71,87,.2)}
+
+/* TABS */
+#tabs{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:2px;flex-shrink:0}
+.tab{padding:10px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;margin-bottom:-1px;transition:color .15s}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);font-weight:600}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:18px 24px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.screen{display:none}.screen.active{display:block}
+
+/* STATS */
+.stats-row{display:flex;gap:10px;margin-bottom:16px}
+.stat-card{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.cyan::before{background:var(--cyan)}.stat-card.green::before{background:var(--green)}
+.stat-card.red::before{background:var(--red)}.stat-card.yellow::before{background:var(--yellow)}
+.stat-card.orange::before{background:var(--orange)}.stat-card.purple::before{background:var(--purple)}
+.stat-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.stat-val{font-size:26px;font-weight:700;line-height:1}
+.stat-val.cyan{color:var(--cyan)}.stat-val.green{color:var(--green)}.stat-val.red{color:var(--red)}
+.stat-val.yellow{color:var(--yellow)}.stat-val.orange{color:var(--orange)}.stat-val.purple{color:var(--purple)}
+.stat-sub2{font-size:10px;color:var(--text3);margin-top:4px}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.srch{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:6px 11px;flex:0 0 260px}
+.srch input{background:none;border:none;color:var(--text);font-size:12px;outline:none;font-family:inherit;width:100%}
+.srch input::placeholder{color:var(--text3)}
+.ml{margin-left:auto}
+.btn{padding:6px 13px;font-size:12px;font-weight:500;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px;border:1px solid}
+.btn-p{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)}
+.btn-p:hover{background:rgba(0,212,255,.18)}
+.btn-g{background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.25);color:var(--green)}
+.btn-g:hover{background:rgba(0,255,157,.15)}
+.btn-d{background:rgba(255,71,87,.08);border-color:rgba(255,71,87,.25);color:var(--red)}
+.btn-d:hover{background:rgba(255,71,87,.15)}
+
+/* FILTER TABS */
+.ftabs{display:flex;gap:5px;margin-bottom:12px}
+.ftab{padding:4px 13px;font-size:11px;border-radius:20px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);color:var(--text2);transition:all .15s}
+.ftab.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.35);color:var(--cyan)}
+
+/* TABLE */
+.tbl{overflow-x:auto;border-radius:9px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--bg3);padding:8px 10px;text-align:left;font-weight:600;color:var(--text3);font-size:10px;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid rgba(30,45,74,.6);color:var(--text);white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.td-n{color:var(--cyan);font-weight:600}
+.acts{display:flex;gap:4px}
+.ibtn{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid;font-size:12px;transition:all .15s}
+.ibtn.e{border-color:rgba(0,212,255,.25);color:var(--cyan)}.ibtn.e:hover{background:rgba(0,212,255,.1)}
+.ibtn.d{border-color:rgba(255,71,87,.25);color:var(--red)}.ibtn.d:hover{background:rgba(255,71,87,.1)}
+.ibtn.s{border-color:rgba(0,255,157,.25);color:var(--green)}.ibtn.s:hover{background:rgba(0,255,157,.08)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:4px;font-size:10px;font-weight:700}
+.b-on{background:rgba(0,255,157,.1);border:1px solid rgba(0,255,157,.3);color:var(--green)}
+.b-off{background:rgba(100,116,139,.1);border:1px solid rgba(100,116,139,.3);color:var(--text3)}
+.b-yt{background:rgba(255,211,42,.08);border:1px solid rgba(255,211,42,.3);color:var(--yellow)}
+.b-sv{background:rgba(0,255,157,.1);border:1px solid rgba(0,255,157,.3);color:var(--green)}
+.b-ns{background:rgba(255,211,42,.08);border:1px solid rgba(255,211,42,.3);color:var(--yellow)}
+.cbdg{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:11px;font-weight:700}
+.cbdg.dm{background:rgba(255,71,87,.15);color:var(--red)}
+.cbdg.cl{background:rgba(0,255,157,.1);color:var(--green)}
+.cbdg.rp{background:rgba(0,212,255,.1);color:var(--cyan)}
+.cbdg.tm{background:rgba(255,211,42,.08);color:var(--yellow)}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.ov.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:11px;padding:22px;width:490px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 16px 50px rgba(0,0,0,.5)}
+.modal-lg{width:620px}
+.modal-sm{width:360px}
+.m-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:3px}
+.m-sub{font-size:11px;color:var(--text3);margin-bottom:18px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)}
+.fi{padding:7px 10px;font-size:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:inherit;transition:border .15s}
+.fi:focus{outline:none;border-color:var(--cyan)}
+select.fi option{background:var(--bg2)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.mf{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+.mt{margin-top:11px}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:9px 15px;border-radius:7px;font-size:12px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+#toast.ok{border-color:rgba(0,255,157,.4);color:var(--green)}
+#toast.err{border-color:rgba(255,71,87,.4);color:var(--red)}
+
+/* UPLOAD */
+.upl{border:2px dashed var(--border2);border-radius:9px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.upl:hover{border-color:var(--cyan);background:rgba(0,212,255,.03)}
+
+/* GANTT */
+.gantt-no{padding:40px;text-align:center;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-badge">🚢 Empty Container Management Department</div>
+    <div class="login-title">EMTY CONTAINER<br><em>INSPECTION</em> — BARGING</div>
+    <div class="login-sub">Cảng Thạnh Phước — Hệ thống quản lý sà lan</div>
+    <label class="login-lbl">Username</label>
+    <input class="login-inp" id="lu" placeholder="Nhập username" autocomplete="off">
+    <label class="login-lbl">Key</label>
+    <input class="login-inp" id="lk" type="password" placeholder="Nhập key" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="lerr"></div>
+    <button class="login-btn" onclick="doLogin()" id="lbtn">Đăng nhập</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="topbar">
+    <div class="tb-brand">
+      <div class="tb-logo">🚢</div>
+      <div>
+        <div class="tb-sub">Empty Container Dept.</div>
+        <div class="tb-title">INSPECTION — <em>BARGING</em></div>
+      </div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user">Xin chào, <strong id="tbname">—</strong></div>
+      <button class="btn-logout" onclick="doLogout()">Đăng xuất</button>
+    </div>
+  </div>
+  <div id="tabs">
+    <div class="tab active" onclick="switchTab('barges',this)">🚢 Quản lý sà lan</div>
+    <div class="tab" onclick="switchTab('voyages',this)">📋 Kế hoạch sà lan</div>
+    <div class="tab" onclick="switchTab('gantt',this)">📊 Sơ đồ Gantt</div>
+    <div class="tab" onclick="switchTab('survey',this)">📄 Báo cáo Survey</div>
+  </div>
+  <div id="content">
+
+    <!-- BARGES -->
+    <div class="screen active" id="screen-barges">
+      <div class="stats-row" id="bstats"></div>
+      <div class="toolbar">
+        <div class="srch"><span style="color:var(--text3)">🔍</span><input placeholder="Tìm kiếm sà lan..." id="bsrch" oninput="renderBarges()"></div>
+        <div class="ml" style="display:flex;gap:7px">
+          <button class="btn btn-g" onclick="exportBargesExcel()">⬆ Export Excel</button>
+          <button class="btn btn-p" onclick="openBargeModal()">⊕ Thêm sà lan mới</button>
+        </div>
+      </div>
+      <div class="tbl">
+        <table><thead><tr>
+          <th style="width:44px">STT</th><th>TÊN SÀ LAN</th><th>SỐ ĐĂNG KÝ</th>
+          <th>TRỌNG TẢI (TẤN)</th><th>SỐ LƯỢNG TEUS</th><th>NĂM ĐÓNG</th>
+          <th>TÌNH TRẠNG</th><th style="width:80px">THAO TÁC</th>
+        </tr></thead><tbody id="btbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- VOYAGES -->
+    <div class="screen" id="screen-voyages">
+      <div class="stats-row" id="vstats"></div>
+      <div class="toolbar">
+        <div class="srch"><span style="color:var(--text3)">🔍</span><input placeholder="Tìm theo sà lan, voyage, cảng..." id="vsrch" oninput="renderVoyages()"></div>
+        <div class="ml" style="display:flex;gap:7px">
+          <button class="btn btn-g" onclick="exportVoyagesExcel()">⬆ Export Excel</button>
+          <button class="btn btn-p" onclick="openVoyageModal()">⊕ Thêm kế hoạch sà lan</button>
+        </div>
+      </div>
+      <div class="ftabs">
+        <div class="ftab active" onclick="setVF('all',this)">⊕ Tất cả</div>
+        <div class="ftab" onclick="setVF('kehoach',this)">📋 Kế hoạch</div>
+        <div class="ftab" onclick="setVF('hoanthanh',this)">✔ Hoàn thành</div>
+        <div class="ftab" onclick="setVF('chuasurvey',this)">⚠ Chưa survey</div>
+      </div>
+      <div class="tbl">
+        <table><thead><tr>
+          <th style="width:44px">STT</th><th>SÀ LAN</th><th>VOYAGE</th><th>LOẠI HÀNG</th>
+          <th>SỐ LƯỢNG</th><th>POL</th><th>POD</th><th>ETA</th><th>ETD</th>
+          <th>BẮT ĐẦU LÀM HÀNG</th><th>KẾT THÚC LÀM HÀNG</th><th>SURVEY</th>
+          <th style="width:100px">THAO TÁC</th>
+        </tr></thead><tbody id="vtbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- GANTT -->
+    <div class="screen" id="screen-gantt">
+      <div class="stats-row" id="gstats"></div>
+      <div class="toolbar" style="margin-bottom:12px">
+        <select class="fi" id="gfbarge" onchange="renderGantt()" style="width:200px">
+          <option value="">-- Tất cả sà lan --</option>
+        </select>
+        <select class="fi" id="gfrange" onchange="renderGantt()" style="width:140px">
+          <option value="week">Tuần này</option>
+          <option value="month" selected>Tháng này</option>
+          <option value="3month">3 tháng</option>
+        </select>
+      </div>
+      <div id="gantt-wrap" style="border:1px solid var(--border);border-radius:9px;overflow:auto;max-height:calc(100vh - 320px)"></div>
+      <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)"><div style="width:14px;height:14px;border-radius:3px;background:rgba(0,212,255,.35)"></div>ETA → ETD (Tại cảng)</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)"><div style="width:14px;height:14px;border-radius:3px;background:rgba(0,255,157,.35)"></div>Bắt đầu → Kết thúc (Làm hàng)</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)"><div style="width:14px;height:14px;border-radius:3px;background:rgba(255,211,42,.25)"></div>Thời gian chờ</div>
+      </div>
+    </div>
+
+    <!-- SURVEY -->
+    <div class="screen" id="screen-survey">
+      <div class="stats-row" id="sstats-top"></div>
+      <div class="toolbar">
+        <div class="srch"><span style="color:var(--text3)">🔍</span><input placeholder="Tìm sà lan..." id="ssrch" oninput="renderSurveys()"></div>
+        <input type="date" class="fi" id="sfrom" onchange="renderSurveys()" style="width:135px">
+        <input type="date" class="fi" id="sto" onchange="renderSurveys()" style="width:135px">
+        <select class="fi" id="sfbarge" onchange="renderSurveys()" style="width:170px">
+          <option value="">Tất cả sà lan</option>
+        </select>
+        <div class="ml" style="display:flex;gap:7px">
+          <button class="btn btn-g" onclick="exportSurveyExcel()">⬆ Export Excel</button>
+          <button class="btn btn-p" onclick="openImportSurvey()">⬆ Import</button>
+          <button class="btn btn-p" onclick="openSurveyModal()">⊕ Thêm survey</button>
+        </div>
+      </div>
+      <div class="stats-row" id="sstats-f" style="margin-bottom:12px"></div>
+      <div class="tbl">
+        <table><thead><tr>
+          <th style="width:44px">STT</th><th>SÀ LAN</th><th>VOYAGE</th><th>LOẠI</th>
+          <th>SỐ LƯỢNG</th><th>DAMAGED</th><th>CLEAN</th><th>REPO</th><th>TERMITES</th>
+          <th>TỔNG</th><th>NGÀY SURVEY</th><th style="width:80px">THAO TÁC</th>
+        </tr></thead><tbody id="stbody"></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- MODAL BARGE -->
+<div class="ov" id="mb">
+  <div class="modal">
+    <div class="m-title" id="mb-title">Thêm sà lan mới</div>
+    <div class="m-sub">Nhập thông tin sà lan</div>
+    <input type="hidden" id="mb-seq">
+    <div class="g2">
+      <div class="fg"><label class="fl">Mã sà lan *</label><input class="fi" id="mb-code" placeholder="VD: DL02"></div>
+      <div class="fg"><label class="fl">Tên sà lan *</label><input class="fi" id="mb-ten" placeholder="VD: Đạt Long 02"></div>
+    </div>
+    <div class="fg mt"><label class="fl">Số đăng ký / SĐT liên hệ</label><input class="fi" id="mb-sdk" placeholder="VD: SG-9379 / 0363622075"></div>
+    <div class="g3 mt">
+      <div class="fg"><label class="fl">Trọng tải (tấn)</label><input class="fi" id="mb-tt" type="number" placeholder="0"></div>
+      <div class="fg"><label class="fl">Số lượng TEUs</label><input class="fi" id="mb-teus" type="number" placeholder="0"></div>
+      <div class="fg"><label class="fl">Năm đóng</label><input class="fi" id="mb-nd" placeholder="2025"></div>
+    </div>
+    <div class="g2 mt">
+      <div class="fg"><label class="fl">Tình trạng</label>
+        <select class="fi" id="mb-tt2">
+          <option value="HOAT_DONG">Hoạt động</option>
+          <option value="NGUNG">Ngưng hoạt động</option>
+          <option value="BAO_TRI">Bảo trì</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Ghi chú</label><input class="fi" id="mb-gc"></div>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeOv('mb')" style="border-color:var(--border2);color:var(--text2)">Huỷ</button>
+      <button class="btn btn-p" onclick="saveBarge()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VOYAGE -->
+<div class="ov" id="mv">
+  <div class="modal modal-lg">
+    <div class="m-title" id="mv-title">Thêm kế hoạch sà lan</div>
+    <div class="m-sub">Nhập thông tin chuyến tàu</div>
+    <input type="hidden" id="mv-seq">
+    <div class="g2">
+      <div class="fg"><label class="fl">Sà lan *</label>
+        <select class="fi" id="mv-sl"><option value="">-- Chọn sà lan --</option></select>
+      </div>
+      <div class="fg"><label class="fl">Voyage No</label><input class="fi" id="mv-vno" placeholder="VD: 0013"></div>
+    </div>
+    <div class="g3 mt">
+      <div class="fg"><label class="fl">Loại hàng</label>
+        <select class="fi" id="mv-lh"><option>Container</option><option>Bulk</option><option>Khác</option></select>
+      </div>
+      <div class="fg"><label class="fl">Số lượng</label><input class="fi" id="mv-sl2" placeholder="VD: 96 TEUs"></div>
+      <div class="fg"><label class="fl">POL</label><input class="fi" id="mv-pol" placeholder="SSIT"></div>
+    </div>
+    <div class="g2 mt">
+      <div class="fg"><label class="fl">POD</label><input class="fi" id="mv-pod" placeholder="TPP"></div>
+      <div class="fg"></div>
+    </div>
+    <div class="g2 mt">
+      <div class="fg"><label class="fl">ETA (Ngày đến)</label><input class="fi" id="mv-eta" type="datetime-local"></div>
+      <div class="fg"><label class="fl">ETD (Ngày rời)</label><input class="fi" id="mv-etd" type="datetime-local"></div>
+    </div>
+    <div class="g2 mt">
+      <div class="fg"><label class="fl">Bắt đầu làm hàng</label><input class="fi" id="mv-bd" type="datetime-local"></div>
+      <div class="fg"><label class="fl">Kết thúc làm hàng</label><input class="fi" id="mv-kt" type="datetime-local"></div>
+    </div>
+    <div class="fg mt"><label class="fl">Ghi chú</label><input class="fi" id="mv-gc"></div>
+    <div class="mf">
+      <button class="btn" onclick="closeOv('mv')" style="border-color:var(--border2);color:var(--text2)">Huỷ</button>
+      <button class="btn btn-p" onclick="saveVoyage()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SURVEY -->
+<div class="ov" id="ms">
+  <div class="modal modal-lg">
+    <div class="m-title" id="ms-title">Thêm Survey</div>
+    <div class="m-sub">Nhập kết quả survey container</div>
+    <input type="hidden" id="ms-seq">
+    <div class="g2">
+      <div class="fg"><label class="fl">Chuyến / Voyage *</label>
+        <select class="fi" id="ms-voy"><option value="">-- Chọn voyage --</option></select>
+      </div>
+      <div class="fg"><label class="fl">Ngày survey</label><input class="fi" id="ms-ngay" type="date"></div>
+    </div>
+    <div class="g2 mt">
+      <div class="fg"><label class="fl">Loại container</label>
+        <select class="fi" id="ms-loai"><option>40E</option><option>20E</option><option>40H</option><option>20H</option><option>Khác</option></select>
+      </div>
+      <div class="fg"><label class="fl">Số lượng</label><input class="fi" id="ms-sl" type="number" placeholder="0" oninput="calcSvTotal()"></div>
+    </div>
+    <div class="g2 mt">
+      <div class="fg"><label class="fl" style="color:#ff4757">Damaged</label><input class="fi" id="ms-dm" type="number" value="0" oninput="calcSvTotal()"></div>
+      <div class="fg"><label class="fl" style="color:#00ff9d">Clean</label><input class="fi" id="ms-cl" type="number" value="0" oninput="calcSvTotal()"></div>
+    </div>
+    <div class="g2 mt">
+      <div class="fg"><label class="fl" style="color:#00d4ff">Repo</label><input class="fi" id="ms-rp" type="number" value="0" oninput="calcSvTotal()"></div>
+      <div class="fg"><label class="fl" style="color:#ffd32a">Termites</label><input class="fi" id="ms-tm" type="number" value="0" oninput="calcSvTotal()"></div>
+    </div>
+    <div class="mt" style="padding:9px 13px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:7px;font-size:12px;color:var(--text2)">
+      Tổng kiểm tra: <strong id="sv-chk" style="color:var(--cyan)">0</strong> / Số lượng: <strong id="sv-ref">0</strong>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeOv('ms')" style="border-color:var(--border2);color:var(--text2)">Huỷ</button>
+      <button class="btn btn-p" onclick="saveSurvey()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORT -->
+<div class="ov" id="mi">
+  <div class="modal">
+    <div class="m-title">Import Survey từ Excel/CSV</div>
+    <div class="m-sub">File CSV cần có cột: ma_salan, ten_salan, voyage_no, ngay_survey, loai_cont, so_luong, damaged, clean, repo, termites</div>
+    <div class="upl" onclick="document.getElementById('ifile').click()">
+      <div style="font-size:26px;margin-bottom:7px">📂</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Click để chọn file CSV</div>
+      <div style="font-size:11px;color:var(--text3)">Hoặc kéo thả file vào đây</div>
+    </div>
+    <input type="file" id="ifile" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImport(event)">
+    <div id="iprev" style="margin-top:10px;display:none;font-size:12px;color:var(--cyan);padding:8px;background:rgba(0,212,255,.05);border-radius:6px"></div>
+    <div class="mf">
+      <button class="btn" onclick="closeOv('mi')" style="border-color:var(--border2);color:var(--text2)">Huỷ</button>
+      <button class="btn btn-p" id="ibtn" onclick="confirmImport()" disabled>Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="ov" id="mconf">
+  <div class="modal modal-sm">
+    <div class="m-title">⚠ Xác nhận xoá</div>
+    <div class="m-sub" id="conf-msg">Bạn có chắc muốn xoá?</div>
+    <div class="mf">
+      <button class="btn" onclick="closeOv('mconf')" style="border-color:var(--border2);color:var(--text2)">Huỷ</button>
+      <button class="btn btn-d" id="conf-ok">Xoá</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'YOUR_GAS_DEPLOY_URL_HERE'; // ← Thay URL deploy GAS của bạn
+
+let S = { user:null, barges:[], voyages:[], surveys:[], vf:'all', importRows:[] };
+
+// ===== API =====
+async function api(action, params={}) {
+  const r = await fetch(GAS_URL+'?action='+action+'&'+new URLSearchParams(params));
+  return r.json();
+}
+async function post(body) {
+  const r = await fetch(GAS_URL,{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}});
+  return r.json();
+}
+
+// ===== LOGIN =====
+async function doLogin() {
+  const u=document.getElementById('lu').value.trim(), k=document.getElementById('lk').value.trim();
+  if(!u||!k){showErr('Vui lòng nhập đầy đủ');return;}
+  const btn=document.getElementById('lbtn'); btn.textContent='Đang đăng nhập...'; btn.disabled=true;
+  try {
+    const res=await api('login',{username:u,key:k});
+    if(res.success){
+      S.user=res;
+      document.getElementById('tbname').textContent=res.fullname;
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').classList.add('visible');
+      await loadAll();
+    } else showErr(res.error||'Đăng nhập thất bại');
+  } catch(e){showErr('Lỗi: '+e.message);}
+  finally{btn.textContent='Đăng nhập';btn.disabled=false;}
+}
+function showErr(m){const e=document.getElementById('lerr');e.textContent=m;e.style.display='block';}
+function doLogout(){S.user=null;document.getElementById('app').classList.remove('visible');document.getElementById('login-screen').style.display='flex';document.getElementById('lk').value='';}
+
+// ===== LOAD =====
+async function loadAll(){
+  try{
+    const[b,v,s]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys')]);
+    S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[];
+    renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); fillDropdowns();
+  }catch(e){toast('Lỗi load: '+e.message,'err');}
+}
+
+// ===== TABS =====
+function switchTab(n,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('screen-'+n).classList.add('active');
+  if(n==='gantt') renderGantt();
+}
+
+// ===== BARGES =====
+function renderBarges(){
+  const q=(document.getElementById('bsrch').value||'').toLowerCase();
+  const rows=S.barges.filter(b=>!q||b.ten.toLowerCase().includes(q)||b.code.toLowerCase().includes(q)||(b.so_dang_ky||'').toLowerCase().includes(q));
+  const tot=S.barges.length, on=S.barges.filter(b=>b.tinh_trang==='HOAT_DONG').length,
+        off=S.barges.filter(b=>b.tinh_trang==='NGUNG').length, bt=S.barges.filter(b=>b.tinh_trang==='BAO_TRI').length,
+        teus=S.barges.filter(b=>b.tinh_trang==='HOAT_DONG').reduce((s,b)=>s+b.so_teus,0);
+  document.getElementById('bstats').innerHTML=
+    sc('TỔNG SÀ LAN',fmt(tot),'cyan')+sc('ĐANG HOẠT ĐỘNG',fmt(on),'green')+
+    sc('NGỪNG HOẠT ĐỘNG',fmt(off),'red')+sc('BẢO TRÌ',fmt(bt),'yellow')+
+    sc('TEUS ĐANG HOẠT ĐỘNG',fmt(teus),'orange');
+  const tb=document.getElementById('btbody');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
+  tb.innerHTML=rows.map((b,i)=>`<tr>
+    <td style="color:var(--text3)">${i+1}</td>
+    <td class="td-n">${b.code} — ${b.ten}</td>
+    <td>${b.so_dang_ky||'—'}</td>
+    <td style="text-align:right">${fmt(b.trong_tai)}</td>
+    <td style="text-align:right">${fmt(b.so_teus)}</td>
+    <td>${b.nam_dong||'—'}</td>
+    <td>${ttBadge(b.tinh_trang)}</td>
+    <td><div class="acts">
+      <div class="ibtn e" onclick='openBargeModal(${jstr(b)})' title="Sửa">✎</div>
+      <div class="ibtn d" onclick="confDel('barge',${b.seq},'Xoá sà lan ${b.ten}?')" title="Xoá">🗑</div>
+    </div></td>
+  </tr>`).join('');
+}
+function ttBadge(t){
+  if(t==='HOAT_DONG') return '<span class="badge b-on">HOẠT ĐỘNG</span>';
+  if(t==='NGUNG') return '<span class="badge b-off">NGỪNG</span>';
+  return '<span class="badge b-yt">BẢO TRÌ</span>';
+}
+function openBargeModal(b=null){
+  document.getElementById('mb-title').textContent=b?'Chỉnh sửa sà lan':'Thêm sà lan mới';
+  _v('mb-seq',b?b.seq:''); _v('mb-code',b?b.code:''); _v('mb-ten',b?b.ten:'');
+  _v('mb-sdk',b?b.so_dang_ky:''); _v('mb-tt',b?b.trong_tai:''); _v('mb-teus',b?b.so_teus:'');
+  _v('mb-nd',b?b.nam_dong:''); _v('mb-tt2',b?b.tinh_trang:'HOAT_DONG'); _v('mb-gc',b?b.ghi_chu:'');
+  openOv('mb');
+}
+async function saveBarge(){
+  const seq=_g('mb-seq'), code=_g('mb-code').trim(), ten=_g('mb-ten').trim();
+  if(!code||!ten){toast('Vui lòng nhập Mã và Tên','err');return;}
+  const res=await post({action:seq?'updateBarge':'saveBarge',seq,code,ten,
+    so_dang_ky:_g('mb-sdk'),trong_tai:_g('mb-tt'),so_teus:_g('mb-teus'),
+    nam_dong:_g('mb-nd'),tinh_trang:_g('mb-tt2'),ghi_chu:_g('mb-gc')});
+  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm sà lan','ok');closeOv('mb');await loadAll();}
+  else toast(res.error||'Lỗi','err');
+}
+
+// ===== VOYAGES =====
+function setVF(f,el){
+  S.vf=f;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); renderVoyages();
+}
+function renderVoyages(){
+  const q=(document.getElementById('vsrch').value||'').toLowerCase();
+  let rows=S.voyages.filter(v=>{
+    if(q&&!v.ten_salan.toLowerCase().includes(q)&&!(v.voyage_no||'').includes(q)&&!v.pol.toLowerCase().includes(q)&&!v.pod.toLowerCase().includes(q)) return false;
+    if(S.vf==='kehoach') return v.trang_thai_survey!=='Đã survey';
+    if(S.vf==='hoanthanh') return v.trang_thai_survey==='Đã survey';
+    if(S.vf==='chuasurvey') return v.trang_thai_survey!=='Đã survey';
+    return true;
+  });
+  const tot=S.voyages.length, teus=S.voyages.reduce((s,v)=>s+(parseInt(v.so_luong)||0),0),
+        cs=S.voyages.filter(v=>v.trang_thai_survey!=='Đã survey').length,
+        ht=S.voyages.filter(v=>v.trang_thai_survey==='Đã survey').length,
+        tc=S.voyages.filter(v=>v.trang_thai_survey!=='Đã survey').reduce((s,v)=>s+(parseInt(v.so_luong)||0),0);
+  document.getElementById('vstats').innerHTML=
+    sc('TỔNG SÀ LAN',fmt(tot),'cyan')+sc('TỔNG TEUS',fmt(teus),'cyan')+
+    sc('CHƯA SURVEY',fmt(cs),'yellow')+sc('HOÀN THÀNH',fmt(ht),'green')+sc('TEUS CHỜ DỠ',fmt(tc),'red');
+  const tb=document.getElementById('vtbody');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
+  tb.innerHTML=rows.map((v,i)=>`<tr>
+    <td style="color:var(--text3)">${i+1}</td>
+    <td class="td-n">${v.ten_salan}</td>
+    <td style="color:var(--text2)">${v.voyage_no||'—'}</td>
+    <td>${v.loai_hang}</td><td>${v.so_luong||'—'}</td>
+    <td>${v.pol||'—'}</td><td>${v.pod||'—'}</td>
+    <td style="font-size:11px">${v.eta||'—'}</td>
+    <td style="font-size:11px">${v.etd||'—'}</td>
+    <td style="font-size:11px">${v.bat_dau||'—'}</td>
+    <td style="font-size:11px">${v.ket_thuc||'—'}</td>
+    <td>${v.trang_thai_survey==='Đã survey'?'<span class="badge b-sv">✔ Đã survey</span>':'<span class="badge b-ns">Chưa survey</span>'}</td>
+    <td><div class="acts">
+      <div class="ibtn s" onclick='quickSurvey(${jstr(v)})' title="Thêm survey">📋</div>
+      <div class="ibtn e" onclick='openVoyageModal(${jstr(v)})' title="Sửa">✎</div>
+      <div class="ibtn d" onclick="confDel('voyage',${v.seq},'Xoá voyage ${v.voyage_no||''} — ${v.ten_salan}?')" title="Xoá">🗑</div>
+    </div></td>
+  </tr>`).join('');
+}
+function openVoyageModal(v=null){
+  document.getElementById('mv-title').textContent=v?'Chỉnh sửa kế hoạch':'Thêm kế hoạch sà lan';
+  _v('mv-seq',v?v.seq:''); _v('mv-vno',v?v.voyage_no:''); _v('mv-lh',v?v.loai_hang:'Container');
+  _v('mv-sl2',v?v.so_luong:''); _v('mv-pol',v?v.pol:'SSIT'); _v('mv-pod',v?v.pod:'TPP');
+  _v('mv-eta',v?toLocal(v.eta):''); _v('mv-etd',v?toLocal(v.etd):'');
+  _v('mv-bd',v?toLocal(v.bat_dau):''); _v('mv-kt',v?toLocal(v.ket_thuc):'');
+  _v('mv-gc',v?v.ghi_chu:'');
+  const sel=document.getElementById('mv-sl');
+  sel.innerHTML='<option value="">-- Chọn sà lan --</option>'+
+    S.barges.map(b=>`<option value="${b.code}" data-ten="${b.ten}" ${v&&v.ma_salan===b.code?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
+  openOv('mv');
+}
+async function saveVoyage(){
+  const seq=_g('mv-seq'), sel=document.getElementById('mv-sl'), maSalan=sel.value;
+  const opt=sel.options[sel.selectedIndex], tenSalan=opt?opt.dataset.ten||'':'';
+  if(!maSalan){toast('Vui lòng chọn sà lan','err');return;}
+  const res=await post({action:seq?'updateVoyage':'saveVoyage',seq,
+    ma_salan:maSalan,ten_salan:tenSalan,voyage_no:_g('mv-vno'),loai_hang:_g('mv-lh'),
+    so_luong:_g('mv-sl2'),pol:_g('mv-pol'),pod:_g('mv-pod'),
+    eta:_g('mv-eta'),etd:_g('mv-etd'),bat_dau:_g('mv-bd'),ket_thuc:_g('mv-kt'),
+    trang_thai_survey:seq?undefined:'Chưa survey',ghi_chu:_g('mv-gc')});
+  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm kế hoạch','ok');closeOv('mv');await loadAll();}
+  else toast(res.error||'Lỗi','err');
+}
+function quickSurvey(v){
+  switchTab('survey',document.querySelectorAll('.tab')[3]);
+  setTimeout(()=>openSurveyModal(null,v),80);
+}
+
+// ===== GANTT =====
+function renderGantt(){
+  const bf=document.getElementById('gfbarge').value, range=document.getElementById('gfrange').value;
+  const now=new Date();
+  let start,end;
+  if(range==='week'){start=new Date(now);start.setDate(now.getDate()-now.getDay()+1);start.setHours(0,0,0,0);end=new Date(start);end.setDate(start.getDate()+6);}
+  else if(range==='month'){start=new Date(now.getFullYear(),now.getMonth(),1);end=new Date(now.getFullYear(),now.getMonth()+1,0);}
+  else{start=new Date(now.getFullYear(),now.getMonth()-1,1);end=new Date(now.getFullYear(),now.getMonth()+2,0);}
+  end.setHours(23,59,59,999);
+
+  let rows=S.voyages.filter(v=>{
+    if(bf&&v.ma_salan!==bf)return false;
+    const eta=v.eta?parseDt(v.eta):null, etd=v.etd?parseDt(v.etd):null;
+    if(!eta&&!etd)return false;
+    if(eta&&etd) return eta<=end&&etd>=start;
+    if(eta) return eta>=start&&eta<=end;
+    return false;
+  });
+
+  // Stats
+  let lhSum=0,lhCnt=0,cangSum=0,cangCnt=0;
+  rows.forEach(v=>{
+    if(v.bat_dau&&v.ket_thuc){const h=(parseDt(v.ket_thuc)-parseDt(v.bat_dau))/3600000;if(h>0){lhSum+=h;lhCnt++;}}
+    if(v.eta&&v.etd){const h=(parseDt(v.etd)-parseDt(v.eta))/3600000;if(h>0){cangSum+=h;cangCnt++;}}
+  });
+  const avgLH=lhCnt?lhSum/lhCnt:0, avgCang=cangCnt?cangSum/cangCnt:0, avgCho=Math.max(0,avgCang-avgLH);
+  document.getElementById('gstats').innerHTML=
+    sc('TỔNG KẾ HOẠCH',fmt(rows.length),'cyan')+
+    sc('THỜI GIAN LÀM HÀNG TB',avgLH.toFixed(1)+'h','green')+
+    sc('THỜI GIAN Ở CẢNG TB',avgCang.toFixed(1)+'h','cyan')+
+    sc('THỜI GIAN CHỜ TB',avgCho.toFixed(1)+'h','yellow');
+
+  const wrap=document.getElementById('gantt-wrap');
+  if(!rows.length){wrap.innerHTML='<div class="gantt-no">Không có kế hoạch trong khoảng thời gian này</div>';return;}
+
+  const days=[];
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)) days.push(new Date(d));
+  const DW=['CN','Th2','Th3','Th4','Th5','Th6','Th7'];
+  const COL_W=80, LABEL_W=200, total_w=LABEL_W+days.length*COL_W;
+  const dur_ms=end-start;
+
+  let html=`<div style="min-width:${total_w}px;position:relative">`;
+  // Header
+  html+=`<div style="display:flex;background:var(--bg3);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5">`;
+  html+=`<div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;border-right:1px solid var(--border);position:sticky;left:0;background:var(--bg3);z-index:6">SÀ LAN</div>`;
+  days.forEach(d=>{
+    const tod=d.toDateString()===now.toDateString();
+    html+=`<div style="width:${COL_W}px;flex-shrink:0;border-right:1px solid var(--border);padding:6px 4px;text-align:center${tod?';background:rgba(0,212,255,.07)':''}">
+      <div style="font-size:10px;font-weight:700;color:${tod?'var(--cyan)':'var(--text3)'}">${DW[d.getDay()]}</div>
+      <div style="font-size:12px;color:${tod?'var(--cyan)':'var(--text)'};font-weight:${tod?700:400}">${d.getDate()}/${d.getMonth()+1}</div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Rows
+  rows.forEach(v=>{
+    const eta=v.eta?parseDt(v.eta):null, etd=v.etd?parseDt(v.etd):null;
+    const bat=v.bat_dau?parseDt(v.bat_dau):null, ket=v.ket_thuc?parseDt(v.ket_thuc):null;
+    const px=dt=>dt?Math.max(0,(dt-start)/dur_ms*days.length*COL_W):null;
+    const etaX=px(eta), etdX=px(etd), batX=px(bat), ketX=px(ket);
+    html+=`<div style="display:flex;border-bottom:1px solid rgba(30,45,74,.5);min-height:50px;position:relative">`;
+    html+=`<div style="width:${LABEL_W}px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:8px 12px;position:sticky;left:0;z-index:4">
+      <div style="font-size:12px;color:var(--cyan);font-weight:600">${v.ten_salan}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">VOY: ${v.voyage_no||'—'}</div>
+    </div>`;
+    html+=`<div style="flex:1;position:relative;height:50px">`;
+    // Grid lines
+    days.forEach((_,i)=>html+=`<div style="position:absolute;top:0;bottom:0;left:${i*COL_W}px;width:1px;background:rgba(30,45,74,.4)"></div>`);
+    // ETA→ETD
+    if(etaX!==null&&etdX!==null&&etdX>etaX)
+      html+=`<div style="position:absolute;top:7px;height:36px;left:${Math.max(0,etaX)}px;width:${Math.min(etdX,days.length*COL_W)-Math.max(0,etaX)}px;min-width:4px;background:rgba(0,212,255,.18);border:1px solid rgba(0,212,255,.4);border-radius:5px;display:flex;align-items:center;padding:0 6px;font-size:10px;color:var(--cyan);overflow:hidden;white-space:nowrap" title="ETA→ETD">${v.ten_salan}</div>`;
+    // Làm hàng
+    if(batX!==null&&ketX!==null&&ketX>batX)
+      html+=`<div style="position:absolute;top:13px;height:24px;left:${Math.max(0,batX)}px;width:${Math.min(ketX,days.length*COL_W)-Math.max(0,batX)}px;min-width:4px;background:rgba(0,255,157,.2);border:1px solid rgba(0,255,157,.4);border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:10px;color:var(--green);overflow:hidden;white-space:nowrap" title="Làm hàng">${v.ten_salan}</div>`;
+    html+=`</div></div>`;
+  });
+
+  // Now line
+  if(now>=start&&now<=end){
+    const nowX=LABEL_W+(now-start)/dur_ms*days.length*COL_W;
+    html+=`<div style="position:absolute;top:38px;bottom:0;left:${nowX}px;width:2px;background:var(--red);z-index:3;pointer-events:none">
+      <div style="position:absolute;top:-15px;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;transform:translateX(-50%)">${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</div>
+    </div>`;
+  }
+  html+=`</div>`;
+  wrap.innerHTML=html;
+}
+
+// ===== SURVEYS =====
+function renderSurveys(){
+  const q=(document.getElementById('ssrch').value||'').toLowerCase();
+  const df=document.getElementById('sfrom').value, dt=document.getElementById('sto').value;
+  const bf=document.getElementById('sfbarge').value;
+  let rows=S.surveys.filter(s=>{
+    if(q&&!s.ten_salan.toLowerCase().includes(q)&&!(s.voyage_no||'').includes(q)) return false;
+    if(bf&&s.ma_salan!==bf) return false;
+    if(df&&s.ngay_survey){const sd=s.ngay_survey.split('/');if(sd.length===3&&sd[2]+'-'+sd[1]+'-'+sd[0]<df) return false;}
+    if(dt&&s.ngay_survey){const sd=s.ngay_survey.split('/');if(sd.length===3&&sd[2]+'-'+sd[1]+'-'+sd[0]>dt) return false;}
+    return true;
+  });
+  const all=S.surveys, adm=all.reduce((s,r)=>s+r.damaged,0), acl=all.reduce((s,r)=>s+r.clean,0),
+        arp=all.reduce((s,r)=>s+r.repo,0), atm=all.reduce((s,r)=>s+r.termites,0), atot=all.reduce((s,r)=>s+r.so_luong,0);
+  document.getElementById('sstats-top').innerHTML=
+    sc('TỔNG CONTAINERS',fmt(atot),'cyan')+sc('DAMAGED',fmt(adm),'red')+
+    sc('CLEAN',fmt(acl),'green')+sc('REPO',fmt(arp),'cyan')+sc('TERMITES',fmt(atm),'yellow');
+  const fdm=rows.reduce((s,r)=>s+r.damaged,0), fcl=rows.reduce((s,r)=>s+r.clean,0),
+        frp=rows.reduce((s,r)=>s+r.repo,0), ftm=rows.reduce((s,r)=>s+r.termites,0), ftot=rows.reduce((s,r)=>s+r.so_luong,0);
+  document.getElementById('sstats-f').innerHTML=
+    sc2('TỔNG CONTAINERS',fmt(ftot),'cyan','')+
+    sc2('DAMAGED',fmt(fdm),'red',ftot?(fdm/ftot*100).toFixed(1)+'%':'')+
+    sc2('CLEAN',fmt(fcl),'green',ftot?(fcl/ftot*100).toFixed(1)+'%':'')+
+    sc2('REPO',fmt(frp),'cyan',ftot?(frp/ftot*100).toFixed(1)+'%':'')+
+    sc2('TERMITES',fmt(ftm),'yellow',ftot?(ftm/ftot*100).toFixed(1)+'%':'');
+  const tb=document.getElementById('stbody');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
+  tb.innerHTML=rows.map((s,i)=>`<tr>
+    <td style="color:var(--text3)">${i+1}</td>
+    <td class="td-n">${s.ten_salan}</td>
+    <td style="color:var(--text2)">${s.voyage_no||'—'}</td>
+    <td><span class="badge b-sv" style="background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)">${s.loai_cont||'—'}</span></td>
+    <td style="text-align:right">${fmt(s.so_luong)}</td>
+    <td style="text-align:center"><span class="cbdg dm">${s.damaged}</span></td>
+    <td style="text-align:center"><span class="cbdg cl">${s.clean}</span></td>
+    <td style="text-align:center"><span class="cbdg rp">${s.repo}</span></td>
+    <td style="text-align:center"><span class="cbdg tm">${s.termites}</span></td>
+    <td style="text-align:right;font-weight:600">${fmt(s.so_luong)}</td>
+    <td style="color:var(--text2)">${s.ngay_survey||'—'}</td>
+    <td><div class="acts">
+      <div class="ibtn e" onclick='openSurveyModal(${jstr(s)})' title="Sửa">✎</div>
+      <div class="ibtn d" onclick="confDel('survey',${s.seq},'Xoá survey này?')" title="Xoá">🗑</div>
+    </div></td>
+  </tr>`).join('');
+}
+function openSurveyModal(s=null,pv=null){
+  document.getElementById('ms-title').textContent=s?'Chỉnh sửa Survey':'Thêm Survey';
+  _v('ms-seq',s?s.seq:''); _v('ms-ngay',s?toDateInp(s.ngay_survey):todayStr());
+  _v('ms-loai',s?s.loai_cont:'40E'); _v('ms-sl',s?s.so_luong:0);
+  _v('ms-dm',s?s.damaged:0); _v('ms-cl',s?s.clean:0); _v('ms-rp',s?s.repo:0); _v('ms-tm',s?s.termites:0);
+  const sel=document.getElementById('ms-voy');
+  sel.innerHTML='<option value="">-- Chọn voyage --</option>'+
+    S.voyages.map(v=>`<option value="${v.seq}" data-ma="${v.ma_salan}" data-ten="${v.ten_salan}" data-vno="${v.voyage_no||''}"
+      ${s&&s.voyage_seq==v.seq?'selected':''} ${pv&&pv.seq==v.seq?'selected':''}
+    >${v.ten_salan} — VOY ${v.voyage_no||'N/A'}</option>`).join('');
+  calcSvTotal(); openOv('ms');
+}
+function calcSvTotal(){
+  const d=+_g('ms-dm')||0, c=+_g('ms-cl')||0, r=+_g('ms-rp')||0, t=+_g('ms-tm')||0;
+  document.getElementById('sv-chk').textContent=d+c+r+t;
+  document.getElementById('sv-ref').textContent=_g('ms-sl')||0;
+}
+async function saveSurvey(){
+  const seq=_g('ms-seq'), sel=document.getElementById('ms-voy'), vseq=sel.value;
+  const opt=sel.options[sel.selectedIndex];
+  if(!vseq){toast('Vui lòng chọn voyage','err');return;}
+  const res=await post({action:seq?'updateSurvey':'saveSurvey',seq,voyage_seq:vseq,
+    ma_salan:opt?opt.dataset.ma:'',ten_salan:opt?opt.dataset.ten:'',voyage_no:opt?opt.dataset.vno:'',
+    ngay_survey:_g('ms-ngay'),loai_cont:_g('ms-loai'),so_luong:_g('ms-sl'),
+    damaged:_g('ms-dm'),clean:_g('ms-cl'),repo:_g('ms-rp'),termites:_g('ms-tm')});
+  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm survey','ok');closeOv('ms');await loadAll();}
+  else toast(res.error||'Lỗi','err');
+}
+
+// ===== IMPORT =====
+function openImportSurvey(){
+  S.importRows=[];
+  document.getElementById('iprev').style.display='none';
+  document.getElementById('ibtn').disabled=true;
+  document.getElementById('ifile').value='';
+  openOv('mi');
+}
+function handleImport(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const lines=ev.target.result.split('\n').filter(l=>l.trim());
+      const rows=lines.slice(1).map(l=>{
+        const c=l.split(',').map(x=>x.replace(/"/g,'').trim());
+        return{ma_salan:c[0]||'',ten_salan:c[1]||'',voyage_no:c[2]||'',
+          ngay_survey:c[3]||'',loai_cont:c[4]||'40E',so_luong:+c[5]||0,
+          damaged:+c[6]||0,clean:+c[7]||0,repo:+c[8]||0,termites:+c[9]||0,voyage_seq:''};
+      }).filter(r=>r.ma_salan);
+      S.importRows=rows;
+      const p=document.getElementById('iprev'); p.style.display='block';
+      p.textContent=`Đọc được ${rows.length} dòng từ file. Nhấn Import để xác nhận.`;
+      document.getElementById('ibtn').disabled=rows.length===0;
+    }catch(e){toast('Lỗi đọc file: '+e.message,'err');}
+  };
+  reader.readAsText(file);
+}
+async function confirmImport(){
+  if(!S.importRows.length)return;
+  const res=await post({action:'importSurveys',rows:S.importRows});
+  if(res.success){toast(`Import thành công ${res.imported} dòng`,'ok');closeOv('mi');await loadAll();}
+  else toast(res.error||'Lỗi','err');
+}
+
+// ===== DELETE =====
+function confDel(type,seq,msg){
+  document.getElementById('conf-msg').textContent=msg;
+  document.getElementById('conf-ok').onclick=()=>doDel(type,seq);
+  openOv('mconf');
+}
+async function doDel(type,seq){
+  const am={barge:'deleteBarge',voyage:'deleteVoyage',survey:'deleteSurvey'};
+  const res=await post({action:am[type],seq});
+  if(res.success){toast('Đã xoá','ok');closeOv('mconf');await loadAll();}
+  else toast(res.error||'Lỗi','err');
+}
+
+// ===== EXPORT =====
+function exportBargesExcel(){
+  const c=['STT','Mã','Tên sà lan','Số đăng ký','Trọng tải','TEUs','Năm đóng','Tình trạng'];
+  const d=S.barges.map((b,i)=>[i+1,b.code,b.ten,b.so_dang_ky,b.trong_tai,b.so_teus,b.nam_dong,b.tinh_trang]);
+  dlCsv('Danh_sach_sa_lan.csv',c,d);
+}
+function exportVoyagesExcel(){
+  const c=['STT','Sà lan','Voyage','Loại hàng','Số lượng','POL','POD','ETA','ETD','Bắt đầu','Kết thúc','Survey'];
+  const d=S.voyages.map((v,i)=>[i+1,v.ten_salan,v.voyage_no,v.loai_hang,v.so_luong,v.pol,v.pod,v.eta,v.etd,v.bat_dau,v.ket_thuc,v.trang_thai_survey]);
+  dlCsv('Ke_hoach_sa_lan.csv',c,d);
+}
+function exportSurveyExcel(){
+  const c=['STT','Sà lan','Voyage','Loại','Số lượng','Damaged','Clean','Repo','Termites','Ngày survey'];
+  const d=S.surveys.map((s,i)=>[i+1,s.ten_salan,s.voyage_no,s.loai_cont,s.so_luong,s.damaged,s.clean,s.repo,s.termites,s.ngay_survey]);
+  dlCsv('Bao_cao_survey.csv',c,d);
+}
+function dlCsv(n,c,d){
+  const bom='\uFEFF', csv=bom+[c,...d].map(r=>r.map(x=>`"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=n; a.click();
+}
+
+// ===== HELPERS =====
+function fillDropdowns(){
+  const gf=document.getElementById('gfbarge'), gc=gf.value;
+  gf.innerHTML='<option value="">-- Tất cả sà lan --</option>'+S.barges.map(b=>`<option value="${b.code}" ${b.code===gc?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
+  const sf=document.getElementById('sfbarge'), sc2=sf.value;
+  sf.innerHTML='<option value="">Tất cả sà lan</option>'+S.barges.map(b=>`<option value="${b.code}" ${b.code===sc2?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
+}
+function sc(l,v,c){return `<div class="stat-card ${c}"><div class="stat-lbl">${l}</div><div class="stat-val ${c}">${v}</div></div>`;}
+function sc2(l,v,c,s){return `<div class="stat-card ${c}"><div class="stat-lbl">${l}</div><div class="stat-val ${c}">${v}</div>${s?`<div class="stat-sub2">${s}</div>`:''}</div>`;}
+function fmt(n){if(n===undefined||n===null||n==='')return '—';return Number(n).toLocaleString('vi-VN');}
+function parseDt(s){
+  if(!s)return null;
+  if(s.includes('T'))return new Date(s);
+  const p=s.split(' '), dp=p[0].split('/');
+  if(dp.length===3){const tp=p[1]?p[1].split(':'):['0','0'];return new Date(+dp[2],dp[1]-1,+dp[0],+tp[0]||0,+tp[1]||0);}
+  return new Date(s);
+}
+function toLocal(s){if(!s)return'';const d=parseDt(s);if(!d||isNaN(d))return'';return d.toISOString().slice(0,16);}
+function toDateInp(s){if(!s)return'';const dp=s.split('/');if(dp.length===3)return`${dp[2]}-${dp[1].padStart(2,'0')}-${dp[0].padStart(2,'0')}`;return s;}
+function todayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function openOv(id){document.getElementById(id).classList.add('open');}
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+function _g(id){return document.getElementById(id).value;}
+function _v(id,v){const el=document.getElementById(id);if(el)el.value=v;}
+function jstr(o){return JSON.stringify(o).replace(/"/g,'&quot;');}
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast'); el.textContent=msg; el.className='show '+type;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
+}
+document.querySelectorAll('.ov').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+</script>
+</body>
+</html>
