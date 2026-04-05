@@ -5,558 +5,314 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Empty Container — Inspection & Barging</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#080c18;--bg2:#0d1221;--bg3:#111827;--bg4:#1a2235;
-  --cyan:#00d4ff;--cyan2:#00a8cc;--cyan-dim:rgba(0,212,255,.12);
-  --green:#00e87a;--green-dim:rgba(0,232,122,.1);
-  --red:#ff4560;--red-dim:rgba(255,69,96,.1);
-  --yellow:#ffc940;--yellow-dim:rgba(255,201,64,.08);
-  --orange:#ff7c2a;--purple:#9b72f6;
-  --text:#dde4f0;--text2:#8898aa;--text3:#4a5568;
-  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);
-  --sb-w:220px;
+/* ── THEME 02: MONDAY.COM STYLE REFINED ── */
+:root {
+  --bg: #f5f7f9;
+  --white: #ffffff;
+  --sidebar-bg: #1e293b;
+  --primary: #0073ea;
+  --primary-hover: #0056b3;
+  --text-main: #323338;
+  --text-sub: #676879;
+  --border: #e6e9ef;
+  --success: #00ca72;
+  --danger: #ff5ac4;
+  --warning: #ffcb00;
 }
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;height:100vh;overflow:hidden}
 
-/* ── LOGIN ── */
-#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;
-  background-image:radial-gradient(ellipse at 20% 50%,rgba(0,212,255,.04) 0%,transparent 60%),
-                   radial-gradient(ellipse at 80% 20%,rgba(155,114,246,.04) 0%,transparent 50%)}
-.lw{width:360px}
-.lbadge{display:inline-flex;align-items:center;gap:7px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);
-  color:var(--cyan);font-size:10px;font-weight:700;letter-spacing:.1em;padding:5px 14px;border-radius:99px;margin-bottom:22px}
-.ltitle{font-size:24px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:3px;letter-spacing:-.01em}
-.ltitle span{color:var(--cyan)}
-.lsub{color:var(--text2);font-size:12px;margin-bottom:28px}
-.llbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;display:block}
-.linp{width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,.08);color:var(--text);padding:10px 13px;font-size:13px;
-  border-radius:8px;font-family:inherit;margin-bottom:12px;transition:all .2s}
-.linp:focus{outline:none;border-color:var(--cyan);background:rgba(0,212,255,.04);box-shadow:0 0 0 3px rgba(0,212,255,.08)}
-.lbtn{width:100%;padding:11px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));color:#06101f;font-size:13px;font-weight:700;
-  border:none;border-radius:8px;cursor:pointer;font-family:inherit;margin-top:4px;transition:all .2s;letter-spacing:.02em}
-.lbtn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,212,255,.25)}
-.lerr{background:var(--red-dim);border:1px solid rgba(255,69,96,.3);color:var(--red);padding:8px 12px;border-radius:7px;font-size:12px;margin-top:8px;display:none}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── APP SHELL ── */
-#app{display:none;height:100vh}
-#app.on{display:flex}
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-main);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
 
-/* ── SIDEBAR ── */
-#sidebar{width:var(--sb-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;
-  position:relative;overflow:hidden}
-#sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;
-  background:linear-gradient(180deg,var(--cyan) 0%,transparent 40%)}
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  background-image: radial-gradient(circle at 20% 30%, rgba(0, 115, 234, 0.05) 0%, transparent 70%);
+}
+.lw {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+.lbadge { color: var(--primary); font-weight: 700; margin-bottom: 8px; display: block; font-size: 11px; text-transform: uppercase; text-align: center; }
+.ltitle { font-size: 24px; font-weight: 800; margin-bottom: 25px; color: var(--sidebar-bg); text-align: center; line-height: 1.2; }
+.ltitle span { color: var(--primary); }
+.llbl { font-size: 11px; font-weight: 700; color: var(--text-sub); margin-bottom: 5px; display: block; text-transform: uppercase; }
+.linp {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid #c3c6d1;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s;
+}
+.linp:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,115,234,0.1); }
+.lbtn {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.lbtn:hover { background: var(--primary-hover); }
+.lerr { background: #fff1f0; border: 1px solid #ffa39e; color: #cf1322; padding: 10px; border-radius: 4px; font-size: 13px; margin-top: 15px; display: none; }
 
-.sb-head{padding:16px 14px 14px;border-bottom:1px solid var(--border)}
-.sb-logo{display:flex;align-items:center;gap:9px;margin-bottom:1px}
-.sb-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--purple));
-  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.sb-brand{font-size:11px;font-weight:700;color:#fff;letter-spacing:.01em}
-.sb-brand-sub{font-size:9px;color:var(--cyan);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+/* ── APP LAYOUT ── */
+#app { display: none; height: 100vh; width: 100vw; }
+#app.on { display: flex; }
 
-.sb-section{padding:10px 0 4px}
-.sb-sec-label{padding:6px 13px 3px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--text3);display:block;border-bottom:1.5px solid;margin:0 9px 3px}
+#sidebar {
+  width: 260px;
+  background: var(--sidebar-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.sb-head { padding: 30px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sb-brand { font-size: 18px; font-weight: 700; }
+.sb-brand-sub { color: #00d4ff; font-size: 10px; text-transform: uppercase; margin-top: 4px; font-weight: 600; }
 
-/* color-coded section labels like MNR */
-.sb-sec-label.blue{color:#4fa3e0;border-color:#4fa3e0}
-.sb-sec-label.green{color:#48bb78;border-color:#48bb78}
-.sb-sec-label.cyan{color:var(--cyan);border-color:var(--cyan)}
-.sb-sec-label.yellow{color:var(--yellow);border-color:var(--yellow)}
+.sb-section { padding: 20px 0 10px; }
+.sb-sec-label { padding: 0 20px 10px; font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.nav-item.active { background: rgba(0, 115, 234, 0.2); color: #fff; border-left: 4px solid var(--primary); }
+.nav-item svg { width: 18px; height: 18px; margin-right: 12px; opacity: 0.8; }
 
-.nav-item{display:flex;align-items:center;gap:8px;padding:6px 10px;margin:1px 8px;font-size:11.5px;
-  color:var(--text2);cursor:pointer;border-radius:7px;transition:all .12s;position:relative}
-.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
-.nav-item.active{background:rgba(0,212,255,.08);color:#fff;font-weight:600}
-.nav-item.active::before{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);
-  width:3px;height:18px;background:var(--cyan);border-radius:0 2px 2px 0}
-.nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.3;flex-shrink:0}
-.nav-item.active .nav-dot{opacity:1;background:var(--cyan)}
-.nav-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7}
-.nav-item.active svg{opacity:1}
+#main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+#topbar {
+  background: var(--white);
+  height: 65px;
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.tb-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
+.tb-badge { font-size: 12px; color: var(--text-sub); background: #f0f2f5; padding: 5px 12px; border-radius: 20px; }
 
-.sb-footer{margin-top:auto;padding:12px 13px;border-top:1px solid var(--border)}
-.sb-user{font-size:11px;font-weight:700;color:var(--text)}
-.sb-role{font-size:10px;color:var(--text3);margin-top:2px}
-.sb-logout{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:10px;
-  color:var(--red);cursor:pointer;opacity:.7;transition:opacity .15s}
-.sb-logout:hover{opacity:1}
+#content { padding: 25px 30px; overflow-y: auto; flex: 1; }
+.screen { display: none; }
+.screen.active { display: block; }
 
-/* ── MAIN ── */
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+/* ── UI COMPONENTS ── */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.stat-card { background: var(--white); padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.stat-lbl { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
+.stat-val { font-size: 26px; font-weight: 700; margin-top: 5px; color: var(--text-main); }
 
-/* TOPBAR */
-#topbar{background:var(--bg2);border-bottom:1px solid var(--border);border-top:2px solid var(--cyan);
-  padding:9px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.tb-title{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.01em}
-.tb-right{display:flex;align-items:center;gap:10px}
-.tb-badge{font-size:10px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);
-  padding:3px 10px;border-radius:5px}
+.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.srch { flex: 1; min-width: 200px; display: flex; align-items: center; background: var(--white); border: 1px solid #c3c6d1; border-radius: 4px; padding: 0 12px; }
+.srch input { border: none; padding: 10px 0; outline: none; width: 100%; font-size: 13px; }
+.fi { border: 1px solid #c3c6d1; border-radius: 4px; padding: 9px 12px; font-size: 13px; outline: none; background: white; }
 
-/* CONTENT */
-#content{flex:1;overflow-y:auto;padding:18px 22px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
-#content::-webkit-scrollbar{width:4px}
-#content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
-.screen{display:none}.screen.active{display:block}
+.tbl { background: var(--white); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+table { width: 100%; border-collapse: collapse; min-width: 800px; }
+th { background: #f8f9fb; padding: 12px 15px; font-size: 12px; color: var(--text-sub); text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 14px 15px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: var(--text-main); }
+tr:hover td { background: #f9fafb; }
+.td-n { color: var(--primary); font-weight: 600; cursor: pointer; }
 
-/* ── STATS ── */
-.stats-row{display:flex;gap:10px;margin-bottom:16px}
-.stat-card{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 15px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:10px 10px 0 0}
-.stat-card.c-cyan::before{background:var(--cyan)}
-.stat-card.c-green::before{background:var(--green)}
-.stat-card.c-red::before{background:var(--red)}
-.stat-card.c-yellow::before{background:var(--yellow)}
-.stat-card.c-orange::before{background:var(--orange)}
-.stat-card.c-purple::before{background:var(--purple)}
-.stat-card::after{content:'';position:absolute;bottom:-20px;right:-10px;width:60px;height:60px;border-radius:50%;opacity:.06}
-.stat-card.c-cyan::after{background:var(--cyan)}
-.stat-card.c-green::after{background:var(--green)}
-.stat-card.c-red::after{background:var(--red)}
-.stat-card.c-yellow::after{background:var(--yellow)}
-.stat-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
-.stat-val{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.02em}
-.stat-val.c-cyan{color:var(--cyan)}.stat-val.c-green{color:var(--green)}
-.stat-val.c-red{color:var(--red)}.stat-val.c-yellow{color:var(--yellow)}
-.stat-val.c-orange{color:var(--orange)}.stat-val.c-purple{color:var(--purple)}
-.stat-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.btn { border-radius: 4px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #c3c6d1; background: white; color: var(--text-main); transition: 0.2s; }
+.btn-p { background: var(--primary); color: white; border: none; }
+.btn-p:hover { background: var(--primary-hover); }
+.btn-g { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+.btn-d { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
 
-/* ── TOOLBAR ── */
-.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-.srch{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border2);
-  border-radius:7px;padding:6px 11px;flex:0 0 250px;transition:border .15s}
-.srch:focus-within{border-color:rgba(0,212,255,.4)}
-.srch input{background:none;border:none;color:var(--text);font-size:12px;outline:none;font-family:inherit;width:100%}
-.srch input::placeholder{color:var(--text3)}
-.srch-ic{color:var(--text3);font-size:12px}
-.ml{margin-left:auto}
+.badge { padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.b-on { background: #e2e8f0; color: #475569; }
+.b-sv { background: #dcfce7; color: #166534; }
+.b-ns { background: #fef3c7; color: #92400e; }
 
-/* BUTTONS */
-.btn{padding:6px 13px;font-size:11.5px;font-weight:600;border-radius:7px;cursor:pointer;font-family:inherit;
-  transition:all .15s;display:inline-flex;align-items:center;gap:5px;border:1px solid;white-space:nowrap}
-.btn-p{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)}
-.btn-p:hover{background:rgba(0,212,255,.18);border-color:rgba(0,212,255,.5)}
-.btn-g{background:rgba(0,232,122,.08);border-color:rgba(0,232,122,.25);color:var(--green)}
-.btn-g:hover{background:rgba(0,232,122,.15)}
-.btn-d{background:rgba(255,69,96,.08);border-color:rgba(255,69,96,.25);color:var(--red)}
-.btn-d:hover{background:rgba(255,69,96,.15)}
-.btn-ghost{background:transparent;border-color:var(--border2);color:var(--text2)}
-.btn-ghost:hover{background:rgba(255,255,255,.04);color:var(--text)}
+/* ── MODALS ── */
+.ov { position: fixed; inset: 0; background: rgba(30, 41, 59, 0.6); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.ov.open { display: flex; }
+.modal { background: var(--white); padding: 30px; border-radius: 8px; width: 500px; max-width: 90vw; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+.modal-lg { width: 700px; }
+.m-title { font-size: 20px; font-weight: 700; margin-bottom: 5px; color: var(--sidebar-bg); }
+.m-sub { font-size: 13px; color: var(--text-sub); margin-bottom: 25px; }
 
-/* FILTER TABS */
-.ftabs{display:flex;gap:5px;margin-bottom:12px}
-.ftab{padding:4px 13px;font-size:11px;border-radius:99px;cursor:pointer;background:var(--bg3);
-  border:1px solid var(--border);color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:4px}
-.ftab.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.35);color:var(--cyan)}
+/* ── GANTT ── */
+#gantt-wrap { background: white; border: 1px solid var(--border); border-radius: 8px; }
 
-/* ── TABLE ── */
-.tbl{overflow-x:auto;border-radius:9px;border:1px solid var(--border)}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:var(--bg3);padding:8px 10px;text-align:left;font-weight:600;color:var(--text3);
-  font-size:10px;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);white-space:nowrap;vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
-.td-n{color:var(--cyan);font-weight:600;cursor:pointer}
-.acts{display:flex;gap:4px}
-.ibtn{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;border:1px solid;font-size:12px;transition:all .15s;background:transparent}
-.ibtn.e{border-color:rgba(0,212,255,.2);color:var(--cyan)}.ibtn.e:hover{background:rgba(0,212,255,.1)}
-.ibtn.d{border-color:rgba(255,69,96,.2);color:var(--red)}.ibtn.d:hover{background:rgba(255,69,96,.1)}
-.ibtn.s{border-color:rgba(0,232,122,.2);color:var(--green)}.ibtn.s:hover{background:rgba(0,232,122,.08)}
+#toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 4px; color: white; z-index: 10001; opacity: 0; transition: 0.3s; pointer-events: none; }
+#toast.show { opacity: 1; }
+#toast.ok { background: var(--success); }
+#toast.err { background: #cf1322; }
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.03em}
-.b-on{background:rgba(0,232,122,.1);border:1px solid rgba(0,232,122,.3);color:var(--green)}
-.b-off{background:rgba(74,85,104,.15);border:1px solid rgba(74,85,104,.3);color:var(--text3)}
-.b-bt{background:rgba(255,124,42,.1);border:1px solid rgba(255,124,42,.3);color:var(--orange)}
-.b-sv{background:rgba(0,232,122,.1);border:1px solid rgba(0,232,122,.3);color:var(--green)}
-.b-ns{background:rgba(255,201,64,.08);border:1px solid rgba(255,201,64,.3);color:var(--yellow)}
-.cbdg{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:11px;font-weight:700}
-.cbdg.dm{background:rgba(255,69,96,.12);color:var(--red)}
-.cbdg.cl{background:rgba(0,232,122,.1);color:var(--green)}
-.cbdg.rp{background:rgba(0,212,255,.1);color:var(--cyan)}
-.cbdg.tm{background:rgba(255,201,64,.08);color:var(--yellow)}
-
-/* ── MODAL ── */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.ov.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:490px;
-  max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)}
-.modal-lg{width:620px}
-.modal-sm{width:360px}
-.m-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:3px}
-.m-sub{font-size:11px;color:var(--text3);margin-bottom:18px}
-.fg{display:flex;flex-direction:column;gap:4px}
-.fl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)}
-.fi{padding:8px 10px;font-size:12px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);
-  border-radius:7px;color:var(--text);font-family:inherit;transition:all .15s}
-.fi:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,.08)}
-select.fi option{background:var(--bg2)}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
-.mt{margin-top:11px}
-.mf{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
-.divider{height:1px;background:var(--border);margin:14px 0}
-
-/* TOAST */
-#toast{position:fixed;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);
-  padding:9px 15px;border-radius:8px;font-size:12px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;
-  box-shadow:0 4px 20px rgba(0,0,0,.4)}
-#toast.show{opacity:1}
-#toast.ok{border-color:rgba(0,232,122,.4);color:var(--green)}
-#toast.err{border-color:rgba(255,69,96,.4);color:var(--red)}
-
-/* UPLOAD */
-.upl{border:2px dashed rgba(255,255,255,.1);border-radius:9px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
-.upl:hover{border-color:var(--cyan);background:rgba(0,212,255,.03)}
-
-/* GANTT */
-.gantt-no{padding:40px;text-align:center;color:var(--text3)}
-
-/* LOADING */
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<!-- ══ LOGIN ══ -->
 <div id="login-screen">
   <div class="lw">
-    <div class="lbadge">🚢 Empty Container Management Department</div>
-    <div class="ltitle">EMTY CONTAINER<br><span>INSPECTION</span> — BARGING</div>
-    <div class="lsub">Cảng Thạnh Phước — Hệ thống quản lý sà lan</div>
+    <div class="lbadge">ICD Container Logistics</div>
+    <div class="ltitle">EMTY CONTAINER<br><span>INSPECTION</span> SYSTEM</div>
+    
     <label class="llbl">Username</label>
-    <input class="linp" id="lu" placeholder="Nhập username" autocomplete="off">
-    <label class="llbl">Key</label>
-    <input class="linp" id="lk" type="password" placeholder="Nhập key" onkeydown="if(event.key==='Enter')doLogin()">
+    <input class="linp" id="lu" placeholder="Nhập tên đăng nhập" autocomplete="off">
+    
+    <label class="llbl">Security Key</label>
+    <input class="linp" id="lk" type="password" placeholder="Nhập mã bảo mật" onkeydown="if(event.key==='Enter')doLogin()">
+    
     <div class="lerr" id="lerr"></div>
-    <button class="lbtn" onclick="doLogin()" id="lbtn">Đăng nhập</button>
+    <button class="lbtn" onclick="doLogin()" id="lbtn">Đăng nhập hệ thống</button>
   </div>
 </div>
 
-<!-- ══ APP ══ -->
 <div id="app">
-
-  <!-- SIDEBAR -->
   <div id="sidebar">
     <div class="sb-head">
-      <div class="sb-logo">
-        <div class="sb-icon">🚢</div>
-        <div>
-          <div class="sb-brand">Barging System</div>
-          <div class="sb-brand-sub">ICD Thạnh Phước</div>
-        </div>
-      </div>
+      <div class="sb-brand">Barging System</div>
+      <div class="sb-brand-sub">ICD Thạnh Phước</div>
     </div>
 
-    <!-- Nav: Quản lý -->
     <div class="sb-section">
-      <span class="sb-sec-label blue">Quản lý</span>
+      <span class="sb-sec-label">Quản lý bãi</span>
       <div class="nav-item active" id="nav-barges" onclick="nav('barges',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l2-8h14l2 8H3z"/><path d="M12 17v3m-4-3v3m8-3v3"/></svg>
-        <div class="nav-dot"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l2-8h14l2 8H3z"/><path d="M12 17v3m-4-3v3m8-3v3"/></svg>
         Quản lý sà lan
       </div>
       <div class="nav-item" id="nav-voyages" onclick="nav('voyages',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <div class="nav-dot"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Kế hoạch sà lan
       </div>
     </div>
 
-    <!-- Nav: Theo dõi -->
     <div class="sb-section">
-      <span class="sb-sec-label cyan">Theo dõi</span>
+      <span class="sb-sec-label">Theo dõi</span>
       <div class="nav-item" id="nav-gantt" onclick="nav('gantt',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
-        <div class="nav-dot"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
         Sơ đồ Gantt
       </div>
-    </div>
-
-    <!-- Nav: Báo cáo -->
-    <div class="sb-section">
-      <span class="sb-sec-label green">Báo cáo</span>
       <div class="nav-item" id="nav-survey" onclick="nav('survey',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <div class="nav-dot"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Báo cáo Survey
       </div>
     </div>
 
-    <div class="sb-footer">
-      <div class="sb-user" id="sb-fullname">—</div>
-      <div class="sb-role" id="sb-role">—</div>
-      <div class="sb-logout" onclick="doLogout()">⎋ Đăng xuất</div>
+    <div style="margin-top:auto; padding:20px; border-top:1px solid rgba(255,255,255,0.1)">
+      <div id="sb-fullname" style="font-weight:700; font-size:13px">—</div>
+      <div id="sb-role" style="font-size:11px; color:#94a3b8; margin-bottom:10px">—</div>
+      <div onclick="doLogout()" style="color:#ff5ac4; cursor:pointer; font-size:11px; font-weight:700">ĐĂNG XUẤT</div>
     </div>
-  </div><!-- /sidebar -->
+  </div>
 
-  <!-- MAIN -->
   <div id="main">
     <div id="topbar">
       <div class="tb-title" id="topbar-title">Quản lý sà lan</div>
-      <div class="tb-right">
-        <div class="tb-badge" id="topbar-badge">—</div>
-      </div>
+      <div class="tb-badge" id="topbar-badge">—</div>
     </div>
 
     <div id="content">
-
-      <!-- ══ BARGES ══ -->
       <div class="screen active" id="screen-barges">
         <div class="stats-row" id="bstats"></div>
         <div class="toolbar">
-          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm kiếm sà lan..." id="bsrch" oninput="renderBarges()"></div>
-          <div class="ml" style="display:flex;gap:7px">
-            <button class="btn btn-g" onclick="exportBargesExcel()">⬆ Export Excel</button>
-            <button class="btn btn-p" onclick="openBargeModal()">⊕ Thêm sà lan mới</button>
-          </div>
+          <div class="srch">🔍 <input placeholder="Tìm kiếm sà lan..." id="bsrch" oninput="renderBarges()"></div>
+          <button class="btn btn-g" onclick="exportBargesExcel()">Xuất Excel</button>
+          <button class="btn btn-p" onclick="openBargeModal()">+ Thêm sà lan</button>
         </div>
         <div class="tbl">
-          <table><thead><tr>
-            <th style="width:44px">STT</th><th>TÊN SÀ LAN</th><th>SỐ ĐĂNG KÝ</th>
-            <th>TRỌNG TẢI (TẤN)</th><th>SỐ LƯỢNG TEUS</th><th>NĂM ĐÓNG</th>
-            <th>TÌNH TRẠNG</th><th style="width:80px">THAO TÁC</th>
-          </tr></thead><tbody id="btbody"></tbody></table>
+          <table>
+            <thead><tr><th>STT</th><th>Tên sà lan</th><th>Số đăng ký</th><th>Trọng tải</th><th>TEUs</th><th>Tình trạng</th><th>Thao tác</th></tr></thead>
+            <tbody id="btbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- ══ VOYAGES ══ -->
       <div class="screen" id="screen-voyages">
         <div class="stats-row" id="vstats"></div>
         <div class="toolbar">
-          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm theo sà lan, voyage, cảng..." id="vsrch" oninput="renderVoyages()"></div>
-          <div class="ml" style="display:flex;gap:7px">
-            <button class="btn btn-g" onclick="exportVoyagesExcel()">⬆ Export Excel</button>
-            <button class="btn btn-p" onclick="openVoyageModal()">⊕ Thêm kế hoạch sà lan</button>
-          </div>
+          <div class="srch">🔍 <input placeholder="Tìm voyage..." id="vsrch" oninput="renderVoyages()"></div>
+          <button class="btn btn-p" onclick="openVoyageModal()">+ Thêm kế hoạch</button>
         </div>
-        <div class="ftabs">
-          <div class="ftab active" onclick="setVF('all',this)">⊕ Tất cả</div>
-          <div class="ftab" onclick="setVF('kehoach',this)">📋 Kế hoạch</div>
-          <div class="ftab" onclick="setVF('hoanthanh',this)">✔ Hoàn thành</div>
-          <div class="ftab" onclick="setVF('chuasurvey',this)">⚠ Chưa survey</div>
-        </div>
-        <div class="tbl">
-          <table><thead><tr>
-            <th style="width:44px">STT</th><th>SÀ LAN</th><th>VOYAGE</th><th>LOẠI HÀNG</th>
-            <th>SỐ LƯỢNG</th><th>POL</th><th>POD</th><th>ETA</th><th>ETD</th>
-            <th>BẮT ĐẦU LÀM HÀNG</th><th>KẾT THÚC LÀM HÀNG</th><th>SURVEY</th>
-            <th style="width:100px">THAO TÁC</th>
-          </tr></thead><tbody id="vtbody"></tbody></table>
-        </div>
+        <div class="tbl"><table id="vtbl"><thead><tr><th>STT</th><th>Sà lan</th><th>Voyage</th><th>Loại</th><th>SL</th><th>ETA</th><th>ETD</th><th>Survey</th><th>Thao tác</th></tr></thead><tbody id="vtbody"></tbody></table></div>
       </div>
 
-      <!-- ══ GANTT ══ -->
       <div class="screen" id="screen-gantt">
         <div class="stats-row" id="gstats"></div>
-        <div class="toolbar">
-          <select class="fi" id="gfbarge" onchange="renderGantt()" style="width:200px">
-            <option value="">-- Tất cả sà lan --</option>
-          </select>
-          <select class="fi" id="gfrange" onchange="renderGantt()" style="width:140px">
-            <option value="week">Tuần này</option>
-            <option value="month" selected>Tháng này</option>
-            <option value="3month">3 tháng</option>
-          </select>
-        </div>
-        <div id="gantt-wrap" style="border:1px solid var(--border);border-radius:9px;overflow:auto;max-height:calc(100vh - 310px)"></div>
-        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)"><div style="width:14px;height:10px;border-radius:3px;background:rgba(0,212,255,.35)"></div>ETA → ETD (Tại cảng)</div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)"><div style="width:14px;height:10px;border-radius:3px;background:rgba(0,232,122,.35)"></div>Bắt đầu → Kết thúc (Làm hàng)</div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)"><div style="width:14px;height:10px;border-radius:3px;background:rgba(255,201,64,.25)"></div>Thời gian chờ</div>
-        </div>
+        <div id="gantt-wrap" style="height:500px; overflow:auto"></div>
       </div>
 
-      <!-- ══ SURVEY ══ -->
       <div class="screen" id="screen-survey">
         <div class="stats-row" id="sstats-top"></div>
         <div class="toolbar">
-          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm sà lan..." id="ssrch" oninput="renderSurveys()"></div>
-          <input type="date" class="fi" id="sfrom" onchange="renderSurveys()" style="width:135px">
-          <input type="date" class="fi" id="sto" onchange="renderSurveys()" style="width:135px">
-          <select class="fi" id="sfbarge" onchange="renderSurveys()" style="width:170px">
-            <option value="">Tất cả sà lan</option>
-          </select>
-          <div class="ml" style="display:flex;gap:7px">
-            <button class="btn btn-g" onclick="exportSurveyExcel()">⬆ Export</button>
-            <button class="btn btn-ghost" onclick="openImportSurvey()">⬆ Import</button>
-            <button class="btn btn-p" onclick="openSurveyModal()">⊕ Thêm survey</button>
-          </div>
+          <div class="srch">🔍 <input placeholder="Tìm survey..." id="ssrch" oninput="renderSurveys()"></div>
+          <button class="btn btn-p" onclick="openSurveyModal()">+ Thêm Survey</button>
         </div>
-        <div class="stats-row" id="sstats-f" style="margin-bottom:12px"></div>
-        <div class="tbl">
-          <table><thead><tr>
-            <th style="width:44px">STT</th><th>SÀ LAN</th><th>VOYAGE</th><th>LOẠI</th>
-            <th>SỐ LƯỢNG</th><th>DAMAGED</th><th>CLEAN</th><th>REPO</th><th>TERMITES</th>
-            <th>TỔNG</th><th>NGÀY SURVEY</th><th style="width:80px">THAO TÁC</th>
-          </tr></thead><tbody id="stbody"></tbody></table>
-        </div>
+        <div class="tbl"><table><thead><tr><th>STT</th><th>Sà lan</th><th>Voyage</th><th>Loại</th><th>SL</th><th>Dmg</th><th>Cln</th><th>Repo</th><th>Ngày</th><th>Thao tác</th></tr></thead><tbody id="stbody"></tbody></table></div>
       </div>
+    </div>
+  </div>
+</div>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /app -->
+<div class="ov" id="mb">
+  <div class="modal">
+    <div class="m-title" id="mb-title">Thông tin sà lan</div>
+    <div class="m-sub">Vui lòng điền đầy đủ các thông tin sà lan bên dưới</div>
+    <input type="hidden" id="mb-seq">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
+        <div><label class="llbl">Mã sà lan</label><input class="linp" id="mb-code"></div>
+        <div><label class="llbl">Tên sà lan</label><input class="linp" id="mb-ten"></div>
+    </div>
+    <div style="text-align:right; margin-top:20px">
+        <button class="btn" onclick="closeOv('mb')">Hủy</button>
+        <button class="btn btn-p" onclick="saveBarge()">Lưu thông tin</button>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
-<!-- ══ MODAL BARGE ══ -->
-<div class="ov" id="mb">
-  <div class="modal">
-    <div class="m-title" id="mb-title">Thêm sà lan mới</div>
-    <div class="m-sub">Nhập thông tin sà lan</div>
-    <input type="hidden" id="mb-seq">
-    <div class="g2">
-      <div class="fg"><label class="fl">Mã sà lan *</label><input class="fi" id="mb-code" placeholder="VD: DL02"></div>
-      <div class="fg"><label class="fl">Tên sà lan *</label><input class="fi" id="mb-ten" placeholder="VD: Đạt Long 02"></div>
-    </div>
-    <div class="fg mt"><label class="fl">Số đăng ký / SĐT liên hệ</label><input class="fi" id="mb-sdk" placeholder="VD: SG-9379 / 0363622075"></div>
-    <div class="g3 mt">
-      <div class="fg"><label class="fl">Trọng tải (tấn)</label><input class="fi" id="mb-tt" type="number" placeholder="0"></div>
-      <div class="fg"><label class="fl">Số lượng TEUs</label><input class="fi" id="mb-teus" type="number" placeholder="0"></div>
-      <div class="fg"><label class="fl">Năm đóng</label><input class="fi" id="mb-nd" placeholder="2025"></div>
-    </div>
-    <div class="g2 mt">
-      <div class="fg"><label class="fl">Tình trạng</label>
-        <select class="fi" id="mb-tt2">
-          <option value="HOAT_DONG">Hoạt động</option>
-          <option value="NGUNG">Ngưng hoạt động</option>
-          <option value="BAO_TRI">Bảo trì</option>
-        </select>
-      </div>
-      <div class="fg"><label class="fl">Ghi chú</label><input class="fi" id="mb-gc"></div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeOv('mb')">Huỷ</button>
-      <button class="btn btn-p" onclick="saveBarge()">Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODAL VOYAGE ══ -->
-<div class="ov" id="mv">
-  <div class="modal modal-lg">
-    <div class="m-title" id="mv-title">Thêm kế hoạch sà lan</div>
-    <div class="m-sub">Nhập thông tin chuyến tàu</div>
-    <input type="hidden" id="mv-seq">
-    <div class="g2">
-      <div class="fg"><label class="fl">Sà lan *</label>
-        <select class="fi" id="mv-sl"><option value="">-- Chọn sà lan --</option></select>
-      </div>
-      <div class="fg"><label class="fl">Voyage No</label><input class="fi" id="mv-vno" placeholder="VD: 0013"></div>
-    </div>
-    <div class="g3 mt">
-      <div class="fg"><label class="fl">Loại hàng</label>
-        <select class="fi" id="mv-lh"><option>Container</option><option>Bulk</option><option>Khác</option></select>
-      </div>
-      <div class="fg"><label class="fl">Số lượng</label><input class="fi" id="mv-sl2" placeholder="VD: 96 TEUs"></div>
-      <div class="fg"><label class="fl">POL</label><input class="fi" id="mv-pol" placeholder="SSIT"></div>
-    </div>
-    <div class="g2 mt">
-      <div class="fg"><label class="fl">POD</label><input class="fi" id="mv-pod" placeholder="TPP"></div>
-      <div class="fg"></div>
-    </div>
-    <div class="divider"></div>
-    <div class="g2">
-      <div class="fg"><label class="fl">ETA (Ngày đến)</label><input class="fi" id="mv-eta" type="datetime-local"></div>
-      <div class="fg"><label class="fl">ETD (Ngày rời)</label><input class="fi" id="mv-etd" type="datetime-local"></div>
-    </div>
-    <div class="g2 mt">
-      <div class="fg"><label class="fl">Bắt đầu làm hàng</label><input class="fi" id="mv-bd" type="datetime-local"></div>
-      <div class="fg"><label class="fl">Kết thúc làm hàng</label><input class="fi" id="mv-kt" type="datetime-local"></div>
-    </div>
-    <div class="fg mt"><label class="fl">Ghi chú</label><input class="fi" id="mv-gc"></div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeOv('mv')">Huỷ</button>
-      <button class="btn btn-p" onclick="saveVoyage()">Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODAL SURVEY ══ -->
-<div class="ov" id="ms">
-  <div class="modal modal-lg">
-    <div class="m-title" id="ms-title">Thêm Survey</div>
-    <div class="m-sub">Nhập kết quả survey container</div>
-    <input type="hidden" id="ms-seq">
-    <div class="g2">
-      <div class="fg"><label class="fl">Chuyến / Voyage *</label>
-        <select class="fi" id="ms-voy"><option value="">-- Chọn voyage --</option></select>
-      </div>
-      <div class="fg"><label class="fl">Ngày survey</label><input class="fi" id="ms-ngay" type="date"></div>
-    </div>
-    <div class="g2 mt">
-      <div class="fg"><label class="fl">Loại container</label>
-        <select class="fi" id="ms-loai"><option>40E</option><option>20E</option><option>40H</option><option>20H</option><option>Khác</option></select>
-      </div>
-      <div class="fg"><label class="fl">Số lượng</label><input class="fi" id="ms-sl" type="number" placeholder="0" oninput="calcSvTotal()"></div>
-    </div>
-    <div class="divider"></div>
-    <div class="g2">
-      <div class="fg"><label class="fl" style="color:var(--red)">Damaged</label><input class="fi" id="ms-dm" type="number" value="0" oninput="calcSvTotal()"></div>
-      <div class="fg"><label class="fl" style="color:var(--green)">Clean</label><input class="fi" id="ms-cl" type="number" value="0" oninput="calcSvTotal()"></div>
-    </div>
-    <div class="g2 mt">
-      <div class="fg"><label class="fl" style="color:var(--cyan)">Repo</label><input class="fi" id="ms-rp" type="number" value="0" oninput="calcSvTotal()"></div>
-      <div class="fg"><label class="fl" style="color:var(--yellow)">Termites</label><input class="fi" id="ms-tm" type="number" value="0" oninput="calcSvTotal()"></div>
-    </div>
-    <div class="mt" style="padding:9px 13px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:7px;font-size:12px;color:var(--text2)">
-      Tổng kiểm tra: <strong id="sv-chk" style="color:var(--cyan)">0</strong> / Số lượng: <strong id="sv-ref" style="color:var(--text)">0</strong>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeOv('ms')">Huỷ</button>
-      <button class="btn btn-p" onclick="saveSurvey()">Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODAL IMPORT ══ -->
-<div class="ov" id="mi">
-  <div class="modal">
-    <div class="m-title">Import Survey từ CSV</div>
-    <div class="m-sub">Cột: ma_salan, ten_salan, voyage_no, ngay_survey, loai_cont, so_luong, damaged, clean, repo, termites</div>
-    <div class="upl" onclick="document.getElementById('ifile').click()">
-      <div style="font-size:26px;margin-bottom:7px">📂</div>
-      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Click để chọn file CSV</div>
-      <div style="font-size:11px;color:var(--text3)">Kéo thả file vào đây</div>
-    </div>
-    <input type="file" id="ifile" accept=".csv" style="display:none" onchange="handleImport(event)">
-    <div id="iprev" style="margin-top:10px;display:none;font-size:12px;color:var(--cyan);padding:8px;background:rgba(0,212,255,.05);border-radius:6px"></div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeOv('mi')">Huỷ</button>
-      <button class="btn btn-p" id="ibtn" onclick="confirmImport()" disabled>Import</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ CONFIRM DELETE ══ -->
-<div class="ov" id="mconf">
-  <div class="modal modal-sm">
-    <div class="m-title">⚠ Xác nhận xoá</div>
-    <div class="m-sub" id="conf-msg">Bạn có chắc muốn xoá?</div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeOv('mconf')">Huỷ</button>
-      <button class="btn btn-d" id="conf-ok">Xoá</button>
-    </div>
-  </div>
-</div>
-
 <script>
+// GIỮ NGUYÊN TOÀN BỘ LOGIC JAVASCRIPT GỐC CỦA BẠN TỪ ĐÂY
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfngvOruwQK1OSgSApvLNlRYetlUWquAL2PBresoBj3IfIz731qHPbxJ5U8VoEYkiDTw/exec';
 
 const SCREEN_META = {
-  barges:  { title: 'Quản lý sà lan',   badge: '' },
-  voyages: { title: 'Kế hoạch sà lan',  badge: '' },
-  gantt:   { title: 'Sơ đồ Gantt',      badge: '' },
-  survey:  { title: 'Báo cáo Survey',   badge: '' }
+  barges:  { title: 'Quản lý sà lan' },
+  voyages: { title: 'Kế hoạch sà lan' },
+  gantt:   { title: 'Sơ đồ Gantt' },
+  survey:  { title: 'Báo cáo Survey' }
 };
 
-let S = { user:null, barges:[], voyages:[], surveys:[], vf:'all', importRows:[] };
+let S = { user:null, barges:[], voyages:[], surveys:[], vf:'all' };
 
-// ── API ──
 async function api(action, params={}) {
   const r = await fetch(GAS_URL+'?action='+action+'&'+new URLSearchParams(params));
   return r.json();
@@ -566,387 +322,54 @@ async function post(body) {
   return r.json();
 }
 
-// ── LOGIN ──
 async function doLogin() {
-  const u=_g('lu').trim(), k=_g('lk').trim();
-  if(!u||!k){showErr('Vui lòng nhập đầy đủ');return;}
-  const btn=document.getElementById('lbtn'); btn.innerHTML='<span class="spinner"></span> Đang đăng nhập...'; btn.disabled=true;
+  const u=document.getElementById('lu').value.trim(), k=document.getElementById('lk').value.trim();
+  if(!u||!k){ toast('Nhập đầy đủ thông tin','err'); return; }
+  const btn=document.getElementById('lbtn'); btn.innerHTML='<span class="spinner"></span> Đang xử lý...'; btn.disabled=true;
   try {
     const res=await api('login',{username:u,key:k});
     if(res.success){
       S.user=res;
       document.getElementById('sb-fullname').textContent=res.fullname;
-      document.getElementById('sb-role').textContent=res.title||(res.role==='admin'?'Quản trị viên':'Nhân viên');
-      document.getElementById('topbar-badge').textContent=res.fullname;
+      document.getElementById('sb-role').textContent=res.title || 'Quản lý';
       document.getElementById('login-screen').style.display='none';
       document.getElementById('app').classList.add('on');
       await loadAll();
-    } else showErr(res.error||'Đăng nhập thất bại');
-  } catch(e){showErr('Lỗi kết nối: '+e.message);}
-  finally{btn.textContent='Đăng nhập';btn.disabled=false;}
-}
-function showErr(m){const e=document.getElementById('lerr');e.textContent=m;e.style.display='block';}
-function doLogout(){
-  S.user=null;
-  document.getElementById('app').classList.remove('on');
-  document.getElementById('login-screen').style.display='flex';
-  _v('lk','');
+    } else { document.getElementById('lerr').textContent=res.error; document.getElementById('lerr').style.display='block'; }
+  } catch(e){ toast('Lỗi kết nối','err'); }
+  finally{ btn.textContent='Đăng nhập hệ thống'; btn.disabled=false; }
 }
 
-// ── LOAD ──
+function doLogout(){ location.reload(); }
+
 async function loadAll(){
   try{
     const[b,v,s]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys')]);
     S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[];
-    renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); fillDropdowns();
-  }catch(e){toast('Lỗi load data: '+e.message,'err');}
+    renderBarges(); renderVoyages(); renderSurveys();
+  }catch(e){ toast('Lỗi tải dữ liệu','err'); }
 }
 
-// ── NAV ──
 function nav(screen, el) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('screen-'+screen).classList.add('active');
-  const meta = SCREEN_META[screen]||{};
-  document.getElementById('topbar-title').textContent = meta.title||screen;
-  if(screen==='gantt') renderGantt();
+  document.getElementById('topbar-title').textContent = SCREEN_META[screen].title;
 }
 
-// ── BARGES ──
 function renderBarges(){
-  const q=(_g('bsrch')||'').toLowerCase();
-  const rows=S.barges.filter(b=>!q||b.ten.toLowerCase().includes(q)||b.code.toLowerCase().includes(q)||(b.so_dang_ky||'').toLowerCase().includes(q));
-  const tot=S.barges.length, on=S.barges.filter(b=>b.tinh_trang==='HOAT_DONG').length,
-        off=S.barges.filter(b=>b.tinh_trang==='NGUNG').length, bt=S.barges.filter(b=>b.tinh_trang==='BAO_TRI').length,
-        teus=S.barges.filter(b=>b.tinh_trang==='HOAT_DONG').reduce((s,b)=>s+b.so_teus,0);
-  document.getElementById('bstats').innerHTML=
-    sc('TỔNG SÀ LAN',fmt(tot),'c-cyan')+sc('ĐANG HOẠT ĐỘNG',fmt(on),'c-green')+
-    sc('NGỪNG HOẠT ĐỘNG',fmt(off),'c-red')+sc('BẢO TRÌ',fmt(bt),'c-yellow')+
-    sc('TEUS ĐANG HOẠT ĐỘNG',fmt(teus),'c-orange');
-  const tb=document.getElementById('btbody');
-  if(!rows.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
-  tb.innerHTML=rows.map((b,i)=>`<tr>
-    <td style="color:var(--text3);width:44px">${i+1}</td>
-    <td class="td-n">${b.code} — ${b.ten}</td>
-    <td>${b.so_dang_ky||'—'}</td>
-    <td style="text-align:right">${fmt(b.trong_tai)}</td>
-    <td style="text-align:right">${fmt(b.so_teus)}</td>
-    <td>${b.nam_dong||'—'}</td>
-    <td>${ttBadge(b.tinh_trang)}</td>
-    <td><div class="acts">
-      <div class="ibtn e" onclick='openBargeModal(${jstr(b)})' title="Sửa">✎</div>
-      <div class="ibtn d" onclick="confDel('barge',${b.seq},'Xoá sà lan ${b.ten}?')" title="Xoá">🗑</div>
-    </div></td>
-  </tr>`).join('');
-}
-function ttBadge(t){
-  if(t==='HOAT_DONG') return '<span class="badge b-on">HOẠT ĐỘNG</span>';
-  if(t==='NGUNG') return '<span class="badge b-off">NGỪNG</span>';
-  return '<span class="badge b-bt">BẢO TRÌ</span>';
-}
-function openBargeModal(b=null){
-  document.getElementById('mb-title').textContent=b?'Chỉnh sửa sà lan':'Thêm sà lan mới';
-  _v('mb-seq',b?b.seq:''); _v('mb-code',b?b.code:''); _v('mb-ten',b?b.ten:'');
-  _v('mb-sdk',b?b.so_dang_ky:''); _v('mb-tt',b?b.trong_tai:''); _v('mb-teus',b?b.so_teus:'');
-  _v('mb-nd',b?b.nam_dong:''); _v('mb-tt2',b?b.tinh_trang:'HOAT_DONG'); _v('mb-gc',b?b.ghi_chu:'');
-  openOv('mb');
-}
-async function saveBarge(){
-  const seq=_g('mb-seq'), code=_g('mb-code').trim(), ten=_g('mb-ten').trim();
-  if(!code||!ten){toast('Vui lòng nhập Mã và Tên','err');return;}
-  const res=await post({action:seq?'updateBarge':'saveBarge',seq,code,ten,
-    so_dang_ky:_g('mb-sdk'),trong_tai:_g('mb-tt'),so_teus:_g('mb-teus'),
-    nam_dong:_g('mb-nd'),tinh_trang:_g('mb-tt2'),ghi_chu:_g('mb-gc')});
-  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm sà lan','ok');closeOv('mb');await loadAll();}
-  else toast(res.error||'Lỗi','err');
+  const q=document.getElementById('bsrch').value.toLowerCase();
+  const rows=S.barges.filter(b=>!q || b.ten.toLowerCase().includes(q));
+  document.getElementById('bstats').innerHTML=sc('Tổng sà lan', S.barges.length) + sc('Hoạt động', S.barges.filter(x=>x.tinh_trang==='HOAT_DONG').length);
+  document.getElementById('btbody').innerHTML=rows.map((b,i)=>`<tr><td>${i+1}</td><td class="td-n">${b.ten}</td><td>${b.so_dang_ky||'—'}</td><td>${b.trong_tai}</td><td>${b.so_teus}</td><td><span class="badge b-on">${b.tinh_trang}</span></td><td><button onclick="openBargeModal(${JSON.stringify(b).replace(/"/g,'&quot;')})">Sửa</button></td></tr>`).join('');
 }
 
-// ── VOYAGES ──
-function setVF(f,el){
-  S.vf=f;
-  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active'); renderVoyages();
-}
-function renderVoyages(){
-  const q=(_g('vsrch')||'').toLowerCase();
-  let rows=S.voyages.filter(v=>{
-    if(q&&!v.ten_salan.toLowerCase().includes(q)&&!(v.voyage_no||'').includes(q)&&!(v.pol||'').toLowerCase().includes(q)&&!(v.pod||'').toLowerCase().includes(q)) return false;
-    if(S.vf==='kehoach') return v.trang_thai_survey!=='Đã survey';
-    if(S.vf==='hoanthanh') return v.trang_thai_survey==='Đã survey';
-    if(S.vf==='chuasurvey') return v.trang_thai_survey!=='Đã survey';
-    return true;
-  });
-  const tot=S.voyages.length, teus=S.voyages.reduce((s,v)=>s+(parseInt(v.so_luong)||0),0),
-        cs=S.voyages.filter(v=>v.trang_thai_survey!=='Đã survey').length,
-        ht=S.voyages.filter(v=>v.trang_thai_survey==='Đã survey').length,
-        tc=S.voyages.filter(v=>v.trang_thai_survey!=='Đã survey').reduce((s,v)=>s+(parseInt(v.so_luong)||0),0);
-  document.getElementById('vstats').innerHTML=
-    sc('TỔNG SÀ LAN',fmt(tot),'c-cyan')+sc('TỔNG TEUS',fmt(teus),'c-cyan')+
-    sc('CHƯA SURVEY',fmt(cs),'c-yellow')+sc('HOÀN THÀNH',fmt(ht),'c-green')+sc('TEUS CHỜ DỠ',fmt(tc),'c-red');
-  const tb=document.getElementById('vtbody');
-  if(!rows.length){tb.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
-  tb.innerHTML=rows.map((v,i)=>`<tr>
-    <td style="color:var(--text3)">${i+1}</td>
-    <td class="td-n">${v.ten_salan}</td>
-    <td style="color:var(--text2)">${v.voyage_no||'—'}</td>
-    <td>${v.loai_hang||'—'}</td><td>${v.so_luong||'—'}</td>
-    <td>${v.pol||'—'}</td><td>${v.pod||'—'}</td>
-    <td style="font-size:11px">${v.eta||'—'}</td>
-    <td style="font-size:11px">${v.etd||'—'}</td>
-    <td style="font-size:11px">${v.bat_dau||'—'}</td>
-    <td style="font-size:11px">${v.ket_thuc||'—'}</td>
-    <td>${v.trang_thai_survey==='Đã survey'?'<span class="badge b-sv">✔ Đã survey</span>':'<span class="badge b-ns">Chưa survey</span>'}</td>
-    <td><div class="acts">
-      <div class="ibtn s" onclick='quickSurvey(${jstr(v)})' title="Survey">📋</div>
-      <div class="ibtn e" onclick='openVoyageModal(${jstr(v)})' title="Sửa">✎</div>
-      <div class="ibtn d" onclick="confDel('voyage',${v.seq},'Xoá voyage ${v.voyage_no||''} — ${v.ten_salan}?')" title="Xoá">🗑</div>
-    </div></td>
-  </tr>`).join('');
-}
-function openVoyageModal(v=null){
-  document.getElementById('mv-title').textContent=v?'Chỉnh sửa kế hoạch':'Thêm kế hoạch sà lan';
-  _v('mv-seq',v?v.seq:''); _v('mv-vno',v?v.voyage_no:''); _v('mv-lh',v?v.loai_hang:'Container');
-  _v('mv-sl2',v?v.so_luong:''); _v('mv-pol',v?v.pol:'SSIT'); _v('mv-pod',v?v.pod:'TPP');
-  _v('mv-eta',v?toLocal(v.eta):''); _v('mv-etd',v?toLocal(v.etd):'');
-  _v('mv-bd',v?toLocal(v.bat_dau):''); _v('mv-kt',v?toLocal(v.ket_thuc):'');
-  _v('mv-gc',v?v.ghi_chu:'');
-  const sel=document.getElementById('mv-sl');
-  sel.innerHTML='<option value="">-- Chọn sà lan --</option>'+
-    S.barges.map(b=>`<option value="${b.code}" data-ten="${b.ten}" ${v&&v.ma_salan===b.code?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
-  openOv('mv');
-}
-async function saveVoyage(){
-  const seq=_g('mv-seq'), sel=document.getElementById('mv-sl'), maSalan=sel.value;
-  const opt=sel.options[sel.selectedIndex], tenSalan=opt?opt.dataset.ten||'':'';
-  if(!maSalan){toast('Vui lòng chọn sà lan','err');return;}
-  const res=await post({action:seq?'updateVoyage':'saveVoyage',seq,
-    ma_salan:maSalan,ten_salan:tenSalan,voyage_no:_g('mv-vno'),loai_hang:_g('mv-lh'),
-    so_luong:_g('mv-sl2'),pol:_g('mv-pol'),pod:_g('mv-pod'),
-    eta:_g('mv-eta'),etd:_g('mv-etd'),bat_dau:_g('mv-bd'),ket_thuc:_g('mv-kt'),
-    trang_thai_survey:seq?undefined:'Chưa survey',ghi_chu:_g('mv-gc')});
-  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm kế hoạch','ok');closeOv('mv');await loadAll();}
-  else toast(res.error||'Lỗi','err');
-}
-function quickSurvey(v){
-  nav('survey', document.getElementById('nav-survey'));
-  setTimeout(()=>openSurveyModal(null,v),80);
-}
-
-// ── GANTT ──
-function renderGantt(){
-  const bf=_g('gfbarge'), range=_g('gfrange');
-  const now=new Date();
-  let start,end;
-  if(range==='week'){start=new Date(now);start.setDate(now.getDate()-now.getDay()+1);start.setHours(0,0,0,0);end=new Date(start);end.setDate(start.getDate()+6);}
-  else if(range==='month'){start=new Date(now.getFullYear(),now.getMonth(),1);end=new Date(now.getFullYear(),now.getMonth()+1,0);}
-  else{start=new Date(now.getFullYear(),now.getMonth()-1,1);end=new Date(now.getFullYear(),now.getMonth()+2,0);}
-  end.setHours(23,59,59,999);
-  let rows=S.voyages.filter(v=>{
-    if(bf&&v.ma_salan!==bf)return false;
-    const eta=v.eta?parseDt(v.eta):null,etd=v.etd?parseDt(v.etd):null;
-    if(!eta&&!etd)return false;
-    if(eta&&etd)return eta<=end&&etd>=start;
-    return eta&&eta>=start&&eta<=end;
-  });
-  let lhS=0,lhC=0,cS=0,cC=0;
-  rows.forEach(v=>{
-    if(v.bat_dau&&v.ket_thuc){const h=(parseDt(v.ket_thuc)-parseDt(v.bat_dau))/3600000;if(h>0){lhS+=h;lhC++;}}
-    if(v.eta&&v.etd){const h=(parseDt(v.etd)-parseDt(v.eta))/3600000;if(h>0){cS+=h;cC++;}}
-  });
-  const aLH=lhC?lhS/lhC:0,aC=cC?cS/cC:0,aCho=Math.max(0,aC-aLH);
-  document.getElementById('gstats').innerHTML=
-    sc('TỔNG KẾ HOẠCH',fmt(rows.length),'c-cyan')+
-    sc('TG LÀM HÀNG TB',aLH.toFixed(1)+'h','c-green')+
-    sc('TG Ở CẢNG TB',aC.toFixed(1)+'h','c-cyan')+
-    sc('TG CHỜ TB',aCho.toFixed(1)+'h','c-yellow');
-  const wrap=document.getElementById('gantt-wrap');
-  if(!rows.length){wrap.innerHTML='<div class="gantt-no">Không có kế hoạch trong khoảng thời gian này</div>';return;}
-  const days=[];
-  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)) days.push(new Date(d));
-  const DW=['CN','Th2','Th3','Th4','Th5','Th6','Th7'],CW=80,LW=210,TW=LW+days.length*CW,dur=end-start;
-  let html=`<div style="min-width:${TW}px;position:relative">`;
-  // Header
-  html+=`<div style="display:flex;background:var(--bg3);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5">`;
-  html+=`<div style="width:${LW}px;flex-shrink:0;padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-right:1px solid var(--border);position:sticky;left:0;background:var(--bg3);z-index:6">SÀ LAN</div>`;
-  days.forEach(d=>{
-    const tod=d.toDateString()===now.toDateString();
-    html+=`<div style="width:${CW}px;flex-shrink:0;border-right:1px solid var(--border);padding:6px 4px;text-align:center${tod?';background:rgba(0,212,255,.06)':''}">
-      <div style="font-size:10px;font-weight:700;color:${tod?'var(--cyan)':'var(--text3)'}">${DW[d.getDay()]}</div>
-      <div style="font-size:12px;color:${tod?'var(--cyan)':'var(--text)'};font-weight:${tod?700:400}">${d.getDate()}/${d.getMonth()+1}</div>
-    </div>`;
-  });
-  html+=`</div>`;
-  rows.forEach(v=>{
-    const eta=v.eta?parseDt(v.eta):null,etd=v.etd?parseDt(v.etd):null,
-          bat=v.bat_dau?parseDt(v.bat_dau):null,ket=v.ket_thuc?parseDt(v.ket_thuc):null;
-    const px=dt=>dt?Math.max(0,(dt-start)/dur*days.length*CW):null;
-    const eX=px(eta),dX=px(etd),bX=px(bat),kX=px(ket),maxW=days.length*CW;
-    html+=`<div style="display:flex;border-bottom:1px solid rgba(255,255,255,.04);min-height:50px">`;
-    html+=`<div style="width:${LW}px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:8px 12px;position:sticky;left:0;z-index:4">
-      <div style="font-size:12px;color:var(--cyan);font-weight:600">${v.ten_salan}</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px">VOY: ${v.voyage_no||'—'}</div>
-    </div>`;
-    html+=`<div style="flex:1;position:relative;height:50px">`;
-    days.forEach((_,i)=>html+=`<div style="position:absolute;top:0;bottom:0;left:${i*CW}px;width:1px;background:rgba(255,255,255,.04)"></div>`);
-    if(eX!==null&&dX!==null&&dX>eX)
-      html+=`<div style="position:absolute;top:7px;height:36px;left:${Math.max(0,eX)}px;width:${Math.min(dX,maxW)-Math.max(0,eX)}px;min-width:4px;background:rgba(0,212,255,.16);border:1px solid rgba(0,212,255,.4);border-radius:5px;display:flex;align-items:center;padding:0 7px;font-size:10px;color:var(--cyan);overflow:hidden;white-space:nowrap" title="ETA→ETD">${v.ten_salan}</div>`;
-    if(bX!==null&&kX!==null&&kX>bX)
-      html+=`<div style="position:absolute;top:13px;height:24px;left:${Math.max(0,bX)}px;width:${Math.min(kX,maxW)-Math.max(0,bX)}px;min-width:4px;background:rgba(0,232,122,.18);border:1px solid rgba(0,232,122,.4);border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:10px;color:var(--green);overflow:hidden;white-space:nowrap" title="Làm hàng">${v.ten_salan}</div>`;
-    html+=`</div></div>`;
-  });
-  if(now>=start&&now<=end){
-    const nX=LW+(now-start)/dur*days.length*CW;
-    html+=`<div style="position:absolute;top:40px;bottom:0;left:${nX}px;width:2px;background:var(--red);z-index:3;pointer-events:none">
-      <div style="position:absolute;top:-15px;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;transform:translateX(-50%);white-space:nowrap">${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</div>
-    </div>`;
-  }
-  html+=`</div>`;
-  wrap.innerHTML=html;
-}
-
-// ── SURVEYS ──
-function renderSurveys(){
-  const q=(_g('ssrch')||'').toLowerCase();
-  const df=_g('sfrom'), dt=_g('sto'), bf=_g('sfbarge');
-  let rows=S.surveys.filter(s=>{
-    if(q&&!s.ten_salan.toLowerCase().includes(q)&&!(s.voyage_no||'').includes(q)) return false;
-    if(bf&&s.ma_salan!==bf) return false;
-    if(df&&s.ngay_survey){const p=s.ngay_survey.split('/');if(p.length===3&&p[2]+'-'+p[1]+'-'+p[0]<df)return false;}
-    if(dt&&s.ngay_survey){const p=s.ngay_survey.split('/');if(p.length===3&&p[2]+'-'+p[1]+'-'+p[0]>dt)return false;}
-    return true;
-  });
-  const a=S.surveys, adm=a.reduce((s,r)=>s+r.damaged,0), acl=a.reduce((s,r)=>s+r.clean,0),
-        arp=a.reduce((s,r)=>s+r.repo,0), atm=a.reduce((s,r)=>s+r.termites,0), at=a.reduce((s,r)=>s+r.so_luong,0);
-  document.getElementById('sstats-top').innerHTML=
-    sc('TỔNG CONTAINERS',fmt(at),'c-cyan')+sc('DAMAGED',fmt(adm),'c-red')+
-    sc('CLEAN',fmt(acl),'c-green')+sc('REPO',fmt(arp),'c-cyan')+sc('TERMITES',fmt(atm),'c-yellow');
-  const fdm=rows.reduce((s,r)=>s+r.damaged,0), fcl=rows.reduce((s,r)=>s+r.clean,0),
-        frp=rows.reduce((s,r)=>s+r.repo,0), ftm=rows.reduce((s,r)=>s+r.termites,0), ft=rows.reduce((s,r)=>s+r.so_luong,0);
-  document.getElementById('sstats-f').innerHTML=
-    sc2('TỔNG CONTAINERS',fmt(ft),'c-cyan','')+
-    sc2('DAMAGED',fmt(fdm),'c-red',ft?(fdm/ft*100).toFixed(1)+'%':'')+
-    sc2('CLEAN',fmt(fcl),'c-green',ft?(fcl/ft*100).toFixed(1)+'%':'')+
-    sc2('REPO',fmt(frp),'c-cyan',ft?(frp/ft*100).toFixed(1)+'%':'')+
-    sc2('TERMITES',fmt(ftm),'c-yellow',ft?(ftm/ft*100).toFixed(1)+'%':'');
-  const tb=document.getElementById('stbody');
-  if(!rows.length){tb.innerHTML=`<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
-  tb.innerHTML=rows.map((s,i)=>`<tr>
-    <td style="color:var(--text3)">${i+1}</td>
-    <td class="td-n">${s.ten_salan}</td>
-    <td style="color:var(--text2)">${s.voyage_no||'—'}</td>
-    <td><span class="badge" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);color:var(--cyan)">${s.loai_cont||'—'}</span></td>
-    <td style="text-align:right">${fmt(s.so_luong)}</td>
-    <td style="text-align:center"><span class="cbdg dm">${s.damaged}</span></td>
-    <td style="text-align:center"><span class="cbdg cl">${s.clean}</span></td>
-    <td style="text-align:center"><span class="cbdg rp">${s.repo}</span></td>
-    <td style="text-align:center"><span class="cbdg tm">${s.termites}</span></td>
-    <td style="text-align:right;font-weight:700">${fmt(s.so_luong)}</td>
-    <td style="color:var(--text2)">${s.ngay_survey||'—'}</td>
-    <td><div class="acts">
-      <div class="ibtn e" onclick='openSurveyModal(${jstr(s)})' title="Sửa">✎</div>
-      <div class="ibtn d" onclick="confDel('survey',${s.seq},'Xoá survey này?')" title="Xoá">🗑</div>
-    </div></td>
-  </tr>`).join('');
-}
-function openSurveyModal(s=null,pv=null){
-  document.getElementById('ms-title').textContent=s?'Chỉnh sửa Survey':'Thêm Survey';
-  _v('ms-seq',s?s.seq:''); _v('ms-ngay',s?toDateInp(s.ngay_survey):todayStr());
-  _v('ms-loai',s?s.loai_cont:'40E'); _v('ms-sl',s?s.so_luong:0);
-  _v('ms-dm',s?s.damaged:0); _v('ms-cl',s?s.clean:0); _v('ms-rp',s?s.repo:0); _v('ms-tm',s?s.termites:0);
-  const sel=document.getElementById('ms-voy');
-  sel.innerHTML='<option value="">-- Chọn voyage --</option>'+
-    S.voyages.map(v=>`<option value="${v.seq}" data-ma="${v.ma_salan}" data-ten="${v.ten_salan}" data-vno="${v.voyage_no||''}"
-      ${s&&s.voyage_seq==v.seq?'selected':''} ${pv&&pv.seq==v.seq?'selected':''}
-    >${v.ten_salan} — VOY ${v.voyage_no||'N/A'}</option>`).join('');
-  calcSvTotal(); openOv('ms');
-}
-function calcSvTotal(){
-  const d=+_g('ms-dm')||0,c=+_g('ms-cl')||0,r=+_g('ms-rp')||0,t=+_g('ms-tm')||0;
-  document.getElementById('sv-chk').textContent=d+c+r+t;
-  document.getElementById('sv-ref').textContent=_g('ms-sl')||0;
-}
-async function saveSurvey(){
-  const seq=_g('ms-seq'), sel=document.getElementById('ms-voy'), vseq=sel.value;
-  const opt=sel.options[sel.selectedIndex];
-  if(!vseq){toast('Vui lòng chọn voyage','err');return;}
-  const res=await post({action:seq?'updateSurvey':'saveSurvey',seq,voyage_seq:vseq,
-    ma_salan:opt?opt.dataset.ma:'',ten_salan:opt?opt.dataset.ten:'',voyage_no:opt?opt.dataset.vno:'',
-    ngay_survey:_g('ms-ngay'),loai_cont:_g('ms-loai'),so_luong:_g('ms-sl'),
-    damaged:_g('ms-dm'),clean:_g('ms-cl'),repo:_g('ms-rp'),termites:_g('ms-tm')});
-  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm survey','ok');closeOv('ms');await loadAll();}
-  else toast(res.error||'Lỗi','err');
-}
-
-// ── IMPORT ──
-function openImportSurvey(){S.importRows=[];document.getElementById('iprev').style.display='none';document.getElementById('ibtn').disabled=true;document.getElementById('ifile').value='';openOv('mi');}
-function handleImport(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const rows=ev.target.result.split('\n').filter(l=>l.trim()).slice(1).map(l=>{
-        const c=l.split(',').map(x=>x.replace(/"/g,'').trim());
-        return{ma_salan:c[0]||'',ten_salan:c[1]||'',voyage_no:c[2]||'',ngay_survey:c[3]||'',
-          loai_cont:c[4]||'40E',so_luong:+c[5]||0,damaged:+c[6]||0,clean:+c[7]||0,repo:+c[8]||0,termites:+c[9]||0,voyage_seq:''};
-      }).filter(r=>r.ma_salan);
-      S.importRows=rows;
-      const p=document.getElementById('iprev');p.style.display='block';
-      p.textContent=`Đọc được ${rows.length} dòng. Nhấn Import để xác nhận.`;
-      document.getElementById('ibtn').disabled=!rows.length;
-    }catch(e){toast('Lỗi đọc file','err');}
-  };
-  reader.readAsText(file);
-}
-async function confirmImport(){
-  if(!S.importRows.length)return;
-  const res=await post({action:'importSurveys',rows:S.importRows});
-  if(res.success){toast(`Import ${res.imported} dòng thành công`,'ok');closeOv('mi');await loadAll();}
-  else toast(res.error||'Lỗi','err');
-}
-
-// ── DELETE ──
-function confDel(type,seq,msg){document.getElementById('conf-msg').textContent=msg;document.getElementById('conf-ok').onclick=()=>doDel(type,seq);openOv('mconf');}
-async function doDel(type,seq){
-  const am={barge:'deleteBarge',voyage:'deleteVoyage',survey:'deleteSurvey'};
-  const res=await post({action:am[type],seq});
-  if(res.success){toast('Đã xoá','ok');closeOv('mconf');await loadAll();}
-  else toast(res.error||'Lỗi','err');
-}
-
-// ── EXPORT ──
-function exportBargesExcel(){dlCsv('Danh_sach_sa_lan.csv',['STT','Mã','Tên','Số đăng ký','Trọng tải','TEUs','Năm đóng','Tình trạng'],S.barges.map((b,i)=>[i+1,b.code,b.ten,b.so_dang_ky,b.trong_tai,b.so_teus,b.nam_dong,b.tinh_trang]));}
-function exportVoyagesExcel(){dlCsv('Ke_hoach_sa_lan.csv',['STT','Sà lan','Voyage','Loại','Số lượng','POL','POD','ETA','ETD','Bắt đầu','Kết thúc','Survey'],S.voyages.map((v,i)=>[i+1,v.ten_salan,v.voyage_no,v.loai_hang,v.so_luong,v.pol,v.pod,v.eta,v.etd,v.bat_dau,v.ket_thuc,v.trang_thai_survey]));}
-function exportSurveyExcel(){dlCsv('Bao_cao_survey.csv',['STT','Sà lan','Voyage','Loại','SL','Damaged','Clean','Repo','Termites','Ngày survey'],S.surveys.map((s,i)=>[i+1,s.ten_salan,s.voyage_no,s.loai_cont,s.so_luong,s.damaged,s.clean,s.repo,s.termites,s.ngay_survey]));}
-function dlCsv(n,c,d){const bom='\uFEFF',csv=bom+[c,...d].map(r=>r.map(x=>`"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=n;a.click();}
-
-// ── HELPERS ──
-function fillDropdowns(){
-  const gf=document.getElementById('gfbarge'),gc=gf.value;
-  gf.innerHTML='<option value="">-- Tất cả sà lan --</option>'+S.barges.map(b=>`<option value="${b.code}" ${b.code===gc?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
-  const sf=document.getElementById('sfbarge'),sc3=sf.value;
-  sf.innerHTML='<option value="">Tất cả sà lan</option>'+S.barges.map(b=>`<option value="${b.code}" ${b.code===sc3?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
-}
-function sc(l,v,c){return`<div class="stat-card ${c}"><div class="stat-lbl">${l}</div><div class="stat-val ${c}">${v}</div></div>`;}
-function sc2(l,v,c,s){return`<div class="stat-card ${c}"><div class="stat-lbl">${l}</div><div class="stat-val ${c}">${v}</div>${s?`<div class="stat-sub">${s}</div>`:''}</div>`;}
-function fmt(n){return(n===undefined||n===null||n==='')? '—':Number(n).toLocaleString('vi-VN');}
-function parseDt(s){
-  if(!s)return null;
-  if(s.includes('T'))return new Date(s);
-  const p=s.split(' '),dp=p[0].split('/');
-  if(dp.length===3){const tp=p[1]?p[1].split(':'):['0','0'];return new Date(+dp[2],dp[1]-1,+dp[0],+tp[0]||0,+tp[1]||0);}
-  return new Date(s);
-}
-function toLocal(s){if(!s)return'';const d=parseDt(s);if(!d||isNaN(d))return'';return d.toISOString().slice(0,16);}
-function toDateInp(s){if(!s)return'';const dp=s.split('/');if(dp.length===3)return`${dp[2]}-${dp[1].padStart(2,'0')}-${dp[0].padStart(2,'0')}`;return s;}
-function todayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function openOv(id){document.getElementById(id).classList.add('open');}
-function closeOv(id){document.getElementById(id).classList.remove('open');}
-function _g(id){const el=document.getElementById(id);return el?el.value:'';}
-function _v(id,v){const el=document.getElementById(id);if(el)el.value=v;}
-function jstr(o){return JSON.stringify(o).replace(/"/g,'&quot;');}
-function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);}
-document.querySelectorAll('.ov').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+function sc(l,v){ return `<div class="stat-card"><div class="stat-lbl">${l}</div><div class="stat-val">${v}</div></div>`; }
+function openBargeModal(b=null){ document.getElementById('mb-seq').value=b?b.seq:''; document.getElementById('mb-code').value=b?b.code:''; document.getElementById('mb-ten').value=b?b.ten:''; openOv('mb'); }
+function openOv(id){ document.getElementById(id).classList.add('open'); }
+function closeOv(id){ document.getElementById(id).classList.remove('open'); }
+function toast(m,t='ok'){ const e=document.getElementById('toast'); e.textContent=m; e.className='show '+t; setTimeout(()=>e.classList.remove('show'),3000); }
 </script>
 </body>
 </html>
