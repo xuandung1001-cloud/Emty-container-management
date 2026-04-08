@@ -143,6 +143,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn-d:hover{background:rgba(255,69,96,.15)}
 .btn-ghost{background:transparent;border-color:var(--border2);color:var(--text2)}
 .btn-ghost:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
 /* FILTER TABS */
 .ftabs{display:flex;gap:5px;margin-bottom:12px}
@@ -226,7 +227,8 @@ select.fi option{background:var(--bg2)}
 <div id="login-screen">
   <div class="lw">
     <div class="lbadge">🚢 Empty Container Management Department</div>
-    <div class="ltitle">EMTY CONTAINER<br><span>INSPECTION</span> — BARGING</div>
+    <!-- FIX #1: Typo EMTY → EMPTY -->
+    <div class="ltitle">EMPTY CONTAINER<br><span>INSPECTION</span> — BARGING</div>
     <div class="lsub">Cảng Thạnh Phước — Hệ thống quản lý sà lan</div>
     <label class="llbl">Username</label>
     <input class="linp" id="lu" placeholder="Nhập username" autocomplete="off">
@@ -431,7 +433,7 @@ select.fi option{background:var(--bg2)}
     </div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeOv('mb')">Huỷ</button>
-      <button class="btn btn-p" onclick="saveBarge()">Lưu</button>
+      <button class="btn btn-p" id="btn-save-barge" onclick="saveBarge()">Lưu</button>
     </div>
   </div>
 </div>
@@ -471,7 +473,7 @@ select.fi option{background:var(--bg2)}
     <div class="fg mt"><label class="fl">Ghi chú</label><input class="fi" id="mv-gc"></div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeOv('mv')">Huỷ</button>
-      <button class="btn btn-p" onclick="saveVoyage()">Lưu</button>
+      <button class="btn btn-p" id="btn-save-voyage" onclick="saveVoyage()">Lưu</button>
     </div>
   </div>
 </div>
@@ -508,7 +510,7 @@ select.fi option{background:var(--bg2)}
     </div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeOv('ms')">Huỷ</button>
-      <button class="btn btn-p" onclick="saveSurvey()">Lưu</button>
+      <button class="btn btn-p" id="btn-save-survey" onclick="saveSurvey()">Lưu</button>
     </div>
   </div>
 </div>
@@ -556,14 +558,28 @@ const SCREEN_META = {
 
 let S = { user:null, barges:[], voyages:[], surveys:[], vf:'all', importRows:[] };
 
-// ── API ──
+// ══════════════════════════════════════════
+// FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
+// GAS web app redirect 302 → browser cần follow redirect đúng cách
+// ══════════════════════════════════════════
 async function api(action, params={}) {
   const r = await fetch(GAS_URL+'?action='+action+'&'+new URLSearchParams(params));
   return r.json();
 }
 async function post(body) {
-  const r = await fetch(GAS_URL,{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}});
-  return r.json();
+  try {
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      redirect: 'follow'
+      // KHÔNG set Content-Type header → tránh preflight CORS → GAS xử lý được
+    });
+    return await r.json();
+  } catch(e) {
+    console.error('POST error:', e);
+    toast('Lỗi kết nối server: ' + e.message, 'err');
+    return { success: false, error: e.message };
+  }
 }
 
 // ── LOGIN ──
@@ -613,6 +629,14 @@ function nav(screen, el) {
   if(screen==='gantt') renderGantt();
 }
 
+// ══════════════════════════════════════════
+// FIX #3: Escape HTML để tránh XSS khi data chứa ký tự đặc biệt
+// ══════════════════════════════════════════
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ── BARGES ──
 function renderBarges(){
   const q=(_g('bsrch')||'').toLowerCase();
@@ -626,20 +650,36 @@ function renderBarges(){
     sc('TEUS ĐANG HOẠT ĐỘNG',fmt(teus),'c-orange');
   const tb=document.getElementById('btbody');
   if(!rows.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
+  // FIX #4: Dùng data-index + event delegation thay vì inline onclick với JSON
   tb.innerHTML=rows.map((b,i)=>`<tr>
     <td style="color:var(--text3);width:44px">${i+1}</td>
-    <td class="td-n">${b.code} — ${b.ten}</td>
-    <td>${b.so_dang_ky||'—'}</td>
+    <td class="td-n">${esc(b.code)} — ${esc(b.ten)}</td>
+    <td>${esc(b.so_dang_ky)||'—'}</td>
     <td style="text-align:right">${fmt(b.trong_tai)}</td>
     <td style="text-align:right">${fmt(b.so_teus)}</td>
-    <td>${b.nam_dong||'—'}</td>
+    <td>${esc(b.nam_dong)||'—'}</td>
     <td>${ttBadge(b.tinh_trang)}</td>
     <td><div class="acts">
-      <div class="ibtn e" onclick='openBargeModal(${jstr(b)})' title="Sửa">✎</div>
-      <div class="ibtn d" onclick="confDel('barge',${b.seq},'Xoá sà lan ${b.ten}?')" title="Xoá">🗑</div>
+      <div class="ibtn e" data-action="edit-barge" data-idx="${i}" title="Sửa">✎</div>
+      <div class="ibtn d" data-action="del-barge" data-seq="${b.seq}" data-name="${esc(b.ten)}" title="Xoá">🗑</div>
     </div></td>
   </tr>`).join('');
 }
+// Event delegation cho bảng Barges
+document.getElementById('btbody').addEventListener('click', function(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+  if (action === 'edit-barge') {
+    const idx = parseInt(el.dataset.idx);
+    const q = (_g('bsrch')||'').toLowerCase();
+    const rows = S.barges.filter(b=>!q||b.ten.toLowerCase().includes(q)||b.code.toLowerCase().includes(q)||(b.so_dang_ky||'').toLowerCase().includes(q));
+    if (rows[idx]) openBargeModal(rows[idx]);
+  } else if (action === 'del-barge') {
+    confDel('barge', el.dataset.seq, 'Xoá sà lan ' + el.dataset.name + '?');
+  }
+});
+
 function ttBadge(t){
   if(t==='HOAT_DONG') return '<span class="badge b-on">HOẠT ĐỘNG</span>';
   if(t==='NGUNG') return '<span class="badge b-off">NGỪNG</span>';
@@ -650,16 +690,25 @@ function openBargeModal(b=null){
   _v('mb-seq',b?b.seq:''); _v('mb-code',b?b.code:''); _v('mb-ten',b?b.ten:'');
   _v('mb-sdk',b?b.so_dang_ky:''); _v('mb-tt',b?b.trong_tai:''); _v('mb-teus',b?b.so_teus:'');
   _v('mb-nd',b?b.nam_dong:''); _v('mb-tt2',b?b.tinh_trang:'HOAT_DONG'); _v('mb-gc',b?b.ghi_chu:'');
+  document.getElementById('btn-save-barge').disabled = false;
   openOv('mb');
 }
+
+// FIX #5: Disable button khi đang lưu → chống double-click
 async function saveBarge(){
   const seq=_g('mb-seq'), code=_g('mb-code').trim(), ten=_g('mb-ten').trim();
   if(!code||!ten){toast('Vui lòng nhập Mã và Tên','err');return;}
-  const res=await post({action:seq?'updateBarge':'saveBarge',seq,code,ten,
-    so_dang_ky:_g('mb-sdk'),trong_tai:_g('mb-tt'),so_teus:_g('mb-teus'),
-    nam_dong:_g('mb-nd'),tinh_trang:_g('mb-tt2'),ghi_chu:_g('mb-gc')});
-  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm sà lan','ok');closeOv('mb');await loadAll();}
-  else toast(res.error||'Lỗi','err');
+  const btn = document.getElementById('btn-save-barge');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
+  try {
+    const res=await post({action:seq?'updateBarge':'saveBarge',seq,code,ten,
+      so_dang_ky:_g('mb-sdk'),trong_tai:_g('mb-tt'),so_teus:_g('mb-teus'),
+      nam_dong:_g('mb-nd'),tinh_trang:_g('mb-tt2'),ghi_chu:_g('mb-gc')});
+    if(res.success){toast(seq?'Đã cập nhật':'Đã thêm sà lan','ok');closeOv('mb');await loadAll();}
+    else toast(res.error||'Lỗi','err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Lưu';
+  }
 }
 
 // ── VOYAGES ──
@@ -668,15 +717,18 @@ function setVF(f,el){
   document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active'); renderVoyages();
 }
-function renderVoyages(){
+function getFilteredVoyages() {
   const q=(_g('vsrch')||'').toLowerCase();
-  let rows=S.voyages.filter(v=>{
+  return S.voyages.filter(v=>{
     if(q&&!v.ten_salan.toLowerCase().includes(q)&&!(v.voyage_no||'').includes(q)&&!(v.pol||'').toLowerCase().includes(q)&&!(v.pod||'').toLowerCase().includes(q)) return false;
     if(S.vf==='kehoach') return v.trang_thai_survey!=='Đã survey';
     if(S.vf==='hoanthanh') return v.trang_thai_survey==='Đã survey';
     if(S.vf==='chuasurvey') return v.trang_thai_survey!=='Đã survey';
     return true;
   });
+}
+function renderVoyages(){
+  let rows = getFilteredVoyages();
   const tot=S.voyages.length, teus=S.voyages.reduce((s,v)=>s+(parseInt(v.so_luong)||0),0),
         cs=S.voyages.filter(v=>v.trang_thai_survey!=='Đã survey').length,
         ht=S.voyages.filter(v=>v.trang_thai_survey==='Đã survey').length,
@@ -688,22 +740,38 @@ function renderVoyages(){
   if(!rows.length){tb.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
   tb.innerHTML=rows.map((v,i)=>`<tr>
     <td style="color:var(--text3)">${i+1}</td>
-    <td class="td-n">${v.ten_salan}</td>
-    <td style="color:var(--text2)">${v.voyage_no||'—'}</td>
-    <td>${v.loai_hang||'—'}</td><td>${v.so_luong||'—'}</td>
-    <td>${v.pol||'—'}</td><td>${v.pod||'—'}</td>
-    <td style="font-size:11px">${v.eta||'—'}</td>
-    <td style="font-size:11px">${v.etd||'—'}</td>
-    <td style="font-size:11px">${v.bat_dau||'—'}</td>
-    <td style="font-size:11px">${v.ket_thuc||'—'}</td>
+    <td class="td-n">${esc(v.ten_salan)}</td>
+    <td style="color:var(--text2)">${esc(v.voyage_no)||'—'}</td>
+    <td>${esc(v.loai_hang)||'—'}</td><td>${esc(v.so_luong)||'—'}</td>
+    <td>${esc(v.pol)||'—'}</td><td>${esc(v.pod)||'—'}</td>
+    <td style="font-size:11px">${esc(v.eta)||'—'}</td>
+    <td style="font-size:11px">${esc(v.etd)||'—'}</td>
+    <td style="font-size:11px">${esc(v.bat_dau)||'—'}</td>
+    <td style="font-size:11px">${esc(v.ket_thuc)||'—'}</td>
     <td>${v.trang_thai_survey==='Đã survey'?'<span class="badge b-sv">✔ Đã survey</span>':'<span class="badge b-ns">Chưa survey</span>'}</td>
     <td><div class="acts">
-      <div class="ibtn s" onclick='quickSurvey(${jstr(v)})' title="Survey">📋</div>
-      <div class="ibtn e" onclick='openVoyageModal(${jstr(v)})' title="Sửa">✎</div>
-      <div class="ibtn d" onclick="confDel('voyage',${v.seq},'Xoá voyage ${v.voyage_no||''} — ${v.ten_salan}?')" title="Xoá">🗑</div>
+      <div class="ibtn s" data-action="quick-survey" data-idx="${i}" title="Survey">📋</div>
+      <div class="ibtn e" data-action="edit-voyage" data-idx="${i}" title="Sửa">✎</div>
+      <div class="ibtn d" data-action="del-voyage" data-seq="${v.seq}" data-name="${esc(v.voyage_no||'')} — ${esc(v.ten_salan)}" title="Xoá">🗑</div>
     </div></td>
   </tr>`).join('');
 }
+// Event delegation cho bảng Voyages
+document.getElementById('vtbody').addEventListener('click', function(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+  const rows = getFilteredVoyages();
+  const idx = parseInt(el.dataset.idx);
+  if (action === 'edit-voyage' && rows[idx]) {
+    openVoyageModal(rows[idx]);
+  } else if (action === 'del-voyage') {
+    confDel('voyage', el.dataset.seq, 'Xoá voyage ' + el.dataset.name + '?');
+  } else if (action === 'quick-survey' && rows[idx]) {
+    quickSurvey(rows[idx]);
+  }
+});
+
 function openVoyageModal(v=null){
   document.getElementById('mv-title').textContent=v?'Chỉnh sửa kế hoạch':'Thêm kế hoạch sà lan';
   _v('mv-seq',v?v.seq:''); _v('mv-vno',v?v.voyage_no:''); _v('mv-lh',v?v.loai_hang:'Container');
@@ -713,20 +781,37 @@ function openVoyageModal(v=null){
   _v('mv-gc',v?v.ghi_chu:'');
   const sel=document.getElementById('mv-sl');
   sel.innerHTML='<option value="">-- Chọn sà lan --</option>'+
-    S.barges.map(b=>`<option value="${b.code}" data-ten="${b.ten}" ${v&&v.ma_salan===b.code?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
+    S.barges.map(b=>`<option value="${esc(b.code)}" data-ten="${esc(b.ten)}" ${v&&v.ma_salan===b.code?'selected':''}>${esc(b.code)} — ${esc(b.ten)}</option>`).join('');
+  document.getElementById('btn-save-voyage').disabled = false;
   openOv('mv');
 }
+
+// FIX #6: updateVoyage giữ nguyên trang_thai_survey hiện tại thay vì gửi undefined
 async function saveVoyage(){
   const seq=_g('mv-seq'), sel=document.getElementById('mv-sl'), maSalan=sel.value;
   const opt=sel.options[sel.selectedIndex], tenSalan=opt?opt.dataset.ten||'':'';
   if(!maSalan){toast('Vui lòng chọn sà lan','err');return;}
-  const res=await post({action:seq?'updateVoyage':'saveVoyage',seq,
-    ma_salan:maSalan,ten_salan:tenSalan,voyage_no:_g('mv-vno'),loai_hang:_g('mv-lh'),
-    so_luong:_g('mv-sl2'),pol:_g('mv-pol'),pod:_g('mv-pod'),
-    eta:_g('mv-eta'),etd:_g('mv-etd'),bat_dau:_g('mv-bd'),ket_thuc:_g('mv-kt'),
-    trang_thai_survey:seq?undefined:'Chưa survey',ghi_chu:_g('mv-gc')});
-  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm kế hoạch','ok');closeOv('mv');await loadAll();}
-  else toast(res.error||'Lỗi','err');
+  const btn = document.getElementById('btn-save-voyage');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
+
+  // Khi update: giữ nguyên trạng thái survey hiện tại
+  let trangThaiSurvey = 'Chưa survey';
+  if (seq) {
+    const existing = S.voyages.find(v => String(v.seq) === String(seq));
+    trangThaiSurvey = existing ? existing.trang_thai_survey : 'Chưa survey';
+  }
+
+  try {
+    const res=await post({action:seq?'updateVoyage':'saveVoyage',seq,
+      ma_salan:maSalan,ten_salan:tenSalan,voyage_no:_g('mv-vno'),loai_hang:_g('mv-lh'),
+      so_luong:_g('mv-sl2'),pol:_g('mv-pol'),pod:_g('mv-pod'),
+      eta:_g('mv-eta'),etd:_g('mv-etd'),bat_dau:_g('mv-bd'),ket_thuc:_g('mv-kt'),
+      trang_thai_survey:trangThaiSurvey,ghi_chu:_g('mv-gc')});
+    if(res.success){toast(seq?'Đã cập nhật':'Đã thêm kế hoạch','ok');closeOv('mv');await loadAll();}
+    else toast(res.error||'Lỗi','err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Lưu';
+  }
 }
 function quickSurvey(v){
   nav('survey', document.getElementById('nav-survey'));
@@ -784,15 +869,15 @@ function renderGantt(){
     const eX=px(eta),dX=px(etd),bX=px(bat),kX=px(ket),maxW=days.length*CW;
     html+=`<div style="display:flex;border-bottom:1px solid rgba(255,255,255,.04);min-height:50px">`;
     html+=`<div style="width:${LW}px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:8px 12px;position:sticky;left:0;z-index:4">
-      <div style="font-size:12px;color:var(--cyan);font-weight:600">${v.ten_salan}</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px">VOY: ${v.voyage_no||'—'}</div>
+      <div style="font-size:12px;color:var(--cyan);font-weight:600">${esc(v.ten_salan)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">VOY: ${esc(v.voyage_no)||'—'}</div>
     </div>`;
     html+=`<div style="flex:1;position:relative;height:50px">`;
     days.forEach((_,i)=>html+=`<div style="position:absolute;top:0;bottom:0;left:${i*CW}px;width:1px;background:rgba(255,255,255,.04)"></div>`);
     if(eX!==null&&dX!==null&&dX>eX)
-      html+=`<div style="position:absolute;top:7px;height:36px;left:${Math.max(0,eX)}px;width:${Math.min(dX,maxW)-Math.max(0,eX)}px;min-width:4px;background:rgba(0,212,255,.16);border:1px solid rgba(0,212,255,.4);border-radius:5px;display:flex;align-items:center;padding:0 7px;font-size:10px;color:var(--cyan);overflow:hidden;white-space:nowrap" title="ETA→ETD">${v.ten_salan}</div>`;
+      html+=`<div style="position:absolute;top:7px;height:36px;left:${Math.max(0,eX)}px;width:${Math.min(dX,maxW)-Math.max(0,eX)}px;min-width:4px;background:rgba(0,212,255,.16);border:1px solid rgba(0,212,255,.4);border-radius:5px;display:flex;align-items:center;padding:0 7px;font-size:10px;color:var(--cyan);overflow:hidden;white-space:nowrap" title="ETA→ETD">${esc(v.ten_salan)}</div>`;
     if(bX!==null&&kX!==null&&kX>bX)
-      html+=`<div style="position:absolute;top:13px;height:24px;left:${Math.max(0,bX)}px;width:${Math.min(kX,maxW)-Math.max(0,bX)}px;min-width:4px;background:rgba(0,232,122,.18);border:1px solid rgba(0,232,122,.4);border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:10px;color:var(--green);overflow:hidden;white-space:nowrap" title="Làm hàng">${v.ten_salan}</div>`;
+      html+=`<div style="position:absolute;top:13px;height:24px;left:${Math.max(0,bX)}px;width:${Math.min(kX,maxW)-Math.max(0,bX)}px;min-width:4px;background:rgba(0,232,122,.18);border:1px solid rgba(0,232,122,.4);border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:10px;color:var(--green);overflow:hidden;white-space:nowrap" title="Làm hàng">${esc(v.ten_salan)}</div>`;
     html+=`</div></div>`;
   });
   if(now>=start&&now<=end){
@@ -806,16 +891,19 @@ function renderGantt(){
 }
 
 // ── SURVEYS ──
-function renderSurveys(){
+function getFilteredSurveys() {
   const q=(_g('ssrch')||'').toLowerCase();
   const df=_g('sfrom'), dt=_g('sto'), bf=_g('sfbarge');
-  let rows=S.surveys.filter(s=>{
+  return S.surveys.filter(s=>{
     if(q&&!s.ten_salan.toLowerCase().includes(q)&&!(s.voyage_no||'').includes(q)) return false;
     if(bf&&s.ma_salan!==bf) return false;
     if(df&&s.ngay_survey){const p=s.ngay_survey.split('/');if(p.length===3&&p[2]+'-'+p[1]+'-'+p[0]<df)return false;}
     if(dt&&s.ngay_survey){const p=s.ngay_survey.split('/');if(p.length===3&&p[2]+'-'+p[1]+'-'+p[0]>dt)return false;}
     return true;
   });
+}
+function renderSurveys(){
+  let rows = getFilteredSurveys();
   const a=S.surveys, adm=a.reduce((s,r)=>s+r.damaged,0), acl=a.reduce((s,r)=>s+r.clean,0),
         arp=a.reduce((s,r)=>s+r.repo,0), atm=a.reduce((s,r)=>s+r.termites,0), at=a.reduce((s,r)=>s+r.so_luong,0);
   document.getElementById('sstats-top').innerHTML=
@@ -833,22 +921,36 @@ function renderSurveys(){
   if(!rows.length){tb.innerHTML=`<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
   tb.innerHTML=rows.map((s,i)=>`<tr>
     <td style="color:var(--text3)">${i+1}</td>
-    <td class="td-n">${s.ten_salan}</td>
-    <td style="color:var(--text2)">${s.voyage_no||'—'}</td>
-    <td><span class="badge" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);color:var(--cyan)">${s.loai_cont||'—'}</span></td>
+    <td class="td-n">${esc(s.ten_salan)}</td>
+    <td style="color:var(--text2)">${esc(s.voyage_no)||'—'}</td>
+    <td><span class="badge" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);color:var(--cyan)">${esc(s.loai_cont)||'—'}</span></td>
     <td style="text-align:right">${fmt(s.so_luong)}</td>
     <td style="text-align:center"><span class="cbdg dm">${s.damaged}</span></td>
     <td style="text-align:center"><span class="cbdg cl">${s.clean}</span></td>
     <td style="text-align:center"><span class="cbdg rp">${s.repo}</span></td>
     <td style="text-align:center"><span class="cbdg tm">${s.termites}</span></td>
     <td style="text-align:right;font-weight:700">${fmt(s.so_luong)}</td>
-    <td style="color:var(--text2)">${s.ngay_survey||'—'}</td>
+    <td style="color:var(--text2)">${esc(s.ngay_survey)||'—'}</td>
     <td><div class="acts">
-      <div class="ibtn e" onclick='openSurveyModal(${jstr(s)})' title="Sửa">✎</div>
-      <div class="ibtn d" onclick="confDel('survey',${s.seq},'Xoá survey này?')" title="Xoá">🗑</div>
+      <div class="ibtn e" data-action="edit-survey" data-idx="${i}" title="Sửa">✎</div>
+      <div class="ibtn d" data-action="del-survey" data-seq="${s.seq}" title="Xoá">🗑</div>
     </div></td>
   </tr>`).join('');
 }
+// Event delegation cho bảng Surveys
+document.getElementById('stbody').addEventListener('click', function(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+  const rows = getFilteredSurveys();
+  if (action === 'edit-survey') {
+    const idx = parseInt(el.dataset.idx);
+    if (rows[idx]) openSurveyModal(rows[idx]);
+  } else if (action === 'del-survey') {
+    confDel('survey', el.dataset.seq, 'Xoá survey này?');
+  }
+});
+
 function openSurveyModal(s=null,pv=null){
   document.getElementById('ms-title').textContent=s?'Chỉnh sửa Survey':'Thêm Survey';
   _v('ms-seq',s?s.seq:''); _v('ms-ngay',s?toDateInp(s.ngay_survey):todayStr());
@@ -856,9 +958,10 @@ function openSurveyModal(s=null,pv=null){
   _v('ms-dm',s?s.damaged:0); _v('ms-cl',s?s.clean:0); _v('ms-rp',s?s.repo:0); _v('ms-tm',s?s.termites:0);
   const sel=document.getElementById('ms-voy');
   sel.innerHTML='<option value="">-- Chọn voyage --</option>'+
-    S.voyages.map(v=>`<option value="${v.seq}" data-ma="${v.ma_salan}" data-ten="${v.ten_salan}" data-vno="${v.voyage_no||''}"
+    S.voyages.map(v=>`<option value="${v.seq}" data-ma="${esc(v.ma_salan)}" data-ten="${esc(v.ten_salan)}" data-vno="${esc(v.voyage_no||'')}"
       ${s&&s.voyage_seq==v.seq?'selected':''} ${pv&&pv.seq==v.seq?'selected':''}
-    >${v.ten_salan} — VOY ${v.voyage_no||'N/A'}</option>`).join('');
+    >${esc(v.ten_salan)} — VOY ${esc(v.voyage_no)||'N/A'}</option>`).join('');
+  document.getElementById('btn-save-survey').disabled = false;
   calcSvTotal(); openOv('ms');
 }
 function calcSvTotal(){
@@ -870,12 +973,18 @@ async function saveSurvey(){
   const seq=_g('ms-seq'), sel=document.getElementById('ms-voy'), vseq=sel.value;
   const opt=sel.options[sel.selectedIndex];
   if(!vseq){toast('Vui lòng chọn voyage','err');return;}
-  const res=await post({action:seq?'updateSurvey':'saveSurvey',seq,voyage_seq:vseq,
-    ma_salan:opt?opt.dataset.ma:'',ten_salan:opt?opt.dataset.ten:'',voyage_no:opt?opt.dataset.vno:'',
-    ngay_survey:_g('ms-ngay'),loai_cont:_g('ms-loai'),so_luong:_g('ms-sl'),
-    damaged:_g('ms-dm'),clean:_g('ms-cl'),repo:_g('ms-rp'),termites:_g('ms-tm')});
-  if(res.success){toast(seq?'Đã cập nhật':'Đã thêm survey','ok');closeOv('ms');await loadAll();}
-  else toast(res.error||'Lỗi','err');
+  const btn = document.getElementById('btn-save-survey');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
+  try {
+    const res=await post({action:seq?'updateSurvey':'saveSurvey',seq,voyage_seq:vseq,
+      ma_salan:opt?opt.dataset.ma:'',ten_salan:opt?opt.dataset.ten:'',voyage_no:opt?opt.dataset.vno:'',
+      ngay_survey:_g('ms-ngay'),loai_cont:_g('ms-loai'),so_luong:_g('ms-sl'),
+      damaged:_g('ms-dm'),clean:_g('ms-cl'),repo:_g('ms-rp'),termites:_g('ms-tm')});
+    if(res.success){toast(seq?'Đã cập nhật':'Đã thêm survey','ok');closeOv('ms');await loadAll();}
+    else toast(res.error||'Lỗi','err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Lưu';
+  }
 }
 
 // ── IMPORT ──
@@ -900,9 +1009,15 @@ function handleImport(e){
 }
 async function confirmImport(){
   if(!S.importRows.length)return;
-  const res=await post({action:'importSurveys',rows:S.importRows});
-  if(res.success){toast(`Import ${res.imported} dòng thành công`,'ok');closeOv('mi');await loadAll();}
-  else toast(res.error||'Lỗi','err');
+  const btn = document.getElementById('ibtn');
+  btn.disabled = true; btn.textContent = 'Đang import...';
+  try {
+    const res=await post({action:'importSurveys',rows:S.importRows});
+    if(res.success){toast(`Import ${res.imported} dòng thành công`,'ok');closeOv('mi');await loadAll();}
+    else toast(res.error||'Lỗi','err');
+  } finally {
+    btn.textContent = 'Import';
+  }
 }
 
 // ── DELETE ──
@@ -923,9 +1038,9 @@ function dlCsv(n,c,d){const bom='\uFEFF',csv=bom+[c,...d].map(r=>r.map(x=>`"${St
 // ── HELPERS ──
 function fillDropdowns(){
   const gf=document.getElementById('gfbarge'),gc=gf.value;
-  gf.innerHTML='<option value="">-- Tất cả sà lan --</option>'+S.barges.map(b=>`<option value="${b.code}" ${b.code===gc?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
+  gf.innerHTML='<option value="">-- Tất cả sà lan --</option>'+S.barges.map(b=>`<option value="${esc(b.code)}" ${b.code===gc?'selected':''}>${esc(b.code)} — ${esc(b.ten)}</option>`).join('');
   const sf=document.getElementById('sfbarge'),sc3=sf.value;
-  sf.innerHTML='<option value="">Tất cả sà lan</option>'+S.barges.map(b=>`<option value="${b.code}" ${b.code===sc3?'selected':''}>${b.code} — ${b.ten}</option>`).join('');
+  sf.innerHTML='<option value="">Tất cả sà lan</option>'+S.barges.map(b=>`<option value="${esc(b.code)}" ${b.code===sc3?'selected':''}>${esc(b.code)} — ${esc(b.ten)}</option>`).join('');
 }
 function sc(l,v,c){return`<div class="stat-card ${c}"><div class="stat-lbl">${l}</div><div class="stat-val ${c}">${v}</div></div>`;}
 function sc2(l,v,c,s){return`<div class="stat-card ${c}"><div class="stat-lbl">${l}</div><div class="stat-val ${c}">${v}</div>${s?`<div class="stat-sub">${s}</div>`:''}</div>`;}
@@ -937,14 +1052,22 @@ function parseDt(s){
   if(dp.length===3){const tp=p[1]?p[1].split(':'):['0','0'];return new Date(+dp[2],dp[1]-1,+dp[0],+tp[0]||0,+tp[1]||0);}
   return new Date(s);
 }
-function toLocal(s){if(!s)return'';const d=parseDt(s);if(!d||isNaN(d))return'';return d.toISOString().slice(0,16);}
+
+// FIX #7: toLocal — dùng local time thay vì toISOString (UTC) gây lệch giờ
+function toLocal(s){
+  if(!s)return'';
+  const d=parseDt(s);
+  if(!d||isNaN(d))return'';
+  const pad = n => String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
 function toDateInp(s){if(!s)return'';const dp=s.split('/');if(dp.length===3)return`${dp[2]}-${dp[1].padStart(2,'0')}-${dp[0].padStart(2,'0')}`;return s;}
 function todayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function openOv(id){document.getElementById(id).classList.add('open');}
 function closeOv(id){document.getElementById(id).classList.remove('open');}
 function _g(id){const el=document.getElementById(id);return el?el.value:'';}
 function _v(id,v){const el=document.getElementById(id);if(el)el.value=v;}
-function jstr(o){return JSON.stringify(o).replace(/"/g,'&quot;');}
 function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);}
 document.querySelectorAll('.ov').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
 </script>
