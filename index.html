@@ -219,6 +219,31 @@ select.fi option{background:var(--bg2)}
 /* LOADING */
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* ── KANBAN ── */
+.kb-board { display:flex; height:calc(100vh - 140px); gap:16px; overflow-x:auto; padding-bottom:8px }
+.kb-col { flex:1; min-width:280px; max-width:340px; background:rgba(255,255,255,.015); border:1px dashed var(--border); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; transition:all .2s; }
+.kb-col.drag-over { border-color:var(--cyan); background:rgba(0,212,255,.04); }
+.kb-head { padding:14px 16px; font-weight:700; font-size:12px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); background:var(--bg2) }
+.kb-dot { width:8px; height:8px; border-radius:50%; }
+.kb-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+.kb-list::-webkit-scrollbar{width:4px}
+.kb-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+.kcard { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px; position:relative; cursor:grab; transition:all .2s; box-shadow:0 4px 12px rgba(0,0,0,.15); display:flex; flex-direction:column; gap:6px; }
+.kcard:hover { border-color:rgba(255,255,255,.15); transform:translateY(-1px); }
+.kcard:active { cursor:grabbing; }
+.kcard.dragging { opacity:0.5; transform:scale(0.98); }
+.kcard.has-flag { border-color:rgba(255,69,96,.4); box-shadow:0 0 10px rgba(255,69,96,.1); background:linear-gradient(to bottom, rgba(255,69,96,.03), var(--bg2)); }
+.kc-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.kc-title { color:var(--cyan); font-weight:700; font-size:13px; letter-spacing:.02em; }
+.kc-vno { color:var(--text3); font-size:9px; font-weight:700; letter-spacing:.05em; background:var(--bg3); padding:2px 6px; border-radius:4px; }
+.kc-b { display:flex; align-items:center; justify-content:space-between; font-size:11px; margin-top:2px; }
+.kc-teu { color:var(--text); font-weight:600; display:flex; align-items:center; gap:4px; }
+.kc-time { font-size:10px; color:var(--text2); display:flex; align-items:center; gap:4px; margin-top:4px; }
+.kc-time svg { width:12px; height:12px; opacity:0.6; }
+.kc-acts { display:flex; gap:6px; margin-top:8px; border-top:1px dashed var(--border); padding-top:8px; }
+.kc-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:4px; font-size:10px; font-weight:600; background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:5px 0; color:var(--text2); cursor:pointer; transition:all .15s; }
+.kc-btn:hover { background:var(--bg2); border-color:var(--border2); color:var(--text); }
+.kc-btn.flag.active { background:rgba(255,69,96,.1); border-color:rgba(255,69,96,.3); color:var(--red); }
 </style>
 </head>
 <body>
@@ -272,10 +297,10 @@ select.fi option{background:var(--bg2)}
     <!-- Nav: Theo dõi -->
     <div class="sb-section">
       <span class="sb-sec-label cyan">Theo dõi</span>
-      <div class="nav-item" id="nav-handovers" onclick="nav('handovers',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <div class="nav-item" id="nav-kanban" onclick="nav('kanban',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7v7"/><path d="M16 7v4"/></svg>
         <div class="nav-dot"></div>
-        Sổ giao ca
+        Bảng Kanban
       </div>
       <div class="nav-item" id="nav-gantt" onclick="nav('gantt',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
@@ -299,7 +324,6 @@ select.fi option{background:var(--bg2)}
       <div class="sb-role" id="sb-role">—</div>
       <div style="display:flex;gap:12px;margin-top:8px">
         <div class="sb-logout" onclick="doLogout()">⎋ Đăng xuất</div>
-        <div class="sb-logout" style="color:var(--yellow);font-weight:600;opacity:0.8" onclick="openHandoverModal()">Nhật ký & Thoát</div>
       </div>
     </div>
   </div><!-- /sidebar -->
@@ -407,19 +431,31 @@ select.fi option{background:var(--bg2)}
         </div>
       </div>
 
-      <!-- ══ HANDOVERS ══ -->
-      <div class="screen" id="screen-handovers">
-        <div class="toolbar">
-          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm ca trực..." id="hsrch" oninput="renderHandovers()"></div>
-          <div class="ml" style="display:flex;gap:7px">
-            <button class="btn btn-p" onclick="openHandoverModal()">⊕ Bàn giao ca trực</button>
+      <!-- ══ KANBAN ══ -->
+      <div class="screen" id="screen-kanban">
+        <div class="toolbar" style="margin-bottom:12px">
+          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm sà lan, voyage..." id="ksrch" oninput="renderKanban()"></div>
+          <div class="ml" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px">
+             <i>Kéo thả sà lan (Drag & Drop) để chuyển cột và trạng thái tự động</i>
           </div>
         </div>
-        <div class="tbl">
-          <table><thead><tr>
-            <th style="width:44px">STT</th><th>CA TRỰC</th><th>NGƯỜI GIAO</th><th>THỜI GIAN GIAO</th>
-            <th>NGƯỜI NHẬN</th><th>THỜI GIAN NHẬN</th><th>TRẠNG THÁI</th><th style="width:80px">THAO TÁC</th>
-          </tr></thead><tbody id="htbody"></tbody></table>
+        <div class="kb-board" id="kb-board">
+          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 0)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
+            <div class="kb-head"><div class="kb-dot" style="background:var(--yellow)"></div>Sắp Cập Cảng / Neo đậu</div>
+            <div class="kb-list" id="kcol-0"></div>
+          </div>
+          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 1)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
+            <div class="kb-head"><div class="kb-dot" style="background:var(--cyan)"></div>Đang Làm Hàng</div>
+            <div class="kb-list" id="kcol-1"></div>
+          </div>
+          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 2)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
+            <div class="kb-head"><div class="kb-dot" style="background:var(--orange)"></div>Chờ Khảo Sát / Survey</div>
+            <div class="kb-list" id="kcol-2"></div>
+          </div>
+          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 3)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
+            <div class="kb-head"><div class="kb-dot" style="background:var(--green)"></div>Hoàn Tất (48h qua)</div>
+            <div class="kb-list" id="kcol-3"></div>
+          </div>
         </div>
       </div>
 
@@ -570,59 +606,18 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- ══ MODAL HANDOVER ══ -->
-<div class="ov" id="mho">
-  <div class="modal modal-lg">
-    <div class="m-title">Bàn giao ca trực</div>
-    <div class="m-sub">Tự động tổng hợp công việc trong ca để bàn giao (Auto-Snapshot)</div>
-    <div class="g2">
-      <div class="fg"><label class="fl">Chọn ca trực *</label>
-        <select class="fi" id="ho-ca">
-          <option value="Ca 1 (06:00 - 14:00)">Ca 1 (06:00 - 14:00)</option>
-          <option value="Ca 2 (14:00 - 22:00)">Ca 2 (14:00 - 22:00)</option>
-          <option value="Ca 3 (22:00 - 06:00)">Ca 3 (22:00 - 06:00)</option>
-        </select>
-      </div>
-      <div class="fg"><label class="fl">Người giao</label><input class="fi" id="ho-nguoi" disabled></div>
-    </div>
-    <div class="fg mt"><label class="fl">Tóm tắt công việc đã thực hiện</label>
-      <textarea class="fi" id="ho-tomtat" rows="3" style="resize:vertical"></textarea>
-    </div>
-    <div class="fg mt"><label class="fl" style="color:var(--orange)">Công việc tồn đọng (Chưa hoàn thành)</label>
-      <textarea class="fi" id="ho-tondong" rows="3" style="resize:vertical;border-color:rgba(255,124,42,.3)"></textarea>
-    </div>
-    <div class="fg mt"><label class="fl">Ghi chú đặc biệt (Tuỳ chọn)</label>
-      <textarea class="fi" id="ho-ghichu" rows="2" style="resize:vertical" placeholder="Ví dụ: Sự cố kỹ thuật, lưu ý thời tiết..."></textarea>
+<!-- ══ MODAL KNOTE ══ -->
+<div class="ov" id="mknote">
+  <div class="modal modal-sm">
+    <div class="m-title" style="color:var(--red)">Cắm Cờ & Ghi Chú</div>
+    <div class="m-sub" id="mkn-sub">Ghi chú cho sự cố hoặc lưu ý bàn giao</div>
+    <input type="hidden" id="mkn-seq">
+    <div class="fg mt">
+      <textarea class="fi" id="mkn-note" rows="4" style="resize:vertical;border-color:rgba(255,69,96,.3)" placeholder="Gõ ghi chú vào đây... Xoá trống để gỡ cờ đỏ."></textarea>
     </div>
     <div class="mf">
-        <button class="btn btn-ghost" onclick="closeOv('mho')">Huỷ</button>
-        <button class="btn btn-p" id="btn-save-ho" onclick="saveHandover()">Bàn giao & Đăng xuất</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODAL RECEIVE HANDOVER ══ -->
-<div class="ov" id="mrec">
-  <div class="modal modal-lg">
-    <div class="m-title" style="color:var(--yellow)">⚠ Bạn có 1 phiếu nhận ca chưa xác nhận</div>
-    <div class="m-sub">Vui lòng đọc thông tin bàn giao từ ca trước và thao tác Xác nhận nhận ca.</div>
-    <input type="hidden" id="rec-seq">
-    <div class="g2">
-      <div class="fg"><label class="fl">Ca giao</label><input class="fi" id="rec-ca" disabled></div>
-      <div class="fg"><label class="fl">Người giao</label><input class="fi" id="rec-nguoi" disabled></div>
-    </div>
-    <div class="fg mt"><label class="fl">Tóm tắt công việc</label>
-      <textarea class="fi" id="rec-tomtat" rows="3" disabled></textarea>
-    </div>
-    <div class="fg mt"><label class="fl">Công việc tồn đọng</label>
-      <textarea class="fi" id="rec-tondong" rows="3" disabled style="border-color:rgba(255,124,42,.3);color:var(--orange)"></textarea>
-    </div>
-    <div class="fg mt"><label class="fl">Ghi chú đặc biệt</label>
-      <textarea class="fi" id="rec-ghichu" rows="2" disabled></textarea>
-    </div>
-    <div class="mf">
-        <button class="btn btn-ghost" onclick="closeOv('mrec')">Đóng</button>
-        <button class="btn btn-p" id="btn-accept-ho" onclick="acceptHandover()">Xác nhận nhận ca</button>
+      <button class="btn btn-ghost" onclick="closeOv('mknote')">Huỷ</button>
+      <button class="btn btn-d" id="btn-save-knote" onclick="saveKnote()">Lưu cờ</button>
     </div>
   </div>
 </div>
@@ -635,10 +630,10 @@ const SCREEN_META = {
   voyages: { title: 'Kế hoạch sà lan',  badge: '' },
   gantt:   { title: 'Sơ đồ Gantt',      badge: '' },
   survey:  { title: 'Báo cáo Survey',   badge: '' },
-  handovers: { title: 'Sổ giao ca',     badge: '' }
+  kanban:  { title: 'Bảng Kanban',      badge: '' }
 };
 
-let S = { user:null, barges:[], voyages:[], surveys:[], handovers:[], vf:'all', importRows:[] };
+let S = { user:null, barges:[], voyages:[], surveys:[], vf:'all', importRows:[] };
 
 // ══════════════════════════════════════════
 // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -694,10 +689,9 @@ function doLogout(){
 // ── LOAD ──
 async function loadAll(){
   try{
-    const[b,v,s,h]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys'),api('getHandovers')]);
-    S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[]; S.handovers=h.data||[];
-    renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderHandovers(); fillDropdowns();
-    setTimeout(checkPendingHandover, 500);
+    const[b,v,s]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys')]);
+    S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[];
+    renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); fillDropdowns();
   }catch(e){toast('Lỗi load data: '+e.message,'err');}
 }
 
@@ -907,125 +901,137 @@ function quickSurvey(v){
   setTimeout(()=>openSurveyModal(null,v),80);
 }
 
-// ── HANDOVERS ──
-function renderHandovers() {
-  const q=(_g('hsrch')||'').toLowerCase();
-  const rows=S.handovers.filter(h=>!q||h.ca_truc.toLowerCase().includes(q)||h.nguoi_giao.toLowerCase().includes(q)||(h.tom_tat_ca||'').toLowerCase().includes(q));
-  const tb=document.getElementById('htbody');
-  if(!rows.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
-  tb.innerHTML=rows.sort((a,b)=>b.seq-a.seq).map((h,i)=>`<tr>
-    <td style="color:var(--text3)">${i+1}</td>
-    <td class="td-n">${esc(h.ca_truc)}</td>
-    <td>${esc(h.nguoi_giao)}</td>
-    <td style="font-size:11px">${esc(h.thoi_gian_giao)}</td>
-    <td>${esc(h.nguoi_nhan)||'—'}</td>
-    <td style="font-size:11px">${esc(h.thoi_gian_nhan)||'—'}</td>
-    <td>${h.trang_thai==='DA_NHAN'?'<span class="badge b-on">ĐÃ NHẬN</span>':'<span class="badge b-ns">CHỜ NHẬN</span>'}</td>
-    <td><div class="acts">
-      ${h.trang_thai==='CHUA_NHAN' && h.nguoi_giao !== S.user.fullname ? `<div class="ibtn s" onclick="viewHandover(${h.seq})" title="Xác nhận">✔</div>` : `<div class="ibtn" onclick="viewHandover(${h.seq})" title="Xem">👁</div>`}
-    </div></td>
-  </tr>`).join('');
-}
+// ── KANBAN ──
+let draggedVoyage = null;
 
-function viewHandover(seq) {
-  const h = S.handovers.find(x => x.seq === seq);
-  if (!h) return;
-  _v('rec-seq', h.seq);
-  _v('rec-ca', h.ca_truc);
-  _v('rec-nguoi', h.nguoi_giao + ' (' + h.thoi_gian_giao + ')');
-  _v('rec-tomtat', h.tom_tat_ca);
-  _v('rec-tondong', h.cong_viec_ton);
-  _v('rec-ghichu', h.ghi_chu);
-  document.getElementById('btn-accept-ho').style.display = h.trang_thai === 'CHUA_NHAN' ? 'block' : 'none';
-  openOv('mrec');
-}
-
-function checkPendingHandover() {
-  const h = S.handovers.slice().sort((a,b)=>b.seq-a.seq).find(x => x.trang_thai === 'CHUA_NHAN');
-  if (h && h.nguoi_giao !== S.user.fullname) {
-    viewHandover(h.seq);
-  }
-}
-
-function openHandoverModal() {
-  const hr = new Date().getHours();
-  // Khởi tạo select cho Ca trực
-  let ca = 'Ca 1 (06:00 - 14:00)';
-  let startHour = 6;
-  if(hr >= 14 && hr < 22) { ca = 'Ca 2 (14:00 - 22:00)'; startHour = 14; }
-  else if(hr >= 22 || hr < 6) { ca = 'Ca 3 (22:00 - 06:00)'; startHour = 22; }
-  _v('ho-ca', ca);
-  _v('ho-nguoi', S.user.fullname);
-
-  // Auto-snapshot dữ liệu
+function renderKanban() {
+  const q = (_g('ksrch')||'').toLowerCase();
+  let cols = [[], [], [], []];
   const now = new Date();
-  const shiftStart = new Date(now);
-  if (hr < 6 && startHour === 22) shiftStart.setDate(shiftStart.getDate() - 1);
-  shiftStart.setHours(startHour, 0, 0, 0);
-  const shiftStamp = shiftStart.getTime();
-
-  let svCount = 0, teus = 0;
-  S.surveys.forEach(s => {
-    if(s.seq >= shiftStamp && s.seq <= now.getTime()) {
-      svCount++; teus += (parseInt(s.so_luong)||0);
-    }
-  });
-
-  let vCount = 0;
-  let tondong = [];
+  
   S.voyages.forEach(v => {
-    if(v.seq >= shiftStamp && v.seq <= now.getTime()) vCount++;
-    if(v.trang_thai_survey !== 'Đã survey') tondong.push(`- Sà lan ${v.ten_salan} (Voyage: ${v.voyage_no}) chưa hoàn thành survey.`);
+    if(q && !v.ten_salan.toLowerCase().includes(q) && !(v.voyage_no||'').includes(q)) return;
+    let st = 0;
+    if (v.trang_thai_survey === 'Đã survey') st = 3;
+    else if (v.ket_thuc) st = 2; // có kết thúc làm hàng
+    else if (v.bat_dau) st = 1; // có bắt đầu
+    else st = 0;
+    
+    // Ẩn chuyến hoàn tất > 48h (chỉ ẩn khi không tìm kiếm)
+    if (st === 3 && !q) {
+      if (v.ket_thuc) {
+        const kt = parseDt(v.ket_thuc);
+        if (kt && now - kt > 48*60*60*1000) return;
+      }
+    }
+    cols[st].push(v);
   });
-
-  let tomtat = [];
-  if(svCount > 0) tomtat.push(`- Trong ca đã thực hiện khảo sát ${svCount} chuyến, tổng ${teus} TEUs.`);
-  if(vCount > 0) tomtat.push(`- Thêm mới ${vCount} chuyến sà lan.`);
-  if(tomtat.length === 0) tomtat.push(`- Không có dữ liệu survey hay sà lan mới tải lên hệ thống trong ca này.`);
-
-  _v('ho-tomtat', tomtat.join('\n'));
-  _v('ho-tondong', tondong.length > 0 ? tondong.join('\n') : '- Không có công việc tồn đọng.');
-  _v('ho-ghichu', '');
-
-  openOv('mho');
+  
+  cols[0].sort((a,b)=>parseDt(a.eta||'2099') - parseDt(b.eta||'2099'));
+  cols[1].sort((a,b)=>parseDt(b.bat_dau) - parseDt(a.bat_dau));
+  cols[2].sort((a,b)=>parseDt(b.ket_thuc) - parseDt(a.ket_thuc));
+  cols[3].sort((a,b)=>parseDt(b.ket_thuc) - parseDt(a.ket_thuc));
+  
+  for(let c=0; c<4; c++) {
+    const list = document.getElementById('kcol-'+c);
+    list.innerHTML = cols[c].map(v => generateKCard(v, c)).join('');
+  }
 }
 
-async function saveHandover() {
-  const btn = document.getElementById('btn-save-ho');
+function generateKCard(v, st) {
+  const hasFlag = !!v.ghi_chu;
+  let timeHtml = '';
+  if (st===0 && v.eta) timeHtml = `<div class="kc-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ETA: ${v.eta.substring(0,16)}</div>`;
+  if (st===1 && v.bat_dau) timeHtml = `<div class="kc-time" style="color:var(--cyan)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Bắt đầu: ${v.bat_dau.substring(0,16)}</div>`;
+  if (st===2 && v.ket_thuc) timeHtml = `<div class="kc-time" style="color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg> Kết thúc LH: ${v.ket_thuc.substring(0,16)}</div>`;
+  if (st===3) timeHtml = `<div class="kc-time" style="color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Đã Survey</div>`;
+
+  return \`
+    <div class="kcard \${hasFlag?'has-flag':''}" draggable="true" data-seq="\${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
+      <div class="kc-top">
+        <div class="kc-title">\${esc(v.ten_salan)}</div>
+        \${v.voyage_no?\`<div class="kc-vno">\${esc(v.voyage_no)}</div>\`:\`\`}
+      </div>
+      <div class="kc-b">
+        <div class="kc-teu">📦 \${esc(v.so_luong)||'0'} TEUs</div>
+      </div>
+      \${timeHtml}
+      \${hasFlag ? \`<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Cảnh báo:</b> \${esc(v.ghi_chu)}</div>\` : \`\`}
+      <div class="kc-acts">
+        <div class="kc-btn flag \${hasFlag?'active':''}" onclick="openKnote('\${v.seq}')">
+          \${hasFlag ? '🚩 Đã gắn cờ' : '⚑ Cắm cờ / Ghi chú'}
+        </div>
+        \${st===2 ? \`<div class="kc-btn" style="color:var(--cyan);border-color:rgba(0,212,255,.3)" onclick="quickSurvey(S.voyages.find(x=>x.seq==\${v.seq}))">📋 Survey</div>\` : \`\`}
+      </div>
+    </div>
+  \`;
+}
+
+// Drag & Drop Handlers
+function kDragStart(e) { e.currentTarget.classList.add('dragging'); draggedVoyage = e.currentTarget.dataset.seq; }
+function kDragEnd(e) { e.currentTarget.classList.remove('dragging'); draggedVoyage = null; document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('drag-over')); }
+function kbDragOver(e) { e.preventDefault(); }
+function kbDragEnter(e) { if (e.currentTarget.classList.contains('kb-col')) e.currentTarget.classList.add('drag-over'); }
+function kbDragLeave(e) { if (e.currentTarget.classList.contains('kb-col')) e.currentTarget.classList.remove('drag-over'); }
+async function kbDrop(e, targetStatus) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!draggedVoyage) return;
+  const v = S.voyages.find(x => String(x.seq) === String(draggedVoyage));
+  if(!v) return;
+
+  let updateData = { seq: v.seq };
+  let nowLocal = new Date(); nowLocal.setMinutes(nowLocal.getMinutes() - nowLocal.getTimezoneOffset());
+  const nowStr = nowLocal.toISOString().slice(0, 16).replace('T', ' ');
+  
+  let changed = false;
+  if (targetStatus === 1 && !v.bat_dau)     { updateData.bat_dau = nowStr; v.bat_dau = nowStr; changed = true; }
+  else if (targetStatus === 2 && !v.ket_thuc){ updateData.ket_thuc = nowStr; v.ket_thuc = nowStr; changed = true; }
+  else if (targetStatus === 3 && v.trang_thai_survey !== 'Đã survey') {
+    toast('Vui lòng làm chức năng Khảo sát để cập nhật cột này!', 'err'); return;
+  }
+  else if (targetStatus === 0) {
+    if(v.bat_dau) { updateData.bat_dau = ''; v.bat_dau = ''; changed=true; }
+    if(v.ket_thuc) { updateData.ket_thuc = ''; v.ket_thuc = ''; changed=true; }
+  }
+  
+  renderKanban(); 
+  if (changed) {
+    try {
+      const res = await post({ action: 'updateVoyageStatus', ...updateData });
+      if(!res.success) throw new Error(res.error);
+    } catch(err) { toast('Lỗi cập nhật server: ' + err.message, 'err'); await loadAll(); }
+  }
+}
+
+// Knote Modal
+function openKnote(seq) {
+  const v = S.voyages.find(x => String(x.seq) === String(seq));
+  if(!v) return;
+  _v('mkn-seq', v.seq);
+  _v('mkn-note', v.ghi_chu||'');
+  document.getElementById('mkn-sub').innerText = `Sà lan: ${v.ten_salan}`;
+  let btn = document.getElementById('btn-save-knote');
+  btn.disabled = false; btn.textContent = 'Lưu cờ';
+  openOv('mknote');
+}
+
+async function saveKnote() {
+  const seq = _g('mkn-seq'), txt = _g('mkn-note').trim();
+  const v = S.voyages.find(x => String(x.seq) === String(seq));
+  if(!v) return;
+  
+  const btn = document.getElementById('btn-save-knote');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
+  
+  v.ghi_chu = txt; 
+  renderKanban(); // optimistic
   try {
-    const res = await post({
-      action: 'saveHandover',
-      ca_truc: _g('ho-ca'),
-      nguoi_giao: S.user.fullname,
-      tom_tat_ca: _g('ho-tomtat').trim(),
-      cong_viec_ton: _g('ho-tondong').trim(),
-      ghi_chu: _g('ho-ghichu').trim()
-    });
-    if(res.success) {
-      toast('Bàn giao ca thành công! Đang thoát...', 'ok');
-      closeOv('mho');
-      setTimeout(doLogout, 1500);
-    } else toast(res.error||'Lỗi', 'err');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Bàn giao & Đăng xuất';
-  }
-}
-
-async function acceptHandover() {
-  const seq = _g('rec-seq');
-  const btn = document.getElementById('btn-accept-ho');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ...';
-  try {
-    const res = await post({ action: 'acceptHandover', seq: seq, nguoi_nhan: S.user.fullname });
-    if(res.success) {
-      toast('Đã nhận ca thành công!', 'ok');
-      closeOv('mrec');
-      await loadAll();
-    } else toast(res.error||'Lỗi', 'err');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Xác nhận nhận ca';
-  }
+    const res = await post({ action: 'updateVoyageStatus', seq: seq, ghi_chu: txt });
+    if(res.success) { toast('Đã cập nhật', 'ok'); closeOv('mknote'); } 
+    else throw new Error(res.error);
+  } catch(err) { toast('Lỗi: '+err.message, 'err'); } 
+  finally { btn.disabled = false; }
 }
 
 // ── GANTT ──
