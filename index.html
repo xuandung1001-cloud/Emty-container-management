@@ -946,25 +946,25 @@ function generateKCard(v, st) {
   if (st===2 && v.ket_thuc) timeHtml = `<div class="kc-time" style="color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg> Kết thúc LH: ${v.ket_thuc.substring(0,16)}</div>`;
   if (st===3) timeHtml = `<div class="kc-time" style="color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Đã Survey</div>`;
 
-  return \`
-    <div class="kcard \${hasFlag?'has-flag':''}" draggable="true" data-seq="\${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
+  return `
+    <div class="kcard ${hasFlag?'has-flag':''}" draggable="true" data-seq="${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
       <div class="kc-top">
-        <div class="kc-title">\${esc(v.ten_salan)}</div>
-        \${v.voyage_no?\`<div class="kc-vno">\${esc(v.voyage_no)}</div>\`:\`\`}
+        <div class="kc-title">${esc(v.ten_salan)}</div>
+        ${v.voyage_no?`<div class="kc-vno">${esc(v.voyage_no)}</div>`:``}
       </div>
       <div class="kc-b">
-        <div class="kc-teu">📦 \${esc(v.so_luong)||'0'} TEUs</div>
+        <div class="kc-teu">📦 ${esc(v.so_luong)||'0'} TEUs</div>
       </div>
-      \${timeHtml}
-      \${hasFlag ? \`<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Cảnh báo:</b> \${esc(v.ghi_chu)}</div>\` : \`\`}
+      ${timeHtml}
+      ${hasFlag ? `<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Cảnh báo:</b> ${esc(v.ghi_chu)}</div>` : ``}
       <div class="kc-acts">
-        <div class="kc-btn flag \${hasFlag?'active':''}" onclick="openKnote('\${v.seq}')">
-          \${hasFlag ? '🚩 Đã gắn cờ' : '⚑ Cắm cờ / Ghi chú'}
+        <div class="kc-btn flag ${hasFlag?'active':''}" onclick="openKnote('${v.seq}')">
+          ${hasFlag ? '🚩 Đã gắn cờ' : '⚑ Cắm cờ / Ghi chú'}
         </div>
-        \${st===2 ? \`<div class="kc-btn" style="color:var(--cyan);border-color:rgba(0,212,255,.3)" onclick="quickSurvey(S.voyages.find(x=>x.seq==\${v.seq}))">📋 Survey</div>\` : \`\`}
+        ${st===2 ? `<div class="kc-btn" style="color:var(--cyan);border-color:rgba(0,212,255,.3)" onclick="quickSurvey(S.voyages.find(x=>String(x.seq)===String('${v.seq}')))">📋 Survey</div>` : ``}
       </div>
     </div>
-  \`;
+  `;
 }
 
 // Drag & Drop Handlers
