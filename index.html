@@ -810,6 +810,15 @@ async function saveBarge(){
 }
 
 // ── VOYAGES ──
+function fmDt(s, time=true){
+  if(!s||s==='—')return '—';
+  let d=new Date(s);
+  if(isNaN(d))return s;
+  let p=n=>String(n).padStart(2,'0');
+  let dateStr = `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
+  return time ? `${dateStr} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}` : dateStr;
+}
+
 function setVF(f,el){
   S.vf=f;
   document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
@@ -845,10 +854,10 @@ function renderVoyages(){
     <td style="color:var(--text2)">${esc(v.voyage_no)||'—'}</td>
     <td>${esc(v.loai_hang)||'—'}</td><td>${esc(v.so_luong)||'—'}</td>
     <td>${esc(v.pol)||'—'}</td><td>${esc(v.pod)||'—'}</td>
-    <td style="font-size:11px">${esc(v.eta)||'—'}</td>
-    <td style="font-size:11px">${esc(v.etd)||'—'}</td>
-    <td style="font-size:11px">${esc(v.bat_dau)||'—'}</td>
-    <td style="font-size:11px">${esc(v.ket_thuc)||'—'}</td>
+    <td style="font-size:11px">${fmDt(v.eta)}</td>
+    <td style="font-size:11px">${fmDt(v.etd)}</td>
+    <td style="font-size:11px">${fmDt(v.bat_dau)}</td>
+    <td style="font-size:11px">${fmDt(v.ket_thuc)}</td>
     <td>${v.trang_thai_survey==='Đã survey'?'<span class="badge b-sv">✔ Đã survey</span>':'<span class="badge b-ns">Chưa survey</span>'}</td>
     <td><div class="acts">
       <div class="ibtn s" data-action="quick-survey" data-idx="${i}" title="Survey">📋</div>
@@ -1290,7 +1299,7 @@ function renderSurveys(){
     <td style="text-align:center"><span class="cbdg rp">${s.repo}</span></td>
     <td style="text-align:center"><span class="cbdg tm">${s.termites}</span></td>
     <td style="text-align:right;font-weight:700">${fmt(s.so_luong)}</td>
-    <td style="color:var(--text2)">${esc(s.ngay_survey)||'—'}</td>
+    <td style="color:var(--text2)">${fmDt(s.ngay_survey, false)}</td>
     <td><div class="acts">
       <div class="ibtn e" data-action="edit-survey" data-idx="${i}" title="Sửa">✎</div>
       <div class="ibtn d" data-action="del-survey" data-seq="${s.seq}" title="Xoá">🗑</div>
