@@ -433,30 +433,19 @@ select.fi option{background:var(--bg2)}
 
       <!-- ══ KANBAN ══ -->
       <div class="screen" id="screen-kanban">
-        <div class="toolbar" style="margin-bottom:12px">
-          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm sà lan, việc rỗng..." id="ksrch" oninput="renderKanban()"></div>
+        <div class="toolbar" style="margin-bottom:12px;display:flex;justify-content:space-between">
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" id="tab-voyages" onclick="switchKanbanTab('voyages')" style="background:var(--cyan-dim);color:var(--cyan);border-color:var(--cyan)">🚢 Theo dõi tiến độ sà lan</button>
+            <button class="btn btn-ghost" id="tab-tasks" onclick="switchKanbanTab('tasks')" style="border-color:transparent">📋 Theo dõi công việc bãi</button>
+          </div>
+          <div class="srch" style="flex:0 0 200px"><span class="srch-ic">🔍</span><input placeholder="Tìm kiếm..." id="ksrch" oninput="renderKanban()"></div>
           <div class="ml" style="display:flex;align-items:center;gap:12px">
-             <i style="font-size:11px;color:var(--text3)">Kéo thả (Drag & Drop) sà lan & task</i>
-             <button class="btn btn-p" onclick="openTaskModal()">⊕ Thêm việc phụ</button>
+             <i style="font-size:11px;color:var(--text3)">Kéo thả (Drag & Drop)</i>
+             <button class="btn btn-p" onclick="openTaskModal()">⊕ Thêm công việc</button>
           </div>
         </div>
         <div class="kb-board" id="kb-board">
-          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 0)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
-            <div class="kb-head"><div class="kb-dot" style="background:var(--yellow)"></div>Sắp Cập Cảng / Neo đậu</div>
-            <div class="kb-list" id="kcol-0"></div>
-          </div>
-          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 1)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
-            <div class="kb-head"><div class="kb-dot" style="background:var(--cyan)"></div>Đang Làm Hàng</div>
-            <div class="kb-list" id="kcol-1"></div>
-          </div>
-          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 2)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
-            <div class="kb-head"><div class="kb-dot" style="background:var(--orange)"></div>Chờ Khảo Sát / Survey</div>
-            <div class="kb-list" id="kcol-2"></div>
-          </div>
-          <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 3)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
-            <div class="kb-head"><div class="kb-dot" style="background:var(--green)"></div>Hoàn Tất (48h qua)</div>
-            <div class="kb-list" id="kcol-3"></div>
-          </div>
+          <!-- Rendered by JS -->
         </div>
       </div>
 
@@ -639,6 +628,7 @@ select.fi option{background:var(--bg2)}
           <option value="Khác">Khác</option>
         </select>
       </div>
+      <div class="fg"><label class="fl">Deadline (Hạn chót)</label><input type="datetime-local" class="fi" id="mt-deadline"></div>
     </div>
     <div class="fg mt"><label class="fl">Mô tả chi tiết</label>
       <textarea class="fi" id="mt-mo-ta" rows="2" style="resize:vertical"></textarea>
@@ -932,44 +922,64 @@ function quickSurvey(v){
 // ── KANBAN ──
 let draggedItem = null;
 
+function switchKanbanTab(tab) {
+  S.kanbanTab = tab;
+  document.getElementById('tab-voyages').style.cssText = tab==='voyages' ? 'background:var(--cyan-dim);color:var(--cyan);border-color:var(--cyan)' : 'border-color:transparent';
+  document.getElementById('tab-tasks').style.cssText = tab==='tasks' ? 'background:var(--cyan-dim);color:var(--cyan);border-color:var(--cyan)' : 'border-color:transparent';
+  renderKanban();
+}
+
 function renderKanban() {
   const q = (_g('ksrch')||'').toLowerCase();
+  S.kanbanTab = S.kanbanTab || 'voyages';
   let cols = [[], [], [], []];
   const now = new Date();
   
-  S.voyages.forEach(v => {
-    if(q && !v.ten_salan.toLowerCase().includes(q) && !(v.voyage_no||'').includes(q)) return;
-    let st = 0;
-    if (v.trang_thai_survey === 'Đã survey') st = 3;
-    else if (v.ket_thuc) st = 2; // có kết thúc làm hàng
-    else if (v.bat_dau) st = 1; // có bắt đầu
-    else st = 0;
-    
-    // Ẩn chuyến hoàn tất > 48h (chỉ ẩn khi không tìm kiếm)
-    if (st === 3 && !q) {
-      if (v.ket_thuc) {
-        const kt = parseDt(v.ket_thuc);
-        if (kt && now - kt > 48*60*60*1000) return;
+  const board = document.getElementById('kb-board');
+  if (S.kanbanTab === 'voyages') {
+    board.innerHTML = `
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 0)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--yellow)"></div>Sắp Cập Cảng / Neo đậu</div><div class="kb-list" id="kcol-0"></div></div>
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 1)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--cyan)"></div>Đang Làm Hàng</div><div class="kb-list" id="kcol-1"></div></div>
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 2)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--orange)"></div>Chờ Khảo Sát / Survey</div><div class="kb-list" id="kcol-2"></div></div>
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 3)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--green)"></div>Hoàn Tất (48h qua)</div><div class="kb-list" id="kcol-3"></div></div>
+    `;
+    S.voyages.forEach(v => {
+      if(q && !v.ten_salan.toLowerCase().includes(q) && !(v.voyage_no||'').includes(q)) return;
+      let st = 0;
+      if (v.trang_thai_survey === 'Đã survey') st = 3;
+      else if (v.ket_thuc) st = 2;
+      else if (v.bat_dau) st = 1;
+      else st = 0;
+      if (st === 3 && !q) {
+        if (v.ket_thuc) {
+          const kt = parseDt(v.ket_thuc);
+          if (kt && now - kt > 48*60*60*1000) return;
+        }
       }
-    }
-    cols[st].push({ type: 'voyage', data: v });
-  });
-
-  S.tasks.forEach(t => {
-    if(q && !t.tieu_de.toLowerCase().includes(q) && !(t.mo_ta||'').toLowerCase().includes(q)) return;
-    let st = parseInt(t.trang_thai) || 0;
-    // Ẩn task hoàn tất > 48h
-    if (st === 3 && !q) {
-      const kt = parseInt(t.seq);
-      if (kt && now.getTime() - kt > 48*60*60*1000) return;
-    }
-    cols[st].push({ type: 'task', data: t });
-  });
-  
-  cols[0].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.eta||'2099') : a.data.seq) - (b.type==='voyage'?parseDt(b.data.eta||'2099') : b.data.seq));
-  cols[1].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.bat_dau||0) : a.data.seq) - (b.type==='voyage'?parseDt(b.data.bat_dau||0) : b.data.seq));
-  cols[2].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.ket_thuc||0) : a.data.seq) - (b.type==='voyage'?parseDt(b.data.ket_thuc||0) : b.data.seq));
-  cols[3].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.ket_thuc||0) : a.data.seq) - (b.type==='voyage'?parseDt(b.data.ket_thuc||0) : b.data.seq));
+      cols[st].push({ type: 'voyage', data: v });
+    });
+    cols[0].sort((a,b)=>parseDt(a.data.eta||'2099') - parseDt(b.data.eta||'2099'));
+    cols[1].sort((a,b)=>parseDt(b.data.bat_dau||0) - parseDt(a.data.bat_dau||0));
+    cols[2].sort((a,b)=>parseDt(b.data.ket_thuc||0) - parseDt(a.data.ket_thuc||0));
+    cols[3].sort((a,b)=>parseDt(b.data.ket_thuc||0) - parseDt(a.data.ket_thuc||0));
+  } else {
+    board.innerHTML = `
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 0)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--yellow)"></div>Cần Làm (To Do)</div><div class="kb-list" id="kcol-0"></div></div>
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 1)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--cyan)"></div>Đang Xử Lý (In Progress)</div><div class="kb-list" id="kcol-1"></div></div>
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 2)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--orange)"></div>Chờ Duyệt (Review)</div><div class="kb-list" id="kcol-2"></div></div>
+      <div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, 3)" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)"><div class="kb-head"><div class="kb-dot" style="background:var(--green)"></div>Hoàn Tất (Done)</div><div class="kb-list" id="kcol-3"></div></div>
+    `;
+    S.tasks.forEach(t => {
+      if(q && !t.tieu_de.toLowerCase().includes(q) && !(t.mo_ta||'').toLowerCase().includes(q)) return;
+      let st = parseInt(t.trang_thai) || 0;
+      if (st === 3 && !q) {
+        const kt = parseInt(t.seq);
+        if (kt && now.getTime() - kt > 48*60*60*1000) return;
+      }
+      cols[st].push({ type: 'task', data: t });
+    });
+    for(let c=0;c<4;c++) cols[c].sort((a,b)=>a.data.seq - b.data.seq);
+  }
   
   for(let c=0; c<4; c++) {
     const list = document.getElementById('kcol-'+c);
@@ -983,6 +993,20 @@ function generateTaskCard(t, st) {
   if(t.phan_loai==='Cấp rỗng') icon = '🚛';
   if(t.phan_loai==='Dọn bãi') icon = '🧹';
 
+  let dlHtml = '';
+  if (t.deadline) {
+    const dlDate = new Date(t.deadline);
+    const msDiff = dlDate.getTime() - new Date().getTime();
+    const isOverdue = msDiff < 0 && st !== 3; // Không xét overdue nếu đã hoàn tất
+    const isUrgent = msDiff > 0 && msDiff < 12*60*60*1000 && st !== 3;
+    let dlColor = 'var(--text2)';
+    if (isOverdue) dlColor = 'var(--red)';
+    else if (isUrgent) dlColor = 'var(--orange)';
+    dlHtml = `<div class="kc-time" style="color:${dlColor};font-weight:${isOverdue||isUrgent?'700':'400'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Deadline: ${dlDate.toLocaleString('vi-VN')} ${isOverdue?'(Quá hạn)':''}</div>`;
+  } else {
+    dlHtml = `<div class="kc-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${new Date(parseInt(t.seq)).toLocaleString('vi-VN')}</div>`;
+  }
+
   return `
     <div class="kcard ${hasFlag?'has-flag':''}" style="border-left:3px solid var(--purple)" draggable="true" data-type="task" data-seq="${t.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
       <div class="kc-top">
@@ -990,7 +1014,7 @@ function generateTaskCard(t, st) {
         <div class="kc-vno" style="background:var(--purple);color:#fff;font-size:8px">${esc(t.phan_loai)}</div>
       </div>
       ${t.mo_ta ? `<div style="font-size:10px;color:var(--text2);margin-top:4px">${esc(t.mo_ta)}</div>` : ``}
-      <div class="kc-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${new Date(parseInt(t.seq)).toLocaleString('vi-VN')}</div>
+      ${dlHtml}
       ${hasFlag ? `<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Lưu ý:</b> ${esc(t.ghi_chu)}</div>` : ``}
       <div class="kc-acts">
         <div class="kc-btn flag ${hasFlag?'active':''}" onclick="openKnoteTask('${t.seq}')">
@@ -1086,15 +1110,15 @@ async function kbDrop(e, targetStatus) {
 
 // Tasks Modal & Actions
 function openTaskModal() {
-  _v('mt-tieu-de', ''); _v('mt-mo-ta', ''); _v('mt-phan-loai', 'Cấp rỗng');
+  _v('mt-tieu-de', ''); _v('mt-mo-ta', ''); _v('mt-phan-loai', 'Cấp rỗng'); _v('mt-deadline', '');
   openOv('mtask');
 }
 async function saveTask() {
-  const td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim();
+  const td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim(), dl = _g('mt-deadline');
   if(!td){ toast('Cần nhập Tiêu đề','err'); return; }
   const btn = document.getElementById('btn-save-task'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span>...';
   try {
-    const res = await post({ action: 'saveTask', tieu_de: td, phan_loai: ml, mo_ta: mt, trang_thai: 0, nguoi_tao: S.user?S.user.fullname:'' });
+    const res = await post({ action: 'saveTask', tieu_de: td, phan_loai: ml, mo_ta: mt, deadline: dl, trang_thai: 0, nguoi_tao: S.user?S.user.fullname:'' });
     if(res.success){ toast('Đã tạo việc', 'ok'); closeOv('mtask'); await loadAll(); }
     else throw new Error(res.error);
   } catch(e) { toast('Lỗi: '+e.message, 'err'); }
