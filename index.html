@@ -1035,7 +1035,8 @@ function generateTaskCard(t, st) {
         <div class="kc-btn flag ${hasFlag?'active':''}" onclick="openKnoteTask('${t.seq}')">
           ${hasFlag ? '🚩 Đã gắn cờ' : '⚑ Ghi chú'}
         </div>
-        <div class="kc-btn" style="color:var(--red);border-color:rgba(255,69,96,.3);flex:0.4" onclick="delTask('${t.seq}')">🗑</div>
+        <div class="kc-btn" style="color:var(--cyan);border-color:var(--cyan-dim);flex:0.4" title="Sửa" onclick="openTaskModal('${t.seq}')">✎</div>
+        <div class="kc-btn" style="color:var(--red);border-color:rgba(255,69,96,.3);flex:0.4" title="Xóa" onclick="delTask('${t.seq}')">🗑</div>
       </div>
     </div>
   `;
@@ -1124,26 +1125,40 @@ async function kbDrop(e, targetStatus) {
 }
 
 // Tasks Modal & Actions
-function openTaskModal() {
-  _v('mt-tieu-de', ''); _v('mt-mo-ta', ''); _v('mt-phan-loai', 'Cấp rỗng'); _v('mt-deadline', '');
-  
+function openTaskModal(seq=null) {
   // Nạp danh sách users
   const asg = document.getElementById('mt-assignee');
   if(asg) {
     asg.innerHTML = '<option value="">-- Chưa phân công --</option>' + '<option value="Tất cả các ca">Phân công chung (Tất cả)</option>' +
       S.users.map(u => `<option value="${esc(u.fullname)}">${esc(u.fullname)} (${esc(u.role||'Nhân sự')})</option>`).join('');
-    _v('mt-assignee', '');
+  }
+
+  if (seq) {
+    const t = S.tasks.find(x => String(x.seq) === String(seq));
+    if (t) {
+      document.getElementById('mt-title').textContent = 'Sửa công việc phụ trợ';
+      _v('mt-seq', seq);
+      _v('mt-tieu-de', t.tieu_de||'');
+      _v('mt-phan-loai', t.phan_loai||'Cấp rỗng');
+      _v('mt-mo-ta', t.mo_ta||'');
+      _v('mt-deadline', t.deadline||'');
+      if (asg) _v('mt-assignee', t.assignee||'');
+    }
+  } else {
+    document.getElementById('mt-title').textContent = 'Thêm công việc phụ trợ';
+    _v('mt-seq', ''); _v('mt-tieu-de', ''); _v('mt-mo-ta', ''); _v('mt-phan-loai', 'Cấp rỗng'); _v('mt-deadline', '');
+    if(asg) _v('mt-assignee', '');
   }
 
   openOv('mtask');
 }
 async function saveTask() {
-  const td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim(), dl = _g('mt-deadline'), a = _g('mt-assignee');
+  const seq = _g('mt-seq'), td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim(), dl = _g('mt-deadline'), a = _g('mt-assignee');
   if(!td){ toast('Cần nhập Tiêu đề','err'); return; }
   const btn = document.getElementById('btn-save-task'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span>...';
   try {
-    const res = await post({ action: 'saveTask', tieu_de: td, phan_loai: ml, mo_ta: mt, deadline: dl, assignee: a, trang_thai: 0, nguoi_tao: S.user?S.user.fullname:'' });
-    if(res.success){ toast('Đã tạo việc', 'ok'); closeOv('mtask'); await loadAll(); }
+    const res = await post({ action: seq ? 'updateTask' : 'saveTask', seq: seq, tieu_de: td, phan_loai: ml, mo_ta: mt, deadline: dl, assignee: a, trang_thai: 0, nguoi_tao: S.user?S.user.fullname:'' });
+    if(res.success){ toast(seq ? 'Đã cập nhật việc' : 'Đã tạo việc', 'ok'); closeOv('mtask'); await loadAll(); }
     else throw new Error(res.error);
   } catch(e) { toast('Lỗi: '+e.message, 'err'); }
   finally { btn.disabled=false; btn.textContent='Lưu công việc'; }
