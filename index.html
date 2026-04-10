@@ -434,9 +434,10 @@ select.fi option{background:var(--bg2)}
       <!-- ══ KANBAN ══ -->
       <div class="screen" id="screen-kanban">
         <div class="toolbar" style="margin-bottom:12px">
-          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm sà lan, voyage..." id="ksrch" oninput="renderKanban()"></div>
-          <div class="ml" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px">
-             <i>Kéo thả sà lan (Drag & Drop) để chuyển cột và trạng thái tự động</i>
+          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm sà lan, việc rỗng..." id="ksrch" oninput="renderKanban()"></div>
+          <div class="ml" style="display:flex;align-items:center;gap:12px">
+             <i style="font-size:11px;color:var(--text3)">Kéo thả (Drag & Drop) sà lan & task</i>
+             <button class="btn btn-p" onclick="openTaskModal()">⊕ Thêm việc phụ</button>
           </div>
         </div>
         <div class="kb-board" id="kb-board">
@@ -622,6 +623,33 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
+<!-- ══ MODAL TASK ══ -->
+<div class="ov" id="mtask">
+  <div class="modal modal-lg">
+    <div class="m-title" id="mt-title">Thêm công việc phụ trợ</div>
+    <div class="m-sub">Tạo thẻ cho công việc dọn bãi, cấp rỗng, sửa chữa... lên bảng Kanban</div>
+    <input type="hidden" id="mt-seq">
+    <div class="g2">
+      <div class="fg"><label class="fl">Tiêu đề công việc *</label><input type="text" class="fi" id="mt-tieu-de" placeholder="VD: Cấp rỗng tài xế Tuấn..."></div>
+      <div class="fg"><label class="fl">Phân loại</label>
+        <select class="fi" id="mt-phan-loai">
+          <option value="Cấp rỗng">Cấp rỗng</option>
+          <option value="Dọn bãi">Dọn bãi</option>
+          <option value="Sửa chữa">Sửa chữa</option>
+          <option value="Khác">Khác</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg mt"><label class="fl">Mô tả chi tiết</label>
+      <textarea class="fi" id="mt-mo-ta" rows="2" style="resize:vertical"></textarea>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeOv('mtask')">Huỷ</button>
+      <button class="btn btn-p" id="btn-save-task" onclick="saveTask()">Lưu công việc</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfngvOruwQK1OSgSApvLNlRYetlUWquAL2PBresoBj3IfIz731qHPbxJ5U8VoEYkiDTw/exec';
 
@@ -633,7 +661,7 @@ const SCREEN_META = {
   kanban:  { title: 'Bảng Kanban',      badge: '' }
 };
 
-let S = { user:null, barges:[], voyages:[], surveys:[], vf:'all', importRows:[] };
+let S = { user:null, barges:[], voyages:[], surveys:[], tasks:[], vf:'all', importRows:[] };
 
 // ══════════════════════════════════════════
 // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -689,8 +717,8 @@ function doLogout(){
 // ── LOAD ──
 async function loadAll(){
   try{
-    const[b,v,s]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys')]);
-    S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[];
+    const[b,v,s,t]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys'),api('getTasks')]);
+    S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[]; S.tasks=t.data||[];
     renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); fillDropdowns();
   }catch(e){toast('Lỗi load data: '+e.message,'err');}
 }
@@ -902,7 +930,7 @@ function quickSurvey(v){
 }
 
 // ── KANBAN ──
-let draggedVoyage = null;
+let draggedItem = null;
 
 function renderKanban() {
   const q = (_g('ksrch')||'').toLowerCase();
@@ -924,18 +952,54 @@ function renderKanban() {
         if (kt && now - kt > 48*60*60*1000) return;
       }
     }
-    cols[st].push(v);
+    cols[st].push({ type: 'voyage', data: v });
+  });
+
+  S.tasks.forEach(t => {
+    if(q && !t.tieu_de.toLowerCase().includes(q) && !(t.mo_ta||'').toLowerCase().includes(q)) return;
+    let st = parseInt(t.trang_thai) || 0;
+    // Ẩn task hoàn tất > 48h
+    if (st === 3 && !q) {
+      const kt = parseInt(t.seq);
+      if (kt && now.getTime() - kt > 48*60*60*1000) return;
+    }
+    cols[st].push({ type: 'task', data: t });
   });
   
-  cols[0].sort((a,b)=>parseDt(a.eta||'2099') - parseDt(b.eta||'2099'));
-  cols[1].sort((a,b)=>parseDt(b.bat_dau) - parseDt(a.bat_dau));
-  cols[2].sort((a,b)=>parseDt(b.ket_thuc) - parseDt(a.ket_thuc));
-  cols[3].sort((a,b)=>parseDt(b.ket_thuc) - parseDt(a.ket_thuc));
+  cols[0].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.eta||'2099') : a.data.seq) - (b.type==='voyage'?parseDt(b.data.eta||'2099') : b.data.seq));
+  cols[1].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.bat_dau||0) : a.data.seq) - (b.type==='voyage'?parseDt(b.data.bat_dau||0) : b.data.seq));
+  cols[2].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.ket_thuc||0) : a.data.seq) - (b.type==='voyage'?parseDt(b.data.ket_thuc||0) : b.data.seq));
+  cols[3].sort((a,b)=> (a.type==='voyage'?parseDt(a.data.ket_thuc||0) : a.data.seq) - (b.type==='voyage'?parseDt(b.data.ket_thuc||0) : b.data.seq));
   
   for(let c=0; c<4; c++) {
     const list = document.getElementById('kcol-'+c);
-    list.innerHTML = cols[c].map(v => generateKCard(v, c)).join('');
+    list.innerHTML = cols[c].map(item => item.type==='voyage' ? generateKCard(item.data, c) : generateTaskCard(item.data, c)).join('');
   }
+}
+
+function generateTaskCard(t, st) {
+  const hasFlag = !!t.ghi_chu;
+  let icon = '🔧';
+  if(t.phan_loai==='Cấp rỗng') icon = '🚛';
+  if(t.phan_loai==='Dọn bãi') icon = '🧹';
+
+  return `
+    <div class="kcard ${hasFlag?'has-flag':''}" style="border-left:3px solid var(--purple)" draggable="true" data-type="task" data-seq="${t.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
+      <div class="kc-top">
+        <div class="kc-title" style="color:var(--text);font-size:12px">${icon} ${esc(t.tieu_de)}</div>
+        <div class="kc-vno" style="background:var(--purple);color:#fff;font-size:8px">${esc(t.phan_loai)}</div>
+      </div>
+      ${t.mo_ta ? `<div style="font-size:10px;color:var(--text2);margin-top:4px">${esc(t.mo_ta)}</div>` : ``}
+      <div class="kc-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${new Date(parseInt(t.seq)).toLocaleString('vi-VN')}</div>
+      ${hasFlag ? `<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Lưu ý:</b> ${esc(t.ghi_chu)}</div>` : ``}
+      <div class="kc-acts">
+        <div class="kc-btn flag ${hasFlag?'active':''}" onclick="openKnoteTask('${t.seq}')">
+          ${hasFlag ? '🚩 Đã gắn cờ' : '⚑ Ghi chú'}
+        </div>
+        <div class="kc-btn" style="color:var(--red);border-color:rgba(255,69,96,.3);flex:0.4" onclick="delTask('${t.seq}')">🗑</div>
+      </div>
+    </div>
+  `;
 }
 
 function generateKCard(v, st) {
@@ -947,7 +1011,7 @@ function generateKCard(v, st) {
   if (st===3) timeHtml = `<div class="kc-time" style="color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Đã Survey</div>`;
 
   return `
-    <div class="kcard ${hasFlag?'has-flag':''}" draggable="true" data-seq="${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
+    <div class="kcard ${hasFlag?'has-flag':''}" draggable="true" data-type="voyage" data-seq="${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
       <div class="kc-top">
         <div class="kc-title">${esc(v.ten_salan)}</div>
         ${v.voyage_no?`<div class="kc-vno">${esc(v.voyage_no)}</div>`:``}
@@ -968,16 +1032,32 @@ function generateKCard(v, st) {
 }
 
 // Drag & Drop Handlers
-function kDragStart(e) { e.currentTarget.classList.add('dragging'); draggedVoyage = e.currentTarget.dataset.seq; }
-function kDragEnd(e) { e.currentTarget.classList.remove('dragging'); draggedVoyage = null; document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('drag-over')); }
+function kDragStart(e) { 
+  e.currentTarget.classList.add('dragging'); 
+  draggedItem = { type: e.currentTarget.dataset.type || 'voyage', seq: e.currentTarget.dataset.seq }; 
+}
+function kDragEnd(e) { e.currentTarget.classList.remove('dragging'); draggedItem = null; document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('drag-over')); }
 function kbDragOver(e) { e.preventDefault(); }
 function kbDragEnter(e) { if (e.currentTarget.classList.contains('kb-col')) e.currentTarget.classList.add('drag-over'); }
 function kbDragLeave(e) { if (e.currentTarget.classList.contains('kb-col')) e.currentTarget.classList.remove('drag-over'); }
 async function kbDrop(e, targetStatus) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
-  if(!draggedVoyage) return;
-  const v = S.voyages.find(x => String(x.seq) === String(draggedVoyage));
+  if(!draggedItem) return;
+
+  if (draggedItem.type === 'task') {
+    const t = S.tasks.find(x => String(x.seq) === String(draggedItem.seq));
+    if(!t) return;
+    t.trang_thai = targetStatus;
+    renderKanban();
+    try {
+      const res = await post({ action: 'updateTaskStatus', seq: t.seq, trang_thai: targetStatus });
+      if(!res.success) throw new Error(res.error);
+    } catch(err) { toast('Lỗi cập nhật server', 'err'); await loadAll(); }
+    return;
+  }
+
+  const v = S.voyages.find(x => String(x.seq) === String(draggedItem.seq));
   if(!v) return;
 
   let updateData = { seq: v.seq };
@@ -1004,6 +1084,39 @@ async function kbDrop(e, targetStatus) {
   }
 }
 
+// Tasks Modal & Actions
+function openTaskModal() {
+  _v('mt-tieu-de', ''); _v('mt-mo-ta', ''); _v('mt-phan-loai', 'Cấp rỗng');
+  openOv('mtask');
+}
+async function saveTask() {
+  const td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim();
+  if(!td){ toast('Cần nhập Tiêu đề','err'); return; }
+  const btn = document.getElementById('btn-save-task'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span>...';
+  try {
+    const res = await post({ action: 'saveTask', tieu_de: td, phan_loai: ml, mo_ta: mt, trang_thai: 0, nguoi_tao: S.user?S.user.fullname:'' });
+    if(res.success){ toast('Đã tạo việc', 'ok'); closeOv('mtask'); await loadAll(); }
+    else throw new Error(res.error);
+  } catch(e) { toast('Lỗi: '+e.message, 'err'); }
+  finally { btn.disabled=false; btn.textContent='Lưu công việc'; }
+}
+async function delTask(seq) {
+  if(!confirm('Chắc chắn xoá việc này?')) return;
+  try {
+    const res = await post({ action: 'deleteTask', seq: seq });
+    if(res.success){ toast('Đã xoá việc', 'ok'); await loadAll(); }
+    else throw new Error(res.error);
+  } catch(e) { toast('Lỗi: '+e.message, 'err'); }
+}
+function openKnoteTask(seq) {
+  const t = S.tasks.find(x => String(x.seq) === String(seq));
+  if(!t) return;
+  _v('mkn-seq', 'TASK_'+t.seq);
+  _v('mkn-note', t.ghi_chu||'');
+  document.getElementById('mkn-sub').innerText = `Tác vụ: ${t.tieu_de}`;
+  openOv('mknote');
+}
+
 // Knote Modal
 function openKnote(seq) {
   const v = S.voyages.find(x => String(x.seq) === String(seq));
@@ -1017,21 +1130,28 @@ function openKnote(seq) {
 }
 
 async function saveKnote() {
-  const seq = _g('mkn-seq'), txt = _g('mkn-note').trim();
-  const v = S.voyages.find(x => String(x.seq) === String(seq));
-  if(!v) return;
-  
+  const seqInput = _g('mkn-seq'), txt = _g('mkn-note').trim();
   const btn = document.getElementById('btn-save-knote');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
   
-  v.ghi_chu = txt; 
-  renderKanban(); // optimistic
   try {
-    const res = await post({ action: 'updateVoyageStatus', seq: seq, ghi_chu: txt });
-    if(res.success) { toast('Đã cập nhật', 'ok'); closeOv('mknote'); } 
-    else throw new Error(res.error);
+    if(seqInput.startsWith('TASK_')) {
+      const seq = seqInput.replace('TASK_', '');
+      const t = S.tasks.find(x => String(x.seq) === String(seq));
+      if(t) t.ghi_chu = txt;
+      renderKanban();
+      const res = await post({ action: 'updateTaskStatus', seq: seq, ghi_chu: txt });
+      if(!res.success) throw new Error(res.error);
+    } else {
+      const v = S.voyages.find(x => String(x.seq) === String(seqInput));
+      if(v) v.ghi_chu = txt; 
+      renderKanban();
+      const res = await post({ action: 'updateVoyageStatus', seq: seqInput, ghi_chu: txt });
+      if(!res.success) throw new Error(res.error);
+    }
+    toast('Đã cập nhật', 'ok'); closeOv('mknote');
   } catch(err) { toast('Lỗi: '+err.message, 'err'); } 
-  finally { btn.disabled = false; }
+  finally { btn.disabled = false; btn.textContent = 'Lưu cờ'; }
 }
 
 // ── GANTT ──
