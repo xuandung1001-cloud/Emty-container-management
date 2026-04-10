@@ -272,6 +272,11 @@ select.fi option{background:var(--bg2)}
     <!-- Nav: Theo dõi -->
     <div class="sb-section">
       <span class="sb-sec-label cyan">Theo dõi</span>
+      <div class="nav-item" id="nav-handovers" onclick="nav('handovers',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <div class="nav-dot"></div>
+        Sổ giao ca
+      </div>
       <div class="nav-item" id="nav-gantt" onclick="nav('gantt',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
         <div class="nav-dot"></div>
@@ -292,7 +297,10 @@ select.fi option{background:var(--bg2)}
     <div class="sb-footer">
       <div class="sb-user" id="sb-fullname">—</div>
       <div class="sb-role" id="sb-role">—</div>
-      <div class="sb-logout" onclick="doLogout()">⎋ Đăng xuất</div>
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <div class="sb-logout" onclick="doLogout()">⎋ Đăng xuất</div>
+        <div class="sb-logout" style="color:var(--yellow);font-weight:600;opacity:0.8" onclick="openHandoverModal()">Nhật ký & Thoát</div>
+      </div>
     </div>
   </div><!-- /sidebar -->
 
@@ -396,6 +404,22 @@ select.fi option{background:var(--bg2)}
             <th>SỐ LƯỢNG</th><th>DAMAGED</th><th>CLEAN</th><th>REPO</th><th>TERMITES</th>
             <th>TỔNG</th><th>NGÀY SURVEY</th><th style="width:80px">THAO TÁC</th>
           </tr></thead><tbody id="stbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ══ HANDOVERS ══ -->
+      <div class="screen" id="screen-handovers">
+        <div class="toolbar">
+          <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm ca trực..." id="hsrch" oninput="renderHandovers()"></div>
+          <div class="ml" style="display:flex;gap:7px">
+            <button class="btn btn-p" onclick="openHandoverModal()">⊕ Bàn giao ca trực</button>
+          </div>
+        </div>
+        <div class="tbl">
+          <table><thead><tr>
+            <th style="width:44px">STT</th><th>CA TRỰC</th><th>NGƯỜI GIAO</th><th>THỜI GIAN GIAO</th>
+            <th>NGƯỜI NHẬN</th><th>THỜI GIAN NHẬN</th><th>TRẠNG THÁI</th><th style="width:80px">THAO TÁC</th>
+          </tr></thead><tbody id="htbody"></tbody></table>
         </div>
       </div>
 
@@ -546,6 +570,63 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
+<!-- ══ MODAL HANDOVER ══ -->
+<div class="ov" id="mho">
+  <div class="modal modal-lg">
+    <div class="m-title">Bàn giao ca trực</div>
+    <div class="m-sub">Tự động tổng hợp công việc trong ca để bàn giao (Auto-Snapshot)</div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Chọn ca trực *</label>
+        <select class="fi" id="ho-ca">
+          <option value="Ca 1 (06:00 - 14:00)">Ca 1 (06:00 - 14:00)</option>
+          <option value="Ca 2 (14:00 - 22:00)">Ca 2 (14:00 - 22:00)</option>
+          <option value="Ca 3 (22:00 - 06:00)">Ca 3 (22:00 - 06:00)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Người giao</label><input class="fi" id="ho-nguoi" disabled></div>
+    </div>
+    <div class="fg mt"><label class="fl">Tóm tắt công việc đã thực hiện</label>
+      <textarea class="fi" id="ho-tomtat" rows="3" style="resize:vertical"></textarea>
+    </div>
+    <div class="fg mt"><label class="fl" style="color:var(--orange)">Công việc tồn đọng (Chưa hoàn thành)</label>
+      <textarea class="fi" id="ho-tondong" rows="3" style="resize:vertical;border-color:rgba(255,124,42,.3)"></textarea>
+    </div>
+    <div class="fg mt"><label class="fl">Ghi chú đặc biệt (Tuỳ chọn)</label>
+      <textarea class="fi" id="ho-ghichu" rows="2" style="resize:vertical" placeholder="Ví dụ: Sự cố kỹ thuật, lưu ý thời tiết..."></textarea>
+    </div>
+    <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mho')">Huỷ</button>
+        <button class="btn btn-p" id="btn-save-ho" onclick="saveHandover()">Bàn giao & Đăng xuất</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL RECEIVE HANDOVER ══ -->
+<div class="ov" id="mrec">
+  <div class="modal modal-lg">
+    <div class="m-title" style="color:var(--yellow)">⚠ Bạn có 1 phiếu nhận ca chưa xác nhận</div>
+    <div class="m-sub">Vui lòng đọc thông tin bàn giao từ ca trước và thao tác Xác nhận nhận ca.</div>
+    <input type="hidden" id="rec-seq">
+    <div class="g2">
+      <div class="fg"><label class="fl">Ca giao</label><input class="fi" id="rec-ca" disabled></div>
+      <div class="fg"><label class="fl">Người giao</label><input class="fi" id="rec-nguoi" disabled></div>
+    </div>
+    <div class="fg mt"><label class="fl">Tóm tắt công việc</label>
+      <textarea class="fi" id="rec-tomtat" rows="3" disabled></textarea>
+    </div>
+    <div class="fg mt"><label class="fl">Công việc tồn đọng</label>
+      <textarea class="fi" id="rec-tondong" rows="3" disabled style="border-color:rgba(255,124,42,.3);color:var(--orange)"></textarea>
+    </div>
+    <div class="fg mt"><label class="fl">Ghi chú đặc biệt</label>
+      <textarea class="fi" id="rec-ghichu" rows="2" disabled></textarea>
+    </div>
+    <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mrec')">Đóng</button>
+        <button class="btn btn-p" id="btn-accept-ho" onclick="acceptHandover()">Xác nhận nhận ca</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfngvOruwQK1OSgSApvLNlRYetlUWquAL2PBresoBj3IfIz731qHPbxJ5U8VoEYkiDTw/exec';
 
@@ -553,10 +634,11 @@ const SCREEN_META = {
   barges:  { title: 'Quản lý sà lan',   badge: '' },
   voyages: { title: 'Kế hoạch sà lan',  badge: '' },
   gantt:   { title: 'Sơ đồ Gantt',      badge: '' },
-  survey:  { title: 'Báo cáo Survey',   badge: '' }
+  survey:  { title: 'Báo cáo Survey',   badge: '' },
+  handovers: { title: 'Sổ giao ca',     badge: '' }
 };
 
-let S = { user:null, barges:[], voyages:[], surveys:[], vf:'all', importRows:[] };
+let S = { user:null, barges:[], voyages:[], surveys:[], handovers:[], vf:'all', importRows:[] };
 
 // ══════════════════════════════════════════
 // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -612,9 +694,10 @@ function doLogout(){
 // ── LOAD ──
 async function loadAll(){
   try{
-    const[b,v,s]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys')]);
-    S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[];
-    renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); fillDropdowns();
+    const[b,v,s,h]=await Promise.all([api('getBarges'),api('getVoyages'),api('getSurveys'),api('getHandovers')]);
+    S.barges=b.data||[]; S.voyages=v.data||[]; S.surveys=s.data||[]; S.handovers=h.data||[];
+    renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderHandovers(); fillDropdowns();
+    setTimeout(checkPendingHandover, 500);
   }catch(e){toast('Lỗi load data: '+e.message,'err');}
 }
 
@@ -641,9 +724,12 @@ function esc(s) {
 function renderBarges(){
   const q=(_g('bsrch')||'').toLowerCase();
   const rows=S.barges.filter(b=>!q||b.ten.toLowerCase().includes(q)||b.code.toLowerCase().includes(q)||(b.so_dang_ky||'').toLowerCase().includes(q));
-  const tot=S.barges.length, on=S.barges.filter(b=>b.tinh_trang==='HOAT_DONG').length,
-        off=S.barges.filter(b=>b.tinh_trang==='NGUNG').length, bt=S.barges.filter(b=>b.tinh_trang==='BAO_TRI').length,
-        teus=S.barges.filter(b=>b.tinh_trang==='HOAT_DONG').reduce((s,b)=>s+b.so_teus,0);
+  let tot=S.barges.length, on=0, off=0, bt=0, teus=0;
+  S.barges.forEach(b => {
+    if(b.tinh_trang==='HOAT_DONG') { on++; teus += (b.so_teus || 0); }
+    else if(b.tinh_trang==='NGUNG') { off++; }
+    else { bt++; }
+  });
   document.getElementById('bstats').innerHTML=
     sc('TỔNG SÀ LAN',fmt(tot),'c-cyan')+sc('ĐANG HOẠT ĐỘNG',fmt(on),'c-green')+
     sc('NGỪNG HOẠT ĐỘNG',fmt(off),'c-red')+sc('BẢO TRÌ',fmt(bt),'c-yellow')+
@@ -729,10 +815,13 @@ function getFilteredVoyages() {
 }
 function renderVoyages(){
   let rows = getFilteredVoyages();
-  const tot=S.voyages.length, teus=S.voyages.reduce((s,v)=>s+(parseInt(v.so_luong)||0),0),
-        cs=S.voyages.filter(v=>v.trang_thai_survey!=='Đã survey').length,
-        ht=S.voyages.filter(v=>v.trang_thai_survey==='Đã survey').length,
-        tc=S.voyages.filter(v=>v.trang_thai_survey!=='Đã survey').reduce((s,v)=>s+(parseInt(v.so_luong)||0),0);
+  let tot=S.voyages.length, teus=0, cs=0, ht=0, tc=0;
+  S.voyages.forEach(v => {
+    const sl = parseInt(v.so_luong) || 0;
+    teus += sl;
+    if(v.trang_thai_survey === 'Đã survey') { ht++; }
+    else { cs++; tc += sl; }
+  });
   document.getElementById('vstats').innerHTML=
     sc('TỔNG SÀ LAN',fmt(tot),'c-cyan')+sc('TỔNG TEUS',fmt(teus),'c-cyan')+
     sc('CHƯA SURVEY',fmt(cs),'c-yellow')+sc('HOÀN THÀNH',fmt(ht),'c-green')+sc('TEUS CHỜ DỠ',fmt(tc),'c-red');
@@ -816,6 +905,127 @@ async function saveVoyage(){
 function quickSurvey(v){
   nav('survey', document.getElementById('nav-survey'));
   setTimeout(()=>openSurveyModal(null,v),80);
+}
+
+// ── HANDOVERS ──
+function renderHandovers() {
+  const q=(_g('hsrch')||'').toLowerCase();
+  const rows=S.handovers.filter(h=>!q||h.ca_truc.toLowerCase().includes(q)||h.nguoi_giao.toLowerCase().includes(q)||(h.tom_tat_ca||'').toLowerCase().includes(q));
+  const tb=document.getElementById('htbody');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;return;}
+  tb.innerHTML=rows.sort((a,b)=>b.seq-a.seq).map((h,i)=>`<tr>
+    <td style="color:var(--text3)">${i+1}</td>
+    <td class="td-n">${esc(h.ca_truc)}</td>
+    <td>${esc(h.nguoi_giao)}</td>
+    <td style="font-size:11px">${esc(h.thoi_gian_giao)}</td>
+    <td>${esc(h.nguoi_nhan)||'—'}</td>
+    <td style="font-size:11px">${esc(h.thoi_gian_nhan)||'—'}</td>
+    <td>${h.trang_thai==='DA_NHAN'?'<span class="badge b-on">ĐÃ NHẬN</span>':'<span class="badge b-ns">CHỜ NHẬN</span>'}</td>
+    <td><div class="acts">
+      ${h.trang_thai==='CHUA_NHAN' && h.nguoi_giao !== S.user.fullname ? `<div class="ibtn s" onclick="viewHandover(${h.seq})" title="Xác nhận">✔</div>` : `<div class="ibtn" onclick="viewHandover(${h.seq})" title="Xem">👁</div>`}
+    </div></td>
+  </tr>`).join('');
+}
+
+function viewHandover(seq) {
+  const h = S.handovers.find(x => x.seq === seq);
+  if (!h) return;
+  _v('rec-seq', h.seq);
+  _v('rec-ca', h.ca_truc);
+  _v('rec-nguoi', h.nguoi_giao + ' (' + h.thoi_gian_giao + ')');
+  _v('rec-tomtat', h.tom_tat_ca);
+  _v('rec-tondong', h.cong_viec_ton);
+  _v('rec-ghichu', h.ghi_chu);
+  document.getElementById('btn-accept-ho').style.display = h.trang_thai === 'CHUA_NHAN' ? 'block' : 'none';
+  openOv('mrec');
+}
+
+function checkPendingHandover() {
+  const h = S.handovers.slice().sort((a,b)=>b.seq-a.seq).find(x => x.trang_thai === 'CHUA_NHAN');
+  if (h && h.nguoi_giao !== S.user.fullname) {
+    viewHandover(h.seq);
+  }
+}
+
+function openHandoverModal() {
+  const hr = new Date().getHours();
+  // Khởi tạo select cho Ca trực
+  let ca = 'Ca 1 (06:00 - 14:00)';
+  let startHour = 6;
+  if(hr >= 14 && hr < 22) { ca = 'Ca 2 (14:00 - 22:00)'; startHour = 14; }
+  else if(hr >= 22 || hr < 6) { ca = 'Ca 3 (22:00 - 06:00)'; startHour = 22; }
+  _v('ho-ca', ca);
+  _v('ho-nguoi', S.user.fullname);
+
+  // Auto-snapshot dữ liệu
+  const now = new Date();
+  const shiftStart = new Date(now);
+  if (hr < 6 && startHour === 22) shiftStart.setDate(shiftStart.getDate() - 1);
+  shiftStart.setHours(startHour, 0, 0, 0);
+  const shiftStamp = shiftStart.getTime();
+
+  let svCount = 0, teus = 0;
+  S.surveys.forEach(s => {
+    if(s.seq >= shiftStamp && s.seq <= now.getTime()) {
+      svCount++; teus += (parseInt(s.so_luong)||0);
+    }
+  });
+
+  let vCount = 0;
+  let tondong = [];
+  S.voyages.forEach(v => {
+    if(v.seq >= shiftStamp && v.seq <= now.getTime()) vCount++;
+    if(v.trang_thai_survey !== 'Đã survey') tondong.push(`- Sà lan ${v.ten_salan} (Voyage: ${v.voyage_no}) chưa hoàn thành survey.`);
+  });
+
+  let tomtat = [];
+  if(svCount > 0) tomtat.push(`- Trong ca đã thực hiện khảo sát ${svCount} chuyến, tổng ${teus} TEUs.`);
+  if(vCount > 0) tomtat.push(`- Thêm mới ${vCount} chuyến sà lan.`);
+  if(tomtat.length === 0) tomtat.push(`- Không có dữ liệu survey hay sà lan mới tải lên hệ thống trong ca này.`);
+
+  _v('ho-tomtat', tomtat.join('\n'));
+  _v('ho-tondong', tondong.length > 0 ? tondong.join('\n') : '- Không có công việc tồn đọng.');
+  _v('ho-ghichu', '');
+
+  openOv('mho');
+}
+
+async function saveHandover() {
+  const btn = document.getElementById('btn-save-ho');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
+  try {
+    const res = await post({
+      action: 'saveHandover',
+      ca_truc: _g('ho-ca'),
+      nguoi_giao: S.user.fullname,
+      tom_tat_ca: _g('ho-tomtat').trim(),
+      cong_viec_ton: _g('ho-tondong').trim(),
+      ghi_chu: _g('ho-ghichu').trim()
+    });
+    if(res.success) {
+      toast('Bàn giao ca thành công! Đang thoát...', 'ok');
+      closeOv('mho');
+      setTimeout(doLogout, 1500);
+    } else toast(res.error||'Lỗi', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Bàn giao & Đăng xuất';
+  }
+}
+
+async function acceptHandover() {
+  const seq = _g('rec-seq');
+  const btn = document.getElementById('btn-accept-ho');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ...';
+  try {
+    const res = await post({ action: 'acceptHandover', seq: seq, nguoi_nhan: S.user.fullname });
+    if(res.success) {
+      toast('Đã nhận ca thành công!', 'ok');
+      closeOv('mrec');
+      await loadAll();
+    } else toast(res.error||'Lỗi', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Xác nhận nhận ca';
+  }
 }
 
 // ── GANTT ──
@@ -904,13 +1114,13 @@ function getFilteredSurveys() {
 }
 function renderSurveys(){
   let rows = getFilteredSurveys();
-  const a=S.surveys, adm=a.reduce((s,r)=>s+r.damaged,0), acl=a.reduce((s,r)=>s+r.clean,0),
-        arp=a.reduce((s,r)=>s+r.repo,0), atm=a.reduce((s,r)=>s+r.termites,0), at=a.reduce((s,r)=>s+r.so_luong,0);
+  let adm=0, acl=0, arp=0, atm=0, at=0;
+  S.surveys.forEach(r => { adm+=r.damaged; acl+=r.clean; arp+=r.repo; atm+=r.termites; at+=r.so_luong; });
   document.getElementById('sstats-top').innerHTML=
     sc('TỔNG CONTAINERS',fmt(at),'c-cyan')+sc('DAMAGED',fmt(adm),'c-red')+
     sc('CLEAN',fmt(acl),'c-green')+sc('REPO',fmt(arp),'c-cyan')+sc('TERMITES',fmt(atm),'c-yellow');
-  const fdm=rows.reduce((s,r)=>s+r.damaged,0), fcl=rows.reduce((s,r)=>s+r.clean,0),
-        frp=rows.reduce((s,r)=>s+r.repo,0), ftm=rows.reduce((s,r)=>s+r.termites,0), ft=rows.reduce((s,r)=>s+r.so_luong,0);
+  let fdm=0, fcl=0, frp=0, ftm=0, ft=0;
+  rows.forEach(r => { fdm+=r.damaged; fcl+=r.clean; frp+=r.repo; ftm+=r.termites; ft+=r.so_luong; });
   document.getElementById('sstats-f').innerHTML=
     sc2('TỔNG CONTAINERS',fmt(ft),'c-cyan','')+
     sc2('DAMAGED',fmt(fdm),'c-red',ft?(fdm/ft*100).toFixed(1)+'%':'')+
