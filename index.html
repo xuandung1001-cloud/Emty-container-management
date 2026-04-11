@@ -2103,7 +2103,7 @@
           let st = parseInt(t.trang_thai) || 0;
           // FIX: Ẩn task "Done" >48h dựa trên done_at (thời điểm hoàn tất) thay vì seq (thời điểm tạo)
           if (st === 3 && !q) {
-            const doneAt = parseInt(t.done_at) || parseInt(t.seq);
+            const doneAt = parseInt(t.done_at) || 0;
             if (doneAt && now.getTime() - doneAt > 48 * 60 * 60 * 1000) return;
           }
           cols[st].push({ type: 'task', data: t });
@@ -2149,7 +2149,7 @@
           dlHtml = `<div class="kc-time" style="color:${dlColor};font-weight:${isOverdue || isUrgent ? '700' : '400'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Deadline: ${fmtDt(t.deadline)} ${isOverdue ? '(Quá hạn)' : ''}</div>`;
         }
       } else if (!statusTimeHtml) {
-        dlHtml = `<div class="kc-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${fmtDtFromDate(new Date(parseInt(t.seq)))}</div>`;
+        dlHtml = `<div class="kc-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${t.created_at ? fmtDt(t.created_at) : '—'}</div>`;
       }
 
       return `
