@@ -2101,9 +2101,10 @@
         S.tasks.forEach(t => {
           if (q && !t.tieu_de.toLowerCase().includes(q) && !(t.mo_ta || '').toLowerCase().includes(q)) return;
           let st = parseInt(t.trang_thai) || 0;
+          // FIX: Ẩn task "Done" >48h dựa trên done_at (thời điểm hoàn tất) thay vì seq (thời điểm tạo)
           if (st === 3 && !q) {
-            const kt = parseInt(t.seq);
-            if (kt && now.getTime() - kt > 48 * 60 * 60 * 1000) return;
+            const doneAt = parseInt(t.done_at) || parseInt(t.seq);
+            if (doneAt && now.getTime() - doneAt > 48 * 60 * 60 * 1000) return;
           }
           cols[st].push({ type: 'task', data: t });
         });
@@ -2203,10 +2204,19 @@
       if (draggedItem.type === 'task') {
         const t = S.tasks.find(x => String(x.seq) === String(draggedItem.seq));
         if (!t) return;
+        const oldStatus = parseInt(t.trang_thai) || 0;
         t.trang_thai = targetStatus;
+        // FIX: Ghi lại thời gian hoàn tất khi kéo sang "Done"
+        let doneAt = undefined;
+        if (targetStatus === 3 && oldStatus !== 3) {
+          t.done_at = Date.now();
+          doneAt = t.done_at;
+        }
         renderKanban();
         try {
-          const res = await post({ action: 'updateTaskStatus', seq: t.seq, trang_thai: targetStatus });
+          const payload = { action: 'updateTaskStatus', seq: t.seq, trang_thai: targetStatus };
+          if (doneAt !== undefined) payload.done_at = doneAt;
+          const res = await post(payload);
           if (!res.success) throw new Error(res.error);
         } catch (err) { toast('Lỗi cập nhật server', 'err'); await loadAll(); }
         return;
@@ -2221,6 +2231,10 @@
 
       let changed = false;
       if (targetStatus === 1 && !v.bat_dau) { updateData.bat_dau = nowStr; v.bat_dau = nowStr; changed = true; }
+      else if (targetStatus === 1 && v.ket_thuc) {
+        // FIX: Cho phép kéo từ cột 2 (Chờ Survey) về cột 1 (Đang Làm Hàng) → xóa ket_thuc
+        updateData.ket_thuc = ''; v.ket_thuc = ''; changed = true;
+      }
       else if (targetStatus === 2 && !v.ket_thuc) { updateData.ket_thuc = nowStr; v.ket_thuc = nowStr; changed = true; }
       else if (targetStatus === 3 && v.trang_thai_survey !== 'Đã survey') {
         toast('Vui lòng làm chức năng Khảo sát để cập nhật cột này!', 'err'); return;
@@ -2271,8 +2285,14 @@
       const seq = _g('mt-seq'), td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim(), dl = _g('mt-deadline'), a = _g('mt-assignee');
       if (!td) { toast('Cần nhập Tiêu đề', 'err'); return; }
       const btn = document.getElementById('btn-save-task'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
+      // FIX: Khi sửa task, giữ nguyên trạng thái cũ thay vì reset về 0
+      let trangThai = 0;
+      if (seq) {
+        const existing = S.tasks.find(x => String(x.seq) === String(seq));
+        if (existing) trangThai = parseInt(existing.trang_thai) || 0;
+      }
       try {
-        const res = await post({ action: seq ? 'updateTask' : 'saveTask', seq: seq, tieu_de: td, phan_loai: ml, mo_ta: mt, deadline: dl, assignee: a, trang_thai: 0, nguoi_tao: S.user ? S.user.fullname : '' });
+        const res = await post({ action: seq ? 'updateTask' : 'saveTask', seq: seq, tieu_de: td, phan_loai: ml, mo_ta: mt, deadline: dl, assignee: a, trang_thai: trangThai, nguoi_tao: S.user ? S.user.fullname : '' });
         if (res.success) { toast(seq ? 'Đã cập nhật việc' : 'Đã tạo việc', 'ok'); closeOv('mtask'); await loadAll(); }
         else throw new Error(res.error);
       } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
