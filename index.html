@@ -1509,9 +1509,9 @@
             <path d="M16 7v4" />
           </svg>
           <div class="nav-dot"></div>
-          Bảng Kanban
+          Theo dõi tiến độ
         </div>
-        <div class="nav-item" id="nav-gantt" onclick="nav('gantt',this)">
+        <div class="nav-item" id="nav-gantt" onclick="nav('gantt',this)" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="12" x2="15" y2="12" />
@@ -2048,10 +2048,7 @@
             <input type="checkbox" id="perm-voyages" onchange="updatePermItem('voyages')"> 📅 Kế hoạch sà lan
           </label>
           <label class="perm-item" id="pi-kanban">
-            <input type="checkbox" id="perm-kanban" onchange="updatePermItem('kanban')"> 📋 Bảng Kanban
-          </label>
-          <label class="perm-item" id="pi-gantt">
-            <input type="checkbox" id="perm-gantt" onchange="updatePermItem('gantt')"> 📊 Sơ đồ Gantt
+            <input type="checkbox" id="perm-kanban" onchange="updatePermItem('kanban')"> 📋 Theo dõi tiến độ
           </label>
           <label class="perm-item" id="pi-survey">
             <input type="checkbox" id="perm-survey" onchange="updatePermItem('survey')"> 📄 Báo cáo Survey
@@ -2125,9 +2122,8 @@
     const SCREEN_META = {
       barges: { title: 'Quản lý sà lan', badge: '' },
       voyages: { title: 'Kế hoạch sà lan', badge: '' },
-      gantt: { title: 'Sơ đồ Gantt', badge: '' },
       survey: { title: 'Báo cáo Survey', badge: '' },
-      kanban: { title: 'Bảng Kanban', badge: '' },
+      kanban: { title: 'Theo dõi tiến độ', badge: '' },
       users: { title: 'Quản lý Users', badge: '' }
     };
 
@@ -2199,8 +2195,7 @@
     const APP_SCREENS_META = {
       barges:  { navId: 'nav-barges',  label: 'Quản lý sà lan' },
       voyages: { navId: 'nav-voyages', label: 'Kế hoạch sà lan' },
-      kanban:  { navId: 'nav-kanban',  label: 'Bảng Kanban' },
-      gantt:   { navId: 'nav-gantt',   label: 'Sơ đồ Gantt' },
+      kanban:  { navId: 'nav-kanban',  label: 'Theo dõi tiến độ' },
       survey:  { navId: 'nav-survey',  label: 'Báo cáo Survey' },
       users:   { navId: 'nav-users',   label: 'Quản lý Users', adminOnly: true }
     };
@@ -3009,15 +3004,15 @@
     });
 
     // ── PERMISSIONS CHECKBOXES ──
-    // TấT CẤ mên hình của cả 2 app
+    // Tất cả màn hình của cả 2 app
     const ALL_SCREENS = [
-      // App Quản lý Rồng
-      'barges','voyages','kanban','gantt','survey','users',
+      // App Quản lý Rồng (không có gantt — đã bỏ)
+      'barges','voyages','kanban','survey','users',
       // App MNR Estimate
       'estimate','revise','ovm','tracking','summary','bulk','stock',
       'warehouse','phieu-kho','ccdc','tariff','report','pictures','inventory','photos'
     ];
-    const THIS_APP_SCREENS = ['barges','voyages','kanban','gantt','survey','users'];
+    const THIS_APP_SCREENS = ['barges','voyages','kanban','survey','users'];
 
     function updatePermItem(screen) {
       const cb = document.getElementById('perm-' + screen);
