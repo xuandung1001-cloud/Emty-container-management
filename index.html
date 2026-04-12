@@ -2031,11 +2031,15 @@
         <div class="fg"><label class="fl">Chức danh</label><input class="fi" id="mu-title-input"
             placeholder="VD: Trưởng ca, Điều phối"></div>
       </div>
-      <!-- Permissions -->
+      <!-- Permissions App này -->
       <div class="divider"></div>
       <div class="fg">
         <label class="fl">Màn hình được phép truy cập</label>
         <div id="mu-perm-info" style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Chọn từng màn hình bên dưới (Admin tự động có tất cả)</div>
+        <!-- App: Quản lý Rồng -->
+        <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);padding:4px 2px 4px;border-bottom:1px solid var(--cyan-dim);margin-bottom:6px">
+          🚢 Ứng dụng Quản lý Rồng
+        </div>
         <div class="perm-grid" id="mu-perm-grid">
           <label class="perm-item" id="pi-barges">
             <input type="checkbox" id="perm-barges" onchange="updatePermItem('barges')"> 🚢 Quản lý sà lan
@@ -2054,6 +2058,57 @@
           </label>
           <label class="perm-item" id="pi-users">
             <input type="checkbox" id="perm-users" onchange="updatePermItem('users')"> 👥 Quản lý Users
+          </label>
+        </div>
+        <!-- App: MNR Estimate -->
+        <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);padding:4px 2px 4px;border-bottom:1px solid var(--yellow-dim);margin:10px 0 6px">
+          📄 Ứng dụng MNR Estimate
+        </div>
+        <div class="perm-grid">
+          <label class="perm-item" id="pi-estimate">
+            <input type="checkbox" id="perm-estimate" onchange="updatePermItem('estimate')"> ✏️ Nhập Báo Giá
+          </label>
+          <label class="perm-item" id="pi-revise">
+            <input type="checkbox" id="perm-revise" onchange="updatePermItem('revise')"> 📝 Chỉnh sửa Báo Giá
+          </label>
+          <label class="perm-item" id="pi-ovm">
+            <input type="checkbox" id="perm-ovm" onchange="updatePermItem('ovm')"> ☁️ Cập nhật OVM
+          </label>
+          <label class="perm-item" id="pi-tracking">
+            <input type="checkbox" id="perm-tracking" onchange="updatePermItem('tracking')"> 📊 Danh sách Báo Giá
+          </label>
+          <label class="perm-item" id="pi-summary">
+            <input type="checkbox" id="perm-summary" onchange="updatePermItem('summary')"> 📈 Tổng hợp
+          </label>
+          <label class="perm-item" id="pi-bulk">
+            <input type="checkbox" id="perm-bulk" onchange="updatePermItem('bulk')"> ⬇️ Xuất Bulk
+          </label>
+          <label class="perm-item" id="pi-stock">
+            <input type="checkbox" id="perm-stock" onchange="updatePermItem('stock')"> 💳 Tồn Rỗng
+          </label>
+          <label class="perm-item" id="pi-warehouse">
+            <input type="checkbox" id="perm-warehouse" onchange="updatePermItem('warehouse')"> 🏠 Thống kê kho
+          </label>
+          <label class="perm-item" id="pi-phieu-kho">
+            <input type="checkbox" id="perm-phieu-kho" onchange="updatePermItem('phieu-kho')"> 📄 Phiếu nhập xuất
+          </label>
+          <label class="perm-item" id="pi-ccdc">
+            <input type="checkbox" id="perm-ccdc" onchange="updatePermItem('ccdc')"> ⚙️ Lịch sử CCDC
+          </label>
+          <label class="perm-item" id="pi-tariff">
+            <input type="checkbox" id="perm-tariff" onchange="updatePermItem('tariff')"> ⚙️ Quản lý Bảng Giá
+          </label>
+          <label class="perm-item" id="pi-report">
+            <input type="checkbox" id="perm-report" onchange="updatePermItem('report')"> 📅 Báo cáo tháng
+          </label>
+          <label class="perm-item" id="pi-pictures">
+            <input type="checkbox" id="perm-pictures" onchange="updatePermItem('pictures')"> 📷 Xuất hình ảnh
+          </label>
+          <label class="perm-item" id="pi-inventory">
+            <input type="checkbox" id="perm-inventory" onchange="updatePermItem('inventory')"> 📦 MSC Inventory
+          </label>
+          <label class="perm-item" id="pi-photos">
+            <input type="checkbox" id="perm-photos" onchange="updatePermItem('photos')"> 🖼️ Xem Hình ảnh
           </label>
         </div>
       </div>
@@ -2954,7 +3009,15 @@
     });
 
     // ── PERMISSIONS CHECKBOXES ──
-    const ALL_SCREENS = ['barges','voyages','kanban','gantt','survey','users'];
+    // TấT CẤ mên hình của cả 2 app
+    const ALL_SCREENS = [
+      // App Quản lý Rồng
+      'barges','voyages','kanban','gantt','survey','users',
+      // App MNR Estimate
+      'estimate','revise','ovm','tracking','summary','bulk','stock',
+      'warehouse','phieu-kho','ccdc','tariff','report','pictures','inventory','photos'
+    ];
+    const THIS_APP_SCREENS = ['barges','voyages','kanban','gantt','survey','users'];
 
     function updatePermItem(screen) {
       const cb = document.getElementById('perm-' + screen);
