@@ -1994,6 +1994,11 @@
         <div class="fg"><label class="fl">Deadline (Hạn chót)</label><input type="datetime-local" class="fi"
             id="mt-deadline"></div>
       </div>
+      <div class="g2 mt">
+        <div class="fg"><label class="fl">Số container</label><input type="text" class="fi" id="mt-so-cont"
+            placeholder="VD: MEDU7281453, TCLU9012345"></div>
+        <div class="fg"></div>
+      </div>
       <div class="fg mt"><label class="fl">Mô tả chi tiết</label>
         <textarea class="fi" id="mt-mo-ta" rows="2" style="resize:vertical"></textarea>
       </div>
@@ -2540,9 +2545,19 @@
     function fillKanbanAssigneeFilter() {
       const sel = document.getElementById('kf-assignee');
       const cur = sel.value;
-      const assignees = [...new Set(S.tasks.map(t => t.assignee).filter(Boolean))];
+      // Lấy danh sách user đầy đủ từ S.users + assignees trong tasks
+      const taskAssignees = [...new Set(S.tasks.map(t => t.assignee).filter(Boolean))];
+      const userMap = {};
+      S.users.forEach(u => { if (u.fullname) userMap[u.fullname] = u; });
+      // Merge: ưu tiên S.users, thêm assignees không có trong users
+      const allNames = [...new Set([...S.users.map(u => u.fullname).filter(Boolean), ...taskAssignees])];
       sel.innerHTML = '<option value="">👤 Tất cả người</option>' +
-        assignees.map(a => `<option value="${esc(a)}" ${a === cur ? 'selected' : ''}>${esc(a)}</option>`).join('');
+        allNames.map(name => {
+          const u = userMap[name];
+          const label = u ? `${esc(name)} (${esc(u.title || u.role || 'Nhân viên')})` : esc(name);
+          const count = S.tasks.filter(t => t.assignee === name).length;
+          return `<option value="${esc(name)}" ${name === cur ? 'selected' : ''}>${label}${count ? ' — ' + count + ' việc' : ''}</option>`;
+        }).join('');
     }
 
     function renderKanban() {
@@ -2674,6 +2689,12 @@
       const creator = t.nguoi_tao || '';
       const creatorHtml = creator ? `<div class="kc-creator"><div class="kc-avatar" style="background:${avatarColor(creator)}">${avatarInitials(creator)}</div> ${esc(creator)}</div>` : '';
 
+      // Số container
+      const contHtml = t.so_cont ? `<div style="font-size:10px;color:var(--text);margin-top:2px;background:rgba(155,114,246,.08);padding:4px 8px;border-radius:5px;border:1px solid rgba(155,114,246,.2)">📦 <b>${esc(t.so_cont)}</b></div>` : '';
+
+      // Ngày tạo (luôn hiện)
+      const createdHtml = t.created_at ? `<div class="kc-time" style="opacity:.6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${fmtDt(t.created_at)}</div>` : '';
+
       return `
     <div class="kcard ${hasFlag ? 'has-flag' : ''}" style="border-left:3px solid var(--purple)" draggable="true" data-type="task" data-seq="${t.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
       <div class="kc-top">
@@ -2681,8 +2702,10 @@
         <div class="kc-vno" style="background:var(--purple);color:#fff;font-size:8px">${esc(t.phan_loai)}</div>
       </div>
       ${t.mo_ta ? `<div style="font-size:10px;color:var(--text2);margin-top:4px">${esc(t.mo_ta)}</div>` : ``}
+      ${contHtml}
       ${statusTimeHtml}
       ${dlHtml}
+      ${createdHtml}
       ${hasFlag ? `<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Lưu ý:</b> ${esc(t.ghi_chu)}</div>` : ``}
       <div style="font-size:10px;color:var(--cyan);margin-top:4px;font-weight:600;display:flex;align-items:center;gap:4px">
         <div class="kc-avatar" style="background:${avatarColor(t.assignee)};width:16px;height:16px;font-size:7px">${avatarInitials(t.assignee)}</div>
@@ -2845,18 +2868,19 @@
           _v('mt-phan-loai', t.phan_loai || 'Cấp rỗng');
           _v('mt-mo-ta', t.mo_ta || '');
           _v('mt-deadline', t.deadline || '');
+          _v('mt-so-cont', t.so_cont || '');
           if (asg) _v('mt-assignee', t.assignee || '');
         }
       } else {
         document.getElementById('mt-title').textContent = 'Thêm công việc phụ trợ';
-        _v('mt-seq', ''); _v('mt-tieu-de', ''); _v('mt-mo-ta', ''); _v('mt-phan-loai', 'Cấp rỗng'); _v('mt-deadline', '');
+        _v('mt-seq', ''); _v('mt-tieu-de', ''); _v('mt-mo-ta', ''); _v('mt-phan-loai', 'Cấp rỗng'); _v('mt-deadline', ''); _v('mt-so-cont', '');
         if (asg) _v('mt-assignee', '');
       }
 
       openOv('mtask');
     }
     async function saveTask() {
-      const seq = _g('mt-seq'), td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim(), dl = _g('mt-deadline'), a = _g('mt-assignee');
+      const seq = _g('mt-seq'), td = _g('mt-tieu-de').trim(), ml = _g('mt-phan-loai'), mt = _g('mt-mo-ta').trim(), dl = _g('mt-deadline'), a = _g('mt-assignee'), sc = _g('mt-so-cont').trim();
       if (!td) { toast('Cần nhập Tiêu đề', 'err'); return; }
       const btn = document.getElementById('btn-save-task'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
       // FIX: Khi sửa task, giữ nguyên trạng thái cũ thay vì reset về 0
@@ -2866,7 +2890,7 @@
         if (existing) trangThai = parseInt(existing.trang_thai) || 0;
       }
       try {
-        const res = await post({ action: seq ? 'updateTask' : 'saveTask', seq: seq, tieu_de: td, phan_loai: ml, mo_ta: mt, deadline: dl, assignee: a, trang_thai: trangThai, nguoi_tao: S.user ? S.user.fullname : '' });
+        const res = await post({ action: seq ? 'updateTask' : 'saveTask', seq: seq, tieu_de: td, phan_loai: ml, mo_ta: mt, deadline: dl, assignee: a, so_cont: sc, trang_thai: trangThai, nguoi_tao: S.user ? S.user.fullname : '' });
         if (res.success) { toast(seq ? 'Đã cập nhật việc' : 'Đã tạo việc', 'ok'); closeOv('mtask'); await loadAll(); }
         else throw new Error(res.error);
       } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
