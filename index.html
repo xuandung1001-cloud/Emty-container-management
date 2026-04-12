@@ -1392,20 +1392,53 @@
         align-items: stretch;
       }
     }
+
+    /* ── PERMISSIONS CHECKBOXES ── */
+    .perm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 4px;
+    }
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border2);
+      background: var(--bg3);
       cursor: pointer;
       transition: all .15s;
+      font-size: 11.5px;
+      color: var(--text2);
     }
-
-    .kc-btn:hover {
-      background: var(--bg2);
-      border-color: var(--border2);
+    .perm-item:hover {
+      border-color: rgba(0,212,255,.35);
+      background: var(--cyan-dim);
       color: var(--text);
     }
-
-    .kc-btn.flag.active {
-      background: rgba(255, 69, 96, .1);
-      border-color: rgba(255, 69, 96, .3);
-      color: var(--red);
+    .perm-item input[type=checkbox] {
+      accent-color: var(--cyan);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .perm-item.checked {
+      border-color: rgba(0,212,255,.5);
+      background: var(--cyan-dim);
+      color: var(--cyan);
+      font-weight: 600;
+    }
+    .perm-all-badge {
+      font-size: 10px;
+      padding: 2px 10px;
+      border-radius: 99px;
+      background: rgba(0,212,255,.1);
+      border: 1px solid rgba(0,212,255,.3);
+      color: var(--cyan);
+      font-weight: 700;
     }
   </style>
 </head>
@@ -1728,6 +1761,7 @@
                   <th>HỌ TÊN</th>
                   <th>CHỨC DANH</th>
                   <th>QUYỀN</th>
+                  <th>MÀN HÌNH</th>
                   <th>HẠN SỬ DỤNG</th>
                   <th>TRẠNG THÁI</th>
                   <th style="width:80px">THAO TÁC</th>
@@ -1972,7 +2006,7 @@
 
   <!-- ══ MODAL USER ══ -->
   <div class="ov" id="mu">
-    <div class="modal">
+    <div class="modal modal-lg">
       <div class="m-title" id="mu-title">Thêm user mới</div>
       <div class="m-sub">Quản lý tài khoản đăng nhập hệ thống</div>
       <input type="hidden" id="mu-mode">
@@ -1989,13 +2023,39 @@
       </div>
       <div class="g2 mt">
         <div class="fg"><label class="fl">Quyền</label>
-          <select class="fi" id="mu-role">
+          <select class="fi" id="mu-role" onchange="onRoleChange()">
             <option value="user">User (Nhân viên)</option>
             <option value="admin">Admin (Quản trị)</option>
           </select>
         </div>
         <div class="fg"><label class="fl">Chức danh</label><input class="fi" id="mu-title-input"
             placeholder="VD: Trưởng ca, Điều phối"></div>
+      </div>
+      <!-- Permissions -->
+      <div class="divider"></div>
+      <div class="fg">
+        <label class="fl">Màn hình được phép truy cập</label>
+        <div id="mu-perm-info" style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Chọn từng màn hình bên dưới (Admin tự động có tất cả)</div>
+        <div class="perm-grid" id="mu-perm-grid">
+          <label class="perm-item" id="pi-barges">
+            <input type="checkbox" id="perm-barges" onchange="updatePermItem('barges')"> 🚢 Quản lý sà lan
+          </label>
+          <label class="perm-item" id="pi-voyages">
+            <input type="checkbox" id="perm-voyages" onchange="updatePermItem('voyages')"> 📅 Kế hoạch sà lan
+          </label>
+          <label class="perm-item" id="pi-kanban">
+            <input type="checkbox" id="perm-kanban" onchange="updatePermItem('kanban')"> 📋 Bảng Kanban
+          </label>
+          <label class="perm-item" id="pi-gantt">
+            <input type="checkbox" id="perm-gantt" onchange="updatePermItem('gantt')"> 📊 Sơ đồ Gantt
+          </label>
+          <label class="perm-item" id="pi-survey">
+            <input type="checkbox" id="perm-survey" onchange="updatePermItem('survey')"> 📄 Báo cáo Survey
+          </label>
+          <label class="perm-item" id="pi-users">
+            <input type="checkbox" id="perm-users" onchange="updatePermItem('users')"> 👥 Quản lý Users
+          </label>
+        </div>
       </div>
       <div class="mf">
         <button class="btn btn-ghost" onclick="closeOv('mu')">Huỷ</button>
@@ -2057,9 +2117,7 @@
           document.getElementById('topbar-badge').textContent = res.fullname;
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('app').classList.add('on');
-          // Hiện menu admin nếu có quyền
-          const adminSection = document.getElementById('nav-section-admin');
-          if (adminSection) adminSection.style.display = res.role === 'admin' ? 'block' : 'none';
+          applyPermissions(res); // Ẩn/hiện sidebar theo permissions
           await loadAll();
         } else showErr(res.error || 'Đăng nhập thất bại');
       } catch (e) { showErr('Lỗi kết nối: ' + e.message); }
@@ -2082,8 +2140,46 @@
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
 
+    // ── PERMISSIONS ──
+    const APP_SCREENS_META = {
+      barges:  { navId: 'nav-barges',  label: 'Quản lý sà lan' },
+      voyages: { navId: 'nav-voyages', label: 'Kế hoạch sà lan' },
+      kanban:  { navId: 'nav-kanban',  label: 'Bảng Kanban' },
+      gantt:   { navId: 'nav-gantt',   label: 'Sơ đồ Gantt' },
+      survey:  { navId: 'nav-survey',  label: 'Báo cáo Survey' },
+      users:   { navId: 'nav-users',   label: 'Quản lý Users', adminOnly: true }
+    };
+
+    function hasPermission(screen) {
+      if (!S.user) return false;
+      if (S.user.role === 'admin') return true;
+      if (!S.user.permissions) return false;
+      if (S.user.permissions === 'all') return true;
+      return S.user.permissions.split(',').map(p => p.trim()).includes(screen);
+    }
+
+    function applyPermissions(user) {
+      let firstAllowed = null;
+      Object.entries(APP_SCREENS_META).forEach(([screen, meta]) => {
+        const el = document.getElementById(meta.navId);
+        if (!el) return;
+        const allowed = user.role === 'admin'
+          ? true
+          : (meta.adminOnly ? false : hasPermission(screen));
+        el.style.display = allowed ? '' : 'none';
+        if (allowed && !firstAllowed) firstAllowed = { screen, el };
+      });
+      // Admin section visibility
+      const adminSection = document.getElementById('nav-section-admin');
+      if (adminSection) adminSection.style.display = user.role === 'admin' ? 'block' : 'none';
+    }
+
     // ── NAV ──
     function nav(screen, el) {
+      // Kiểm tra permission trước khi chuyển màn
+      if (!hasPermission(screen) && !(S.user && S.user.role === 'admin')) {
+        toast('Bạn không có quyền truy cập màn hình này', 'err'); return;
+      }
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       el.classList.add('active');
@@ -2799,7 +2895,7 @@
         sc('ĐANG HOẠT ĐỘNG', fmt(active), 'c-green') + sc('HẾT HẠN', fmt(expired), 'c-red');
 
       const tb = document.getElementById('utbody');
-      if (!rows.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`; return; }
+      if (!rows.length) { tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`; return; }
       const now = new Date();
       tb.innerHTML = rows.map((u, i) => {
         let statusBadge = '<span class="badge b-on">Hoạt động</span>';
@@ -2814,12 +2910,24 @@
           ? '<span class="badge" style="background:rgba(155,114,246,.1);border:1px solid rgba(155,114,246,.3);color:var(--purple)">Admin</span>'
           : '<span class="badge" style="background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);color:var(--cyan)">User</span>';
         const isSelf = S.user && S.user.fullname === u.fullname;
+        // Render permissions badges
+        let permHtml = '';
+        if (u.permissions === 'all' || u.role === 'admin') {
+          permHtml = '<span class="perm-all-badge">✦ All</span>';
+        } else if (u.permissions) {
+          const screenLabels = { barges:'🚢', voyages:'📅', kanban:'📋', gantt:'📊', survey:'📄', users:'👥' };
+          permHtml = u.permissions.split(',').map(p => p.trim()).filter(Boolean)
+            .map(p => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);margin:1px">${screenLabels[p] || ''}${p}</span>`).join(' ');
+        } else {
+          permHtml = '<span style="color:var(--text3);font-size:10px">—</span>';
+        }
         return `<tr>
           <td style="color:var(--text3)">${i + 1}</td>
           <td class="td-n">${esc(u.username)} ${isSelf ? '<span style="font-size:9px;color:var(--green)">(Bạn)</span>' : ''}</td>
           <td>${esc(u.fullname)}</td>
           <td style="color:var(--text2)">${esc(u.title) || '—'}</td>
           <td>${roleBadge}</td>
+          <td style="white-space:normal;max-width:180px">${permHtml}</td>
           <td style="color:var(--text2)">${esc(u.expiry) || '—'}</td>
           <td>${statusBadge}</td>
           <td><div class="acts">
@@ -2845,6 +2953,45 @@
       }
     });
 
+    // ── PERMISSIONS CHECKBOXES ──
+    const ALL_SCREENS = ['barges','voyages','kanban','gantt','survey','users'];
+
+    function updatePermItem(screen) {
+      const cb = document.getElementById('perm-' + screen);
+      const pi = document.getElementById('pi-' + screen);
+      if (cb && pi) pi.classList.toggle('checked', cb.checked);
+    }
+
+    function setPermCheckboxes(permStr, role) {
+      const isAll = role === 'admin' || permStr === 'all';
+      ALL_SCREENS.forEach(s => {
+        const cb = document.getElementById('perm-' + s);
+        const pi = document.getElementById('pi-' + s);
+        if (!cb) return;
+        cb.checked = isAll || permStr.split(',').map(p => p.trim()).includes(s);
+        cb.disabled = role === 'admin'; // admin luôn có tất cả, không cho bỏ tick
+        if (pi) pi.classList.toggle('checked', cb.checked);
+      });
+      const info = document.getElementById('mu-perm-info');
+      if (info) info.textContent = role === 'admin'
+        ? '✅ Admin có tất cả quyền truy cập (không thể thay đổi)'
+        : 'Chọn từng màn hình bên dưới (Admin tự động có tất cả)';
+    }
+
+    function onRoleChange() {
+      const role = _g('mu-role');
+      setPermCheckboxes(role === 'admin' ? 'all' : '', role);
+    }
+
+    function getPermFromCheckboxes(role) {
+      if (role === 'admin') return 'all';
+      const checked = ALL_SCREENS.filter(s => {
+        const cb = document.getElementById('perm-' + s);
+        return cb && cb.checked;
+      });
+      return checked.join(',');
+    }
+
     function openUserModal(u = null) {
       document.getElementById('mu-title').textContent = u ? 'Chỉnh sửa user' : 'Thêm user mới';
       _v('mu-mode', u ? 'edit' : 'new');
@@ -2858,6 +3005,8 @@
       document.getElementById('mu-username').disabled = !!u;
       document.getElementById('mu-key-label').textContent = u ? 'Key mới (bỏ trống = giữ cũ)' : 'Key đăng nhập *';
       document.getElementById('btn-save-user').disabled = false;
+      // Set permissions checkboxes
+      setPermCheckboxes(u ? (u.permissions || '') : '', u ? u.role : 'user');
       openOv('mu');
     }
 
@@ -2869,6 +3018,7 @@
       const expiry = _g('mu-expiry');
       const role = _g('mu-role');
       const title = _g('mu-title-input').trim();
+      const permissions = getPermFromCheckboxes(role);
 
       if (!username || !fullname) { toast('Vui lòng nhập Username và Họ tên', 'err'); return; }
       if (mode === 'new' && !key) { toast('Vui lòng nhập Key đăng nhập', 'err'); return; }
@@ -2878,9 +3028,9 @@
       try {
         let res;
         if (mode === 'edit') {
-          res = await post({ action: 'updateUser', username, fullname, new_key: key || undefined, expiry, role, title });
+          res = await post({ action: 'updateUser', username, fullname, new_key: key || undefined, expiry, role, title, permissions });
         } else {
-          res = await post({ action: 'saveUser', username, key, fullname, expiry, role, title });
+          res = await post({ action: 'saveUser', username, key, fullname, expiry, role, title, permissions });
         }
         if (res.success) {
           toast(mode === 'edit' ? 'Đã cập nhật user' : 'Đã thêm user', 'ok');
