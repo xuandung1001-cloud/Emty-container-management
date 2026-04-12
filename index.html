@@ -2049,6 +2049,7 @@
       const btn = document.getElementById('lbtn'); btn.innerHTML = '<span class="spinner"></span> Đang đăng nhập...'; btn.disabled = true;
       try {
         const res = await api('login', { username: u, key: k });
+        console.log('[LOGIN] response:', JSON.stringify(res));
         if (res.success) {
           S.user = res;
           document.getElementById('sb-fullname').textContent = res.fullname;
@@ -2058,7 +2059,7 @@
           document.getElementById('app').classList.add('on');
           // Hiện menu admin nếu có quyền
           const adminSection = document.getElementById('nav-section-admin');
-          if (adminSection) adminSection.style.display = res.role === 'admin' ? '' : 'none';
+          if (adminSection) adminSection.style.display = res.role === 'admin' ? 'block' : 'none';
           await loadAll();
         } else showErr(res.error || 'Đăng nhập thất bại');
       } catch (e) { showErr('Lỗi kết nối: ' + e.message); }
