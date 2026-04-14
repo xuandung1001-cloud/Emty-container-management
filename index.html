@@ -1535,6 +1535,14 @@
           <div class="nav-dot"></div>
           Báo cáo Survey
         </div>
+        <div class="nav-item" id="nav-report" onclick="nav('report',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="18" rx="2" />
+            <path d="M8 7h8" /><path d="M8 11h8" /><path d="M8 15h4" />
+          </svg>
+          <div class="nav-dot"></div>
+          Báo cáo ca
+        </div>
       </div>
 
       <!-- Nav: Hệ thống (admin only) -->
@@ -1739,6 +1747,54 @@
           </div>
           <div class="kb-board" id="kb-board">
             <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- ══ BÁO CÁO CA ══ -->
+        <div class="screen" id="screen-report">
+          <div class="stats-row" id="rpstats"></div>
+          <div class="toolbar">
+            <div style="display:flex;gap:8px">
+              <select class="fi" id="rp-ca" style="width:140px">
+                <option value="Sáng">☀ Ca Sáng (8h-20h)</option>
+                <option value="Đêm">🌙 Ca Đêm (20h-8h)</option>
+              </select>
+              <button class="btn btn-p" id="btn-preview-report" onclick="previewReport()">👁 Preview báo cáo</button>
+              <button class="btn btn-g" id="btn-send-report" onclick="sendReportManual()">📧 Gửi báo cáo ngay</button>
+            </div>
+            <div class="ml" style="display:flex;gap:7px">
+              <button class="btn btn-ghost" onclick="openEmailListModal()">📋 DS Email nhận</button>
+            </div>
+          </div>
+
+          <!-- Preview area -->
+          <div id="rp-preview" style="display:none;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;max-height:500px;overflow-y:auto">
+            <div style="padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:700;color:var(--cyan)">📄 Preview email báo cáo</span>
+              <span style="font-size:10px;color:var(--text3)" id="rp-preview-file"></span>
+            </div>
+            <div id="rp-preview-body" style="background:#fff;padding:0"></div>
+          </div>
+
+          <!-- Lịch sử báo cáo -->
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">📜 Lịch sử báo cáo đã gửi</div>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:44px">STT</th>
+                  <th>NGÀY</th>
+                  <th>CA</th>
+                  <th>FILE</th>
+                  <th>SẢN LƯỢNG XUẤT</th>
+                  <th>TỒN BÃI</th>
+                  <th>NGƯỜI GỬI</th>
+                  <th>THỜI GIAN GỬI</th>
+                  <th>TRẠNG THÁI</th>
+                </tr>
+              </thead>
+              <tbody id="rptbody"></tbody>
+            </table>
           </div>
         </div>
 
@@ -2009,6 +2065,26 @@
     </div>
   </div>
 
+  <!-- ══ MODAL EMAIL LIST ══ -->
+  <div class="ov" id="memail">
+    <div class="modal modal-lg">
+      <div class="m-title">📋 Danh sách email nhận báo cáo ca</div>
+      <div class="m-sub">Thêm/xoá email nhận báo cáo tự động</div>
+      <div class="g3" style="margin-bottom:12px">
+        <div class="fg"><input class="fi" id="me-email" placeholder="Email"></div>
+        <div class="fg"><input class="fi" id="me-ten" placeholder="Tên người nhận"></div>
+        <div class="fg"><button class="btn btn-p" onclick="addReportEmail()" style="width:100%;padding:9px">⊕ Thêm</button></div>
+      </div>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>EMAIL</th><th>TÊN</th><th>GHI CHÚ</th><th style="width:60px"></th></tr></thead>
+          <tbody id="metbody"></tbody>
+        </table>
+      </div>
+      <div class="mf"><button class="btn btn-ghost" onclick="closeOv('memail')">Đóng</button></div>
+    </div>
+  </div>
+
   <!-- ══ MODAL USER ══ -->
   <div class="ov" id="mu">
     <div class="modal modal-lg">
@@ -2129,6 +2205,7 @@
       voyages: { title: 'Kế hoạch sà lan', badge: '' },
       survey: { title: 'Báo cáo Survey', badge: '' },
       kanban: { title: 'Theo dõi tiến độ', badge: '' },
+      report: { title: 'Báo cáo ca', badge: '' },
       users: { title: 'Quản lý Users', badge: '' }
     };
 
@@ -2192,7 +2269,7 @@
       try {
         const [b, v, s, t, u] = await Promise.all([api('getBarges'), api('getVoyages'), api('getSurveys'), api('getTasks'), api('getUsers')]);
         S.barges = b.data || []; S.voyages = v.data || []; S.surveys = s.data || []; S.tasks = t.data || []; S.users = u.data || [];
-        renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); fillDropdowns();
+        renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); fillDropdowns();
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
 
@@ -2202,6 +2279,7 @@
       voyages: { navId: 'nav-voyages', label: 'Kế hoạch sà lan' },
       kanban:  { navId: 'nav-kanban',  label: 'Theo dõi tiến độ' },
       survey:  { navId: 'nav-survey',  label: 'Báo cáo Survey' },
+      report:  { navId: 'nav-report',  label: 'Báo cáo ca' },
       users:   { navId: 'nav-users',   label: 'Quản lý Users', adminOnly: true }
     };
 
@@ -3030,12 +3108,12 @@
     // Tất cả màn hình của cả 2 app
     const ALL_SCREENS = [
       // App Quản lý Rồng (không có gantt — đã bỏ)
-      'barges','voyages','kanban','survey','users',
+      'barges','voyages','kanban','survey','report','users',
       // App MNR Estimate
       'estimate','revise','ovm','tracking','summary','bulk','stock',
       'warehouse','phieu-kho','ccdc','tariff','report','pictures','inventory','photos'
     ];
-    const THIS_APP_SCREENS = ['barges','voyages','kanban','survey','users'];
+    const THIS_APP_SCREENS = ['barges','voyages','kanban','survey','report','users'];
 
     function updatePermItem(screen) {
       const cb = document.getElementById('perm-' + screen);
@@ -3129,6 +3207,119 @@
         else toast(res.error || 'Lỗi', 'err');
       };
       openOv('mconf');
+    }
+
+    // ── BÁO CÁO CA ──
+    async function renderReportLogs() {
+      try {
+        const res = await api('getReportLogs');
+        S.reportLogs = res.data || [];
+      } catch (e) { S.reportLogs = []; }
+
+      const logs = S.reportLogs;
+      const total = logs.length;
+      const today = new Date();
+      const todayStr2 = fmtDtFromDate(today).substring(0, 10);
+      const todayLogs = logs.filter(l => String(l.ngay) === todayStr2);
+
+      const el = document.getElementById('rpstats');
+      if (el) el.innerHTML =
+        sc('TỔNG BÁO CÁO', fmt(total), 'c-cyan') +
+        sc('HÔM NAY', fmt(todayLogs.length), 'c-green') +
+        sc('GỬI GẦN NHẤT', logs.length ? esc(logs[0].sent_at || logs[0].ngay) : '—', 'c-yellow');
+
+      const tb = document.getElementById('rptbody');
+      if (!tb) return;
+      if (!logs.length) {
+        tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">Chưa có báo cáo nào</td></tr>';
+        return;
+      }
+      tb.innerHTML = logs.map((l, i) => `<tr>
+        <td style="color:var(--text3)">${i + 1}</td>
+        <td>${esc(l.ngay)}</td>
+        <td><span class="badge ${l.ca === 'Đêm' ? 'b-ns' : 'b-sv'}">${l.ca === 'Đêm' ? '🌙' : '☀'} ${esc(l.ca)}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${esc(l.file_name)}</td>
+        <td class="num" style="font-weight:600">${fmt(l.san_luong_xuat)}</td>
+        <td class="num" style="font-weight:600">${fmt(l.ton_bai)}</td>
+        <td>${esc(l.nguoi_gui)}</td>
+        <td style="font-size:11px;color:var(--text2)">${esc(l.sent_at)}</td>
+        <td><span class="badge b-on">${esc(l.status)}</span></td>
+      </tr>`).join('');
+    }
+
+    async function previewReport() {
+      const btn = document.getElementById('btn-preview-report');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tải...';
+      try {
+        const ca = _g('rp-ca');
+        const res = await post({ action: 'previewReport', ca });
+        if (res.success) {
+          document.getElementById('rp-preview').style.display = 'block';
+          document.getElementById('rp-preview-body').innerHTML = res.html || '<p style="padding:20px;color:#999">Không có data</p>';
+          document.getElementById('rp-preview-file').textContent = '📎 ' + (res.file_name || '');
+          toast('Đã tải preview từ file mới nhất trên Drive', 'ok');
+        } else {
+          toast(res.error || 'Lỗi preview', 'err');
+        }
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = '👁 Preview báo cáo'; }
+    }
+
+    async function sendReportManual() {
+      if (!confirm('Gửi báo cáo ca ' + _g('rp-ca') + ' ngay bây giờ?')) return;
+      const btn = document.getElementById('btn-send-report');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang gửi...';
+      try {
+        const ca = _g('rp-ca');
+        const res = await post({ action: 'sendReportManual', ca });
+        if (res.success) {
+          toast('Đã gửi báo cáo thành công! (' + (res.emails_sent || 0) + ' email)', 'ok');
+          await renderReportLogs();
+        } else {
+          toast(res.error || 'Lỗi gửi báo cáo', 'err');
+        }
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = '📧 Gửi báo cáo ngay'; }
+    }
+
+    // Email list modal
+    async function openEmailListModal() {
+      try {
+        const res = await api('getReportEmails');
+        S.reportEmails = res.data || [];
+      } catch (e) { S.reportEmails = []; }
+      renderEmailList();
+      _v('me-email', ''); _v('me-ten', '');
+      openOv('memail');
+    }
+
+    function renderEmailList() {
+      const tb = document.getElementById('metbody');
+      if (!S.reportEmails || !S.reportEmails.length) {
+        tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Chưa có email nào</td></tr>';
+        return;
+      }
+      tb.innerHTML = S.reportEmails.map(e => `<tr>
+        <td style="color:var(--cyan);font-weight:600">${esc(e.email)}</td>
+        <td>${esc(e.ten)}</td>
+        <td style="color:var(--text3)">${esc(e.ghi_chu)}</td>
+        <td><div class="ibtn d" onclick="delReportEmail('${esc(e.email)}')" title="Xoá">🗑</div></td>
+      </tr>`).join('');
+    }
+
+    async function addReportEmail() {
+      const email = _g('me-email').trim(), ten = _g('me-ten').trim();
+      if (!email) { toast('Nhập email', 'err'); return; }
+      const res = await post({ action: 'saveReportEmail', email, ten });
+      if (res.success) { toast('Đã thêm ' + email, 'ok'); await openEmailListModal(); }
+      else toast(res.error || 'Lỗi', 'err');
+    }
+
+    async function delReportEmail(email) {
+      if (!confirm('Xoá ' + email + '?')) return;
+      const res = await post({ action: 'deleteReportEmail', email });
+      if (res.success) { toast('Đã xoá', 'ok'); await openEmailListModal(); }
+      else toast(res.error || 'Lỗi', 'err');
     }
 
     // ── GANTT ──
