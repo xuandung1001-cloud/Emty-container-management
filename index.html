@@ -1773,7 +1773,8 @@
               <option value="A">A — Tốt</option>
               <option value="B">B — Bình thường</option>
             </select>
-            <div class="ml">
+            <div class="ml" style="display:flex;gap:7px">
+              <button class="btn btn-ghost" onclick="fetchTonBai()">⟳ Làm mới</button>
               <button class="btn btn-g" onclick="exportTonBaiExcel()">⬆ Export</button>
             </div>
           </div>
@@ -2314,8 +2315,9 @@
     // ── LOAD ──
     async function loadAll() {
       try {
-        const [b, v, s, t, u] = await Promise.all([api('getBarges'), api('getVoyages'), api('getSurveys'), api('getTasks'), api('getUsers')]);
+        const [b, v, s, t, u, tb] = await Promise.all([api('getBarges'), api('getVoyages'), api('getSurveys'), api('getTasks'), api('getUsers'), api('getTonBai')]);
         S.barges = b.data || []; S.voyages = v.data || []; S.surveys = s.data || []; S.tasks = t.data || []; S.users = u.data || [];
+        S.tonbai = tb.data || []; S.tonbai_updated = tb.updated_at || '';
         renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); renderTonBai(); fillDropdowns();
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
@@ -3258,17 +3260,26 @@
     }
 
     // ── TỒN BÃI ──
-    async function renderTonBai() {
-      // Luôn load data mới từ server
+    async function fetchTonBai() {
       try {
+        const btn = document.querySelector('#screen-tonbai .btn-ghost');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tải...'; }
         const res = await api('getTonBai');
         S.tonbai = res.data || [];
         S.tonbai_updated = res.updated_at || '';
+        renderTonBai();
+        if (btn) { btn.disabled = false; btn.innerHTML = '⟳ Làm mới'; }
+        toast('Đã tải mới tồn bãi', 'ok');
       } catch (e) {
         S.tonbai = [];
         S.tonbai_updated = '';
+        renderTonBai();
+        toast('Lỗi lấy tồn bãi: ' + e.message, 'err');
       }
-      const data = S.tonbai;
+    }
+
+    function renderTonBai() {
+      const data = S.tonbai || [];
       const q = (_g('tbsrch') || '').toLowerCase();
       const fHang = _g('tbf-hang'), fSize = _g('tbf-size'), fStatus = _g('tbf-status');
 
