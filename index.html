@@ -23,7 +23,7 @@
       --green: #10b981;
       --green-dim: rgba(16, 185, 129, 0.1);
       --red: #ef4444;
-      --red-dim: rgba(239, 68, 68, 0.12);g
+      --red-dim: rgba(239, 68, 68, 0.12);
       --yellow: #f59e0b;
       --yellow-dim: rgba(245, 158, 11, 0.1);
       --orange: #f97316;
@@ -2245,7 +2245,7 @@
   </div>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwTOQVHyAfhDUQPaAdN_qfTtqqbqQ9OIf67IOuHodcAZuQi9l5FjBj77ifX1bvVbpY2-A/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfngvOruwQK1OSgSApvLNlRYetlUWquAL2PBresoBj3IfIz731qHPbxJ5U8VoEYkiDTw/exec';
 
     const SCREEN_META = {
       barges: { title: 'Quản lý sà lan', badge: '' },
@@ -2694,6 +2694,10 @@
       let cols = [[], [], [], []];
       const now = new Date();
 
+      // [GIẢI PHÁP 2] Tự điển hash-map tra cứu vị trí siêu tốc O(1)
+      const viTriMap = {};
+      (S.tonbai || []).forEach(tb => { if (tb.container) viTriMap[tb.container.trim().toUpperCase()] = tb.vi_tri; });
+
       const board = document.getElementById('kb-board');
       if (S.kanbanTab === 'voyages') {
         S.voyages.forEach(v => {
@@ -2773,11 +2777,11 @@
 
       for (let c = 0; c < 4; c++) {
         const list = document.getElementById('kcol-' + c);
-        list.innerHTML = cols[c].map(item => item.type === 'voyage' ? generateKCard(item.data, c) : generateTaskCard(item.data, c)).join('');
+        list.innerHTML = cols[c].map(item => item.type === 'voyage' ? generateKCard(item.data, c) : generateTaskCard(item.data, c, viTriMap)).join('');
       }
     }
 
-    function generateTaskCard(t, st) {
+    function generateTaskCard(t, st, viTriMap = {}) {
       const hasFlag = !!t.ghi_chu;
       let icon = '🔧';
       if (t.phan_loai === 'Cấp rỗng') icon = '🚛';
@@ -2816,8 +2820,16 @@
       const creator = t.nguoi_tao || '';
       const creatorHtml = creator ? `<div class="kc-creator"><div class="kc-avatar" style="background:${avatarColor(creator)}">${avatarInitials(creator)}</div> ${esc(creator)}</div>` : '';
 
-      // Số container
-      const contHtml = t.so_cont ? `<div style="font-size:10px;color:var(--text);margin-top:2px;background:rgba(155,114,246,.08);padding:4px 8px;border-radius:5px;border:1px solid rgba(155,114,246,.2)">📦 <b>${esc(t.so_cont)}</b></div>` : '';
+      // Số container và tra cứu vị trí bãi
+      let contHtml = '';
+      if (t.so_cont) {
+        const conts = String(t.so_cont).split(',').map(x => x.trim().toUpperCase()).filter(Boolean);
+        const tags = conts.map(c => {
+          const vt = viTriMap[c] ? `<span style="color:var(--purple);margin-left:6px;font-weight:700">📍 ${esc(viTriMap[c])}</span>` : '';
+          return `<div style="padding:2px 0">📦 <b>${esc(c)}</b>${vt}</div>`;
+        }).join('');
+        contHtml = `<div style="font-size:10px;color:var(--text);margin-top:2px;background:rgba(155,114,246,.08);padding:4px 8px;border-radius:5px;border:1px solid rgba(155,114,246,.2)">${tags}</div>`;
+      }
 
       // Ngày tạo (luôn hiện) — xanh lá rõ
       const createdHtml = t.created_at ? `<div class="kc-time" style="color:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${fmtDt(t.created_at)}</div>` : '';
