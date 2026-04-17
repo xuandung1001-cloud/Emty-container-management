@@ -3261,21 +3261,23 @@
 
     // ── TỒN BÃI ──
     async function fetchTonBai() {
+      const btn = document.querySelector('#screen-tonbai .btn-ghost');
       try {
-        const btn = document.querySelector('#screen-tonbai .btn-ghost');
         if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tải...'; }
         const res = await api('getTonBai');
         if (!res.success) throw new Error(res.error || 'API error');
         S.tonbai = res.data || [];
         S.tonbai_updated = res.updated_at || '';
         renderTonBai();
-        if (btn) { btn.disabled = false; btn.innerHTML = '⟳ Làm mới'; }
         toast('Đã tải mới tồn bãi', 'ok');
       } catch (e) {
         S.tonbai = [];
         S.tonbai_updated = '';
         renderTonBai();
         toast('Lỗi lấy tồn bãi: ' + e.message, 'err');
+        console.error('Fetch TonBai Error:', e);
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '⟳ Làm mới'; }
       }
     }
 
