@@ -3076,7 +3076,7 @@
       });
       maxTier = Math.max(5, maxTier); // Luôn vẽ tối thiểu 5 tầng cho đẹp
 
-      let html = `<div class="yard-grid" style="grid-template-columns: 30px repeat(${maxRow}, 1fr)">`;
+      let html = `<div class="yard-grid" style="grid-template-columns: 30px repeat(${maxRow}, minmax(75px, 95px)); justify-content: center;">`;
 
       // Vẽ từ tầng trên cùng xuống mặt đất (Tier Max -> 1)
       for (let t = maxTier; t >= 1; t--) {
