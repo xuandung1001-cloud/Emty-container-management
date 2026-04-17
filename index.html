@@ -2256,7 +2256,7 @@
       users: { title: 'Quản lý Users', badge: '' }
     };
 
-    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], vf: 'all', importRows: [] };
+    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [] };
 
     // ══════════════════════════════════════════
     // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -3259,13 +3259,14 @@
 
     // ── TỒN BÃI ──
     async function renderTonBai() {
-      // Load data nếu chưa có
-      if (!S.tonbai) {
-        try {
-          const res = await api('getTonBai');
-          S.tonbai = res.data || [];
-          S.tonbai_updated = res.updated_at || '';
-        } catch (e) { S.tonbai = []; }
+      // Luôn load data mới từ server
+      try {
+        const res = await api('getTonBai');
+        S.tonbai = res.data || [];
+        S.tonbai_updated = res.updated_at || '';
+      } catch (e) {
+        S.tonbai = [];
+        S.tonbai_updated = '';
       }
       const data = S.tonbai;
       const q = (_g('tbsrch') || '').toLowerCase();
