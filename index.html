@@ -3265,6 +3265,7 @@
         const btn = document.querySelector('#screen-tonbai .btn-ghost');
         if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tải...'; }
         const res = await api('getTonBai');
+        if (!res.success) throw new Error(res.error || 'API error');
         S.tonbai = res.data || [];
         S.tonbai_updated = res.updated_at || '';
         renderTonBai();
