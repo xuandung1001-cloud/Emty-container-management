@@ -1948,6 +1948,7 @@
                   <th>NGÀY</th>
                   <th>CA</th>
                   <th>FILE</th>
+                  <th>SẢN LƯỢNG NHẬP</th>
                   <th>SẢN LƯỢNG XUẤT</th>
                   <th>TỒN BÃI</th>
                   <th>NGƯỜI GỬI</th>
@@ -2321,6 +2322,12 @@
           </label>
           <label class="perm-item" id="pi-survey">
             <input type="checkbox" id="perm-survey" onchange="updatePermItem('survey')"> 📄 Báo cáo Survey
+          </label>
+          <label class="perm-item" id="pi-report">
+            <input type="checkbox" id="perm-report" onchange="updatePermItem('report')"> 📊 Báo cáo ca
+          </label>
+          <label class="perm-item" id="pi-tonbai">
+            <input type="checkbox" id="perm-tonbai" onchange="updatePermItem('tonbai')"> 📦 Tồn bãi
           </label>
           <label class="perm-item" id="pi-users">
             <input type="checkbox" id="perm-users" onchange="updatePermItem('users')"> 👥 Quản lý Users
@@ -3651,6 +3658,7 @@
         <td>${esc(l.ngay)}</td>
         <td><span class="badge ${l.ca === 'Đêm' ? 'b-ns' : 'b-sv'}">${l.ca === 'Đêm' ? '🌙' : '☀'} ${esc(l.ca)}</span></td>
         <td style="font-size:11px;color:var(--text2)">${esc(l.file_name)}</td>
+        <td class="num" style="font-weight:600">${fmt(l.san_luong_nhap)}</td>
         <td class="num" style="font-weight:600">${fmt(l.san_luong_xuat)}</td>
         <td class="num" style="font-weight:600">${fmt(l.ton_bai)}</td>
         <td>${esc(l.nguoi_gui)}</td>
