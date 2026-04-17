@@ -1455,6 +1455,90 @@
       color: var(--cyan);
       font-weight: 700;
     }
+
+    /* ── YARD MAP (Mặt cắt ngang) ── */
+    .yard-badge {
+      color: #fff;
+      background: var(--purple);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .yard-badge:hover {
+      box-shadow: 0 0 8px var(--purple);
+      transform: scale(1.05);
+    }
+    .yard-grid {
+      display: grid;
+      gap: 4px;
+      background: #111b2b; /* Nền tối phong cách bãi */
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .yard-cell {
+      background: rgba(255,255,255,0.03); /* Ô trống */
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 6px;
+      font-size: 9px;
+      color: var(--text3);
+      min-height: 48px;
+      min-width: 65px;
+      text-align: center;
+    }
+    .yard-cont {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .yard-cont.grade-a {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .yard-cont.grade-b {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+    .yard-cont.target {
+      background: var(--danger) !important;
+      color: #fff !important;
+      border-color: #ffb3c1 !important;
+      box-shadow: 0 0 10px var(--danger), 0 0 20px var(--danger);
+      animation: pulseYard 1.5s infinite;
+    }
+    @keyframes pulseYard {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .yard-row-label {
+      font-weight: 700;
+      color: var(--cyan);
+      font-size: 10px;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .yard-tier-label {
+      font-weight: 700;
+      color: var(--text2);
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+    }
   </style>
 </head>
 
@@ -2282,6 +2366,29 @@
     </div>
   </div>
 
+  <!-- ══ MODAL YARD MAP ══ -->
+  <div class="ov" id="myard">
+    <div class="modal modal-lg" style="max-width: 900px;">
+      <div class="m-title" id="myard-title">🗺️ Sơ đồ bãi: <span id="myard-block-bay" style="color:var(--cyan)"></span></div>
+      <div class="m-sub">Mặt cắt ngang (Cross-section) tiến độ bốc dỡ</div>
+      
+      <div class="yard-container" id="yard-grid" style="margin-top: 15px; overflow-x: auto; padding-bottom: 15px;">
+        <!-- CSS Grid rendered by JS -->
+      </div>
+      
+      <div style="margin-top: 15px; display:flex; gap:16px; font-size:11px; justify-content:center; flex-wrap:wrap">
+        <div style="display:flex; align-items:center; gap:6px"><div style="width:14px;height:14px;background:rgba(16,185,129,0.2);border:1px solid var(--green);border-radius:3px"></div> Rỗng Tốt (A)</div>
+        <div style="display:flex; align-items:center; gap:6px"><div style="width:14px;height:14px;background:rgba(245,158,11,0.2);border:1px solid var(--yellow);border-radius:3px"></div> Rỗng Bình Thường (B)</div>
+        <div style="display:flex; align-items:center; gap:6px"><div style="width:14px;height:14px;background:var(--danger);border-radius:3px;box-shadow:0 0 5px var(--danger)"></div> Cont Mục Tiêu</div>
+        <div style="display:flex; align-items:center; gap:6px"><div style="width:14px;height:14px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.1);border-radius:3px"></div> Vị trí trống</div>
+      </div>
+
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('myard')">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbwTOQVHyAfhDUQPaAdN_qfTtqqbqQ9OIf67IOuHodcAZuQi9l5FjBj77ifX1bvVbpY2-A/exec';
 
@@ -2863,7 +2970,7 @@
       if (t.so_cont) {
         const conts = String(t.so_cont).split(',').map(x => x.trim().toUpperCase()).filter(Boolean);
         const tags = conts.map(c => {
-          const vt = viTriMap[c] ? `<span style="color:var(--purple);margin-left:6px;font-weight:700">📍 ${esc(viTriMap[c])}</span>` : '';
+          const vt = viTriMap[c] ? `<span class="yard-badge" onclick="openYardMap('${viTriMap[c]}', '${c}')" title="Xem sơ đồ bãi">📍 ${esc(viTriMap[c])}</span>` : '';
           return `<div style="padding:2px 0">📦 <b>${esc(c)}</b>${vt}</div>`;
         }).join('');
         contHtml = `<div style="font-size:10px;color:var(--text);margin-top:2px;background:rgba(155,114,246,.08);padding:4px 8px;border-radius:5px;border:1px solid rgba(155,114,246,.2)">${tags}</div>`;
@@ -2898,6 +3005,75 @@
       </div>
     </div>
   `;
+    }
+
+    function openYardMap(viTri, targetContainer) {
+      if (!viTri) return;
+      // viTri: Block-Bay-Row-Tier (vd: A1-02-03-2)
+      const parts = String(viTri).split('-');
+      if (parts.length < 4) {
+        toast('Định dạng toạ độ rỗng không chuẩn (cần Block-Bay-Row-Tier)', 'warn');
+        return;
+      }
+      const block = parts[0];
+      const bay = parts[1];
+      const targetRow = parseInt(parts[2], 10);
+      const targetTier = parseInt(parts[3], 10);
+
+      document.getElementById('myard-block-bay').textContent = `${block} — Bay ${bay}`;
+
+      const prefix = `${block}-${bay}-`;
+      const bayConts = (S.tonbai || []).filter(tb => String(tb.vi_tri).startsWith(prefix));
+
+      let maxRow = targetRow || 3;
+      let maxTier = targetTier || 5; 
+      
+      bayConts.forEach(tb => {
+        const p = String(tb.vi_tri).split('-');
+        if (p.length >= 4) {
+          const r = parseInt(p[2], 10);
+          const t = parseInt(p[3], 10);
+          if (r > maxRow) maxRow = r;
+          if (t > maxTier) maxTier = t;
+        }
+      });
+      maxTier = Math.max(5, maxTier); // Luôn vẽ tối thiểu 5 tầng cho đẹp
+
+      let html = `<div class="yard-grid" style="grid-template-columns: 30px repeat(${maxRow}, 1fr)">`;
+
+      // Vẽ từ tầng trên cùng xuống mặt đất (Tier Max -> 1)
+      for (let t = maxTier; t >= 1; t--) {
+        html += `<div class="yard-tier-label">T${t}</div>`;
+        for (let r = 1; r <= maxRow; r++) {
+          const rowStr = String(r).padStart(2, '0');
+          const vtLookup = `${prefix}${rowStr}-${t}`;
+          
+          const cont = bayConts.find(tb => String(tb.vi_tri) === vtLookup);
+          if (cont) {
+            const isTarget = cont.container.trim().toUpperCase() === targetContainer.trim().toUpperCase();
+            let gradeClass = 'grade-a';
+            if (String(cont.tinh_trang).includes('B') || String(cont.tinh_trang).toLowerCase().includes('bình')) gradeClass = 'grade-b';
+            
+            html += `<div class="yard-cell yard-cont ${gradeClass} ${isTarget ? 'target' : ''}" title="${esc(cont.container)} | ${esc(cont.hang)} | ${esc(cont.tinh_trang)}">
+              <div style="font-size:10px">${esc(cont.container)}</div>
+              <div style="font-size:8px;opacity:0.8">${esc(cont.hang)} ${esc(cont.kich_co || '')}</div>
+              ${isTarget ? '<div style="font-size:8px;margin-top:2px;font-weight:800">🎯 TARGET</div>' : ''}
+            </div>`;
+          } else {
+            html += `<div class="yard-cell">(Trống)</div>`;
+          }
+        }
+      }
+
+      // Hàng Label Row ngang
+      html += `<div></div>`; // Góc dưới cùng bên trái trống
+      for (let r = 1; r <= maxRow; r++) {
+        html += `<div class="yard-row-label">R${String(r).padStart(2, '0')}</div>`;
+      }
+
+      html += `</div>`;
+      document.getElementById('yard-grid').innerHTML = html;
+      openOv('myard');
     }
 
     function generateKCard(v, st) {
