@@ -17,7 +17,7 @@
       --bg2: #ffffff;
       --bg3: #eaeff2;
       --bg4: #dfe6eb;
-      --cyan: #3b82f6; 
+      --cyan: #3b82f6;
       --cyan2: #2563eb;
       --cyan-dim: rgba(59, 130, 246, 0.12);
       --green: #10b981;
@@ -626,10 +626,11 @@
       align-items: center;
       gap: 5px;
       white-space: nowrap;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
+
     .btn:hover {
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .btn-p {
@@ -1253,8 +1254,15 @@
     }
 
     @keyframes pulse-elapsed {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .6; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .6;
+      }
     }
 
     .kc-time {
@@ -1382,11 +1390,13 @@
         height: auto;
         max-height: none;
       }
+
       .kb-col {
         min-width: 100%;
         max-width: 100%;
         max-height: 350px;
       }
+
       .kb-toolbar-row {
         flex-direction: column;
         align-items: stretch;
@@ -1400,6 +1410,7 @@
       gap: 7px;
       margin-top: 4px;
     }
+
     .perm-item {
       display: flex;
       align-items: center;
@@ -1413,11 +1424,13 @@
       font-size: 11.5px;
       color: var(--text2);
     }
+
     .perm-item:hover {
-      border-color: rgba(0,212,255,.35);
+      border-color: rgba(0, 212, 255, .35);
       background: var(--cyan-dim);
       color: var(--text);
     }
+
     .perm-item input[type=checkbox] {
       accent-color: var(--cyan);
       width: 14px;
@@ -1425,18 +1438,20 @@
       cursor: pointer;
       flex-shrink: 0;
     }
+
     .perm-item.checked {
-      border-color: rgba(0,212,255,.5);
+      border-color: rgba(0, 212, 255, .5);
       background: var(--cyan-dim);
       color: var(--cyan);
       font-weight: 600;
     }
+
     .perm-all-badge {
       font-size: 10px;
       padding: 2px 10px;
       border-radius: 99px;
-      background: rgba(0,212,255,.1);
-      border: 1px solid rgba(0,212,255,.3);
+      background: rgba(0, 212, 255, .1);
+      border: 1px solid rgba(0, 212, 255, .3);
       color: var(--cyan);
       font-weight: 700;
     }
@@ -1538,14 +1553,19 @@
         <div class="nav-item" id="nav-report" onclick="nav('report',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="3" width="20" height="18" rx="2" />
-            <path d="M8 7h8" /><path d="M8 11h8" /><path d="M8 15h4" />
+            <path d="M8 7h8" />
+            <path d="M8 11h8" />
+            <path d="M8 15h4" />
           </svg>
           <div class="nav-dot"></div>
           Báo cáo ca
         </div>
         <div class="nav-item" id="nav-tonbai" onclick="nav('tonbai',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="1" y="6" width="22" height="15" rx="2"/><path d="M1 10h22"/><path d="M8 6v15"/><path d="M16 6v15"/>
+            <rect x="1" y="6" width="22" height="15" rx="2" />
+            <path d="M1 10h22" />
+            <path d="M8 6v15" />
+            <path d="M16 6v15" />
           </svg>
           <div class="nav-dot"></div>
           Tồn bãi
@@ -1745,7 +1765,8 @@
               <option value="">👤 Tất cả người</option>
             </select>
             <div class="ml" style="display:flex;align-items:center;gap:10px">
-              <div class="kb-auto-badge on" id="kb-auto-label" onclick="toggleAutoRefresh()" style="cursor:pointer" title="Bật/tắt auto-refresh">
+              <div class="kb-auto-badge on" id="kb-auto-label" onclick="toggleAutoRefresh()" style="cursor:pointer"
+                title="Bật/tắt auto-refresh">
                 <span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span> Live 30s
               </div>
               <span style="font-size:10px;color:var(--text3)" id="kb-last-refresh"></span>
@@ -1761,7 +1782,8 @@
         <div class="screen" id="screen-tonbai">
           <div class="stats-row" id="tbstats"></div>
           <div class="toolbar">
-            <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm container, vị trí, hãng..." id="tbsrch" oninput="renderTonBai()"></div>
+            <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm container, vị trí, hãng..."
+                id="tbsrch" oninput="renderTonBai()"></div>
             <select class="fi" id="tbf-hang" onchange="renderTonBai()" style="width:140px">
               <option value="">Tất cả hãng</option>
             </select>
@@ -1812,7 +1834,8 @@
           </div>
 
           <!-- Lịch sử báo cáo -->
-          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">📜 Lịch sử báo cáo đã gửi</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">📜 Lịch sử báo cáo đã gửi
+          </div>
           <div class="tbl">
             <table>
               <thead>
@@ -2107,26 +2130,38 @@
       <div class="m-sub">Thêm/xoá email nhận báo cáo tự động</div>
 
       <!-- TO list -->
-      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase">📮 TO — Người nhận chính</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase">📮 TO —
+        Người nhận chính</div>
       <div class="g3" style="margin-bottom:12px">
         <div class="fg"><input class="fi" id="me-email" placeholder="Email"></div>
         <div class="fg"><input class="fi" id="me-ten" placeholder="Tên người nhận"></div>
-        <div class="fg"><button class="btn btn-p" onclick="addReportEmail()" style="width:100%;padding:9px">⊕ Thêm</button></div>
+        <div class="fg"><button class="btn btn-p" onclick="addReportEmail()" style="width:100%;padding:9px">⊕
+            Thêm</button></div>
       </div>
       <div class="tbl" style="margin-bottom:18px">
         <table>
-          <thead><tr><th>EMAIL</th><th>TÊN</th><th>GHI CHÚ</th><th style="width:60px"></th></tr></thead>
+          <thead>
+            <tr>
+              <th>EMAIL</th>
+              <th>TÊN</th>
+              <th>GHI CHÚ</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
           <tbody id="metbody"></tbody>
         </table>
       </div>
 
       <!-- CC list -->
-      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;border-top:1px solid var(--border);padding-top:12px">📋 CC — Danh sách email CC cố định (phân cách bằng dấu phẩy)</div>
+      <div
+        style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;border-top:1px solid var(--border);padding-top:12px">
+        📋 CC — Danh sách email CC cố định (phân cách bằng dấu phẩy)</div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <input class="fi" id="me-cc" placeholder="cc1@example.com, cc2@example.com, ..." style="flex:1">
         <button class="btn btn-g" onclick="saveReportCC()" style="min-width:100px">💾 Lưu CC</button>
       </div>
-      <div style="font-size:10.5px;color:var(--text3);margin-bottom:4px">Mọi email báo cáo sẽ được CC tới danh sách này.</div>
+      <div style="font-size:10.5px;color:var(--text3);margin-bottom:4px">Mọi email báo cáo sẽ được CC tới danh sách này.
+      </div>
 
       <div class="mf"><button class="btn btn-ghost" onclick="closeOv('memail')">Đóng</button></div>
     </div>
@@ -2163,9 +2198,11 @@
       <div class="divider"></div>
       <div class="fg">
         <label class="fl">Màn hình được phép truy cập</label>
-        <div id="mu-perm-info" style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Chọn từng màn hình bên dưới (Admin tự động có tất cả)</div>
+        <div id="mu-perm-info" style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Chọn từng màn hình bên dưới
+          (Admin tự động có tất cả)</div>
         <!-- App: Quản lý Rồng -->
-        <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);padding:4px 2px 4px;border-bottom:1px solid var(--cyan-dim);margin-bottom:6px">
+        <div
+          style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);padding:4px 2px 4px;border-bottom:1px solid var(--cyan-dim);margin-bottom:6px">
           🚢 Ứng dụng Quản lý Rồng
         </div>
         <div class="perm-grid" id="mu-perm-grid">
@@ -2186,7 +2223,8 @@
           </label>
         </div>
         <!-- App: MNR Estimate -->
-        <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);padding:4px 2px 4px;border-bottom:1px solid var(--yellow-dim);margin:10px 0 6px">
+        <div
+          style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);padding:4px 2px 4px;border-bottom:1px solid var(--yellow-dim);margin:10px 0 6px">
           📄 Ứng dụng MNR Estimate
         </div>
         <div class="perm-grid">
@@ -2324,13 +2362,13 @@
 
     // ── PERMISSIONS ──
     const APP_SCREENS_META = {
-      barges:  { navId: 'nav-barges',  label: 'Quản lý sà lan' },
+      barges: { navId: 'nav-barges', label: 'Quản lý sà lan' },
       voyages: { navId: 'nav-voyages', label: 'Kế hoạch sà lan' },
-      kanban:  { navId: 'nav-kanban',  label: 'Theo dõi tiến độ' },
-      survey:  { navId: 'nav-survey',  label: 'Báo cáo Survey' },
-      report:  { navId: 'nav-report',  label: 'Báo cáo ca' },
-      tonbai:  { navId: 'nav-tonbai',  label: 'Tồn bãi' },
-      users:   { navId: 'nav-users',   label: 'Quản lý Users', adminOnly: true }
+      kanban: { navId: 'nav-kanban', label: 'Theo dõi tiến độ' },
+      survey: { navId: 'nav-survey', label: 'Báo cáo Survey' },
+      report: { navId: 'nav-report', label: 'Báo cáo ca' },
+      tonbai: { navId: 'nav-tonbai', label: 'Tồn bãi' },
+      users: { navId: 'nav-users', label: 'Quản lý Users', adminOnly: true }
     };
 
     function hasPermission(screen) {
@@ -2601,13 +2639,13 @@
       if (!name) return '#4a5568';
       let h = 0;
       for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-      const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63'];
+      const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#e91e63'];
       return colors[Math.abs(h) % colors.length];
     }
     function avatarInitials(name) {
       if (!name) return '?';
       const parts = name.trim().split(/\s+/);
-      if (parts.length >= 2) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+      if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
       return name.substring(0, 2).toUpperCase();
     }
 
@@ -2622,7 +2660,7 @@
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
-      } catch(e) {}
+      } catch (e) { }
     }
 
     // Auto-refresh
@@ -2654,7 +2692,7 @@
           S.voyages = v.data || []; S.tasks = t.data || [];
           renderKanban();
           document.getElementById('kb-last-refresh').textContent = '⟳ ' + fmtDtFromDate(new Date()).substring(11);
-        } catch(e) {}
+        } catch (e) { }
       }, 30000);
     }
 
@@ -2872,7 +2910,7 @@
         if (eta && eta > new Date()) {
           const ms = eta - Date.now();
           const h = Math.floor(ms / 3600000);
-          elapsedHtml = `<span class="kc-elapsed warn">⏳ còn ${h > 24 ? Math.floor(h/24) + 'n' : h + 'h'}</span>`;
+          elapsedHtml = `<span class="kc-elapsed warn">⏳ còn ${h > 24 ? Math.floor(h / 24) + 'n' : h + 'h'}</span>`;
         }
       }
       if (st === 1 && v.bat_dau) {
@@ -3128,7 +3166,7 @@
         if (u.permissions === 'all' || u.role === 'admin') {
           permHtml = '<span class="perm-all-badge">✦ All</span>';
         } else if (u.permissions) {
-          const screenLabels = { barges:'🚢', voyages:'📅', kanban:'📋', gantt:'📊', survey:'📄', users:'👥' };
+          const screenLabels = { barges: '🚢', voyages: '📅', kanban: '📋', gantt: '📊', survey: '📄', users: '👥' };
           permHtml = u.permissions.split(',').map(p => p.trim()).filter(Boolean)
             .map(p => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);margin:1px">${screenLabels[p] || ''}${p}</span>`).join(' ');
         } else {
@@ -3170,12 +3208,12 @@
     // Tất cả màn hình của cả 2 app
     const ALL_SCREENS = [
       // App Quản lý Rồng (không có gantt — đã bỏ)
-      'barges','voyages','kanban','survey','report','tonbai','users',
+      'barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'users',
       // App MNR Estimate
-      'estimate','revise','ovm','tracking','summary','bulk','stock',
-      'warehouse','phieu-kho','ccdc','tariff','report','pictures','inventory','photos'
+      'estimate', 'revise', 'ovm', 'tracking', 'summary', 'bulk', 'stock',
+      'warehouse', 'phieu-kho', 'ccdc', 'tariff', 'report', 'pictures', 'inventory', 'photos'
     ];
-    const THIS_APP_SCREENS = ['barges','voyages','kanban','survey','report','tonbai','users'];
+    const THIS_APP_SCREENS = ['barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'users'];
 
     function updatePermItem(screen) {
       const cb = document.getElementById('perm-' + screen);
@@ -3365,8 +3403,8 @@
     function exportTonBaiExcel() {
       if (!S.tonbai || !S.tonbai.length) { toast('Không có data', 'err'); return; }
       dlCsv('Ton_bai.csv',
-        ['STT','Container','Hãng','Kích cỡ','ISO','F/E','Tình trạng','Vị trí','Ngày lưu','Nhập bãi','Ra bãi','Vào cổng','Ra cổng','Số lệnh GN','Status','Ghi chú'],
-        S.tonbai.map((r, i) => [i+1, r.container, r.hang, r.kich_co, r.iso, r.fe, r.tinh_trang, r.vi_tri, r.ngay_luu, r.ngay_nhap, r.ngay_ra, r.ngay_vao_cong, r.ngay_ra_cong, r.so_lenh_gn, r.cont_status, r.ghi_chu])
+        ['STT', 'Container', 'Hãng', 'Kích cỡ', 'ISO', 'F/E', 'Tình trạng', 'Vị trí', 'Ngày lưu', 'Nhập bãi', 'Ra bãi', 'Vào cổng', 'Ra cổng', 'Số lệnh GN', 'Status', 'Ghi chú'],
+        S.tonbai.map((r, i) => [i + 1, r.container, r.hang, r.kich_co, r.iso, r.fe, r.tinh_trang, r.vi_tri, r.ngay_luu, r.ngay_nhap, r.ngay_ra, r.ngay_vao_cong, r.ngay_ra_cong, r.so_lenh_gn, r.cont_status, r.ghi_chu])
       );
     }
 
