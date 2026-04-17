@@ -2504,9 +2504,16 @@
     // ── LOAD ──
     async function loadAll() {
       try {
-        const [b, v, s, t, u, tb] = await Promise.all([api('getBarges'), api('getVoyages'), api('getSurveys'), api('getTasks'), api('getUsers'), api('getTonBai')]);
-        S.barges = b.data || []; S.voyages = v.data || []; S.surveys = s.data || []; S.tasks = t.data || []; S.users = u.data || [];
-        S.tonbai = tb.data || []; S.tonbai_updated = tb.updated_at || '';
+        const res = await api('getAllData');
+        const d = res.data || {};
+        S.barges = d.barges || []; 
+        S.voyages = d.voyages || []; 
+        S.surveys = d.surveys || []; 
+        S.tasks = d.tasks || []; 
+        S.users = d.users || [];
+        S.tonbai = d.tonbai || []; 
+        S.tonbai_updated = d.tonbai_updated || '';
+        S.reportLogs = d.reportLogs || [];
         renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); renderTonBai(); fillDropdowns();
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
@@ -3630,10 +3637,7 @@
 
     // ── BÁO CÁO CA ──
     async function renderReportLogs() {
-      try {
-        const res = await api('getReportLogs');
-        S.reportLogs = res.data || [];
-      } catch (e) { S.reportLogs = []; }
+      // Dữ liệu reportLogs nay đã được tải ở loadAll() lấy từ getAllData()
 
       const logs = S.reportLogs;
       const total = logs.length;
