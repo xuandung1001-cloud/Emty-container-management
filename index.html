@@ -4283,19 +4283,35 @@
 
     function buildYmData() {
       ymBlocksData = {};
+      // Load from container data
       (S.tonbai || []).forEach(tb => {
         if (!tb.vi_tri) return;
         const parts = String(tb.vi_tri).split('-');
         if (parts.length < 4) return;
         const block = parts[0];
-        const bay = parts[1];
-        const row = parseInt(parts[2], 10);
-        const tier = parseInt(parts[3], 10);
+        const bay   = parts[1];
+        const row   = parseInt(parts[2], 10);
+        const tier  = parseInt(parts[3], 10);
         if (!block || !bay || isNaN(row) || isNaN(tier)) return;
         if (!ymBlocksData[block]) ymBlocksData[block] = {};
         if (!ymBlocksData[block][bay]) ymBlocksData[block][bay] = [];
         ymBlocksData[block][bay].push({ row, tier, cont: tb });
       });
+      // Also ensure blocks/bays from yardSetup exist (even if no containers yet)
+      (S.yardSetup || []).forEach(ys => {
+        if (!ys.block || !ys.bay) return;
+        if (!ymBlocksData[ys.block]) ymBlocksData[ys.block] = {};
+        if (!ymBlocksData[ys.block][ys.bay]) ymBlocksData[ys.block][ys.bay] = [];
+      });
+    }
+
+    // Get configured row count and max tier for a block+bay from yardSetup
+    function ymGetSetupForBay(block, bay) {
+      const rows = (S.yardSetup || []).filter(s => s.block === block && s.bay === bay);
+      if (!rows.length) return null;
+      const maxRow  = Math.max(...rows.map(r => r.row));
+      const maxTier = Math.max(...rows.map(r => r.max_tier));
+      return { maxRow, maxTier, rows };
     }
 
     function renderYardMap() {
@@ -4317,7 +4333,7 @@
           : sc('LƯU > 30 NGÀY', fmt(oldConts), 'c-red') + sc('CHƯA CÓ VỊ TRÍ', fmt(noPos), 'c-yellow'));
       const listEl = document.getElementById('ym-block-list');
       if (!blocks.length) {
-        listEl.innerHTML = '<div style="color:var(--text3);font-size:11px;padding:4px 0">Không có container nào có dữ liệu vị trí.</div>';
+        listEl.innerHTML = '<div style="color:var(--text3);font-size:11px;padding:4px 0">Không có container nào và chưa cấu hình yard. Hãy dùng ⚙ Dung tích để khai báo bãi.</div>';
         return;
       }
       listEl.innerHTML = ymBuildBlockListHTML(blocks);
@@ -4325,6 +4341,8 @@
         ymSelectBlock(blocks[0]);
       } else if (ymCurrentBlock && ymBlocksData[ymCurrentBlock]) {
         ymDrawBlock(ymCurrentBlock);
+      } else if (ymCurrentBlock && !ymBlocksData[ymCurrentBlock] && blocks.length) {
+        ymSelectBlock(blocks[0]);
       }
     }
 
@@ -4347,19 +4365,22 @@
     }
 
     function ymDrawBlock(block) {
-      const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
+      // Merge bays from both container data AND yardSetup
+      const baysFromData = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
+      const baysFromSetup = [...new Set((S.yardSetup||[]).filter(s=>s.block===block).map(s=>s.bay))];
+      const allBays = [...new Set([...baysFromData, ...baysFromSetup])].sort();
       const body = document.getElementById('ym-canvas-body');
-      const totalCont = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
-      const old30 = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
+      const totalCont = allBays.reduce((s, bay) => s + (ymBlocksData[block] && ymBlocksData[block][bay] ? ymBlocksData[block][bay].length : 0), 0);
+      const old30 = allBays.reduce((s, bay) => s + ((ymBlocksData[block]&&ymBlocksData[block][bay])||[]).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
       const capData = ymGetBlockCapacity(block);
       const capStr = capData ? `  |  ${capData.usedSlots}/${capData.totalCapacity} slots — ${capData.pct}%` : '';
-      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${bays.length} Bay  —  ${totalCont} cont${capStr}${old30 ? '  ⚠'+old30+' lưu >30ng' : ''}`;
+      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${allBays.length} Bay  —  ${totalCont} cont${capStr}${old30 ? '  ⚠'+old30+' lưu >30ng' : ''}`;
       document.getElementById('ym-cap-info').textContent = S.tonbai_updated ? '📅 ' + S.tonbai_updated : '';
-      if (!bays.length) {
-        body.innerHTML = '<div class="ym-empty-state"><div style="font-size:32px">📭</div><div>Không có containers trong block này</div></div>';
+      if (!allBays.length) {
+        body.innerHTML = '<div class="ym-empty-state"><div style="font-size:32px">📭</div><div>Chưa có containers và chưa cấu hình yard setup cho block này</div></div>';
         return;
       }
-      body.innerHTML = bays.map(bay => ymDrawBaySVG(block, bay)).join('');
+      body.innerHTML = allBays.map(bay => ymDrawBaySVG(block, bay)).join('');
     }
 
     const YM_CW = 72, YM_CH = 36, YM_D = 12; // cell width, height, depth
@@ -4373,25 +4394,39 @@
     }
 
     function ymDrawBaySVG(block, bay) {
-      const conts = ymBlocksData[block][bay] || [];
-      let maxRow = 0, maxTier = 0;
-      conts.forEach(c => {
-        if (c.row > maxRow) maxRow = c.row;
-        if (c.tier > maxTier) maxTier = c.tier;
-      });
-      maxRow = Math.max(maxRow, 3);
-      maxTier = Math.max(maxTier, 3);
+      const conts = (ymBlocksData[block] && ymBlocksData[block][bay]) ? ymBlocksData[block][bay] : [];
+
+      // Tính maxRow và maxTier: ưu tiên từ yardSetup (bao gồm cả slot trống)
+      const setup = ymGetSetupForBay(block, bay);
+      let maxRow  = conts.reduce((m,c) => Math.max(m, c.row),  0);
+      let maxTier = conts.reduce((m,c) => Math.max(m, c.tier), 0);
+      if (setup) {
+        maxRow  = Math.max(maxRow,  setup.maxRow);
+        // maxTier per row — lấy giá trị tier tối đa được cấu hình cho row đó
+        setup.rows.forEach(sr => { maxTier = Math.max(maxTier, sr.max_tier); });
+      }
+      maxRow  = Math.max(maxRow,  1);
+      maxTier = Math.max(maxTier, 1);
+
+      // Build per-row max tier map from yardSetup (dùng để giới hạn hiển thị theo row)
+      const rowMaxTierMap = {}; // rowMaxTierMap[rowNum] = max_tier for that row
+      if (setup) {
+        setup.rows.forEach(sr => { rowMaxTierMap[sr.row] = sr.max_tier; });
+      }
+
       const map = {};
       conts.forEach(c => { map[`${c.row}-${c.tier}`] = c.cont; });
 
-      const offX = 30; // space for tier labels
+      const offX = 30;
       const W = offX + maxRow * (YM_CW + YM_D) + YM_D + 10;
-      const H = maxTier * (YM_CH + 3) + YM_D + 34; // 34 for row labels
+      const H = maxTier * (YM_CH + 3) + YM_D + 34;
 
       let svgCells = '';
-      // Draw from top tier to bottom tier so lower containers paint over upper slightly
       for (let tier = maxTier; tier >= 1; tier--) {
         for (let row = 1; row <= maxRow; row++) {
+          const rowMaxT = rowMaxTierMap[row] || maxTier;
+          // Nếu tier này vượt quá max cho row này thì bỏ qua (không render cell)
+          if (tier > rowMaxT) continue;
           const cont = map[`${row}-${tier}`];
           const x = offX + (row - 1) * (YM_CW + YM_D);
           const y = (maxTier - tier) * (YM_CH + 3) + YM_D;
@@ -4401,7 +4436,7 @@
         const ly = (maxTier - tier) * (YM_CH + 3) + YM_D + YM_CH / 2 + 5;
         svgCells += `<text x="${offX - 7}" y="${ly}" text-anchor="end" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif" font-weight="600">T${tier}</text>`;
       }
-      // Row labels at bottom
+      // Row labels
       for (let row = 1; row <= maxRow; row++) {
         const rx = offX + (row - 1) * (YM_CW + YM_D) + YM_CW / 2;
         svgCells += `<text x="${rx}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif">R${String(row).padStart(2,'0')}</text>`;
@@ -4413,6 +4448,8 @@
       const bayBar = bayCap
         ? `<div style="width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:7px;overflow:hidden"><div style="width:${bayCap.pct}%;height:100%;background:${pctColor};border-radius:2px"></div></div>`
         : '<div style="margin-bottom:8px"></div>';
+      // Size type badge
+      const szLabel = setup ? '' : '';
       return `<div style="flex-shrink:0">
         <div style="font-size:10px;font-weight:700;color:var(--cyan);text-align:center;margin-bottom:4px;letter-spacing:.07em;text-transform:uppercase">Bay ${esc(bay)}${bayCapStr}</div>
         ${bayBar}
