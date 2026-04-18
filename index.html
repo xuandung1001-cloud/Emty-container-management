@@ -4396,26 +4396,53 @@
     function ymDrawBaySVG(block, bay) {
       const conts = (ymBlocksData[block] && ymBlocksData[block][bay]) ? ymBlocksData[block][bay] : [];
 
-      // Tính maxRow và maxTier: ưu tiên từ yardSetup (bao gồm cả slot trống)
+      // Tính maxRow và maxTier: ưu tiên từ yardSetup
       const setup = ymGetSetupForBay(block, bay);
       let maxRow  = conts.reduce((m,c) => Math.max(m, c.row),  0);
       let maxTier = conts.reduce((m,c) => Math.max(m, c.tier), 0);
       if (setup) {
-        maxRow  = Math.max(maxRow,  setup.maxRow);
-        // maxTier per row — lấy giá trị tier tối đa được cấu hình cho row đó
+        maxRow = Math.max(maxRow, setup.maxRow);
         setup.rows.forEach(sr => { maxTier = Math.max(maxTier, sr.max_tier); });
       }
-      maxRow  = Math.max(maxRow,  1);
+      maxRow  = Math.max(maxRow, 1);
       maxTier = Math.max(maxTier, 1);
 
-      // Build per-row max tier map from yardSetup (dùng để giới hạn hiển thị theo row)
-      const rowMaxTierMap = {}; // rowMaxTierMap[rowNum] = max_tier for that row
-      if (setup) {
-        setup.rows.forEach(sr => { rowMaxTierMap[sr.row] = sr.max_tier; });
-      }
+      // Per-row max tier map
+      const rowMaxTierMap = {};
+      if (setup) { setup.rows.forEach(sr => { rowMaxTierMap[sr.row] = sr.max_tier; }); }
 
+      // Container map
       const map = {};
       conts.forEach(c => { map[`${c.row}-${c.tier}`] = c.cont; });
+
+      // ── LOCK MAP: Bay Group locking logic ──
+      // Bay lẻ (20ft): bị khoá nếu bay chẵn kề có 40ft cont ở cùng row-tier
+      // Bay chẵn (40ft): bị khoá nếu bay lẻ kề có 20ft cont ở cùng row-tier
+      const lockMap = {};
+      const bayNum = parseInt(String(bay).replace(/\D/g,'')) || 0;
+      const isOddBay = bayNum % 2 === 1;
+
+      if (isOddBay) {
+        // Odd bay (20ft): check adjacent EVEN bays for 40ft containers
+        const adjEvens = [];
+        if (bayNum > 1) adjEvens.push(String(bayNum - 1).padStart(2, '0'));
+        adjEvens.push(String(bayNum + 1).padStart(2, '0'));
+        adjEvens.forEach(evBay => {
+          ((ymBlocksData[block] && ymBlocksData[block][evBay]) || []).forEach(c => {
+            lockMap[`${c.row}-${c.tier}`] = true;
+          });
+        });
+      } else {
+        // Even bay (40ft): check adjacent ODD bays — if EITHER has 20ft → slot locked for 40ft
+        const adjOdds = [];
+        if (bayNum > 1) adjOdds.push(String(bayNum - 1).padStart(2, '0'));
+        adjOdds.push(String(bayNum + 1).padStart(2, '0'));
+        adjOdds.forEach(oddBay => {
+          ((ymBlocksData[block] && ymBlocksData[block][oddBay]) || []).forEach(c => {
+            lockMap[`${c.row}-${c.tier}`] = true;
+          });
+        });
+      }
 
       const offX = 30;
       const W = offX + maxRow * (YM_CW + YM_D) + YM_D + 10;
@@ -4425,18 +4452,16 @@
       for (let tier = maxTier; tier >= 1; tier--) {
         for (let row = 1; row <= maxRow; row++) {
           const rowMaxT = rowMaxTierMap[row] || maxTier;
-          // Nếu tier này vượt quá max cho row này thì bỏ qua (không render cell)
           if (tier > rowMaxT) continue;
           const cont = map[`${row}-${tier}`];
+          const isLocked = !cont && !!lockMap[`${row}-${tier}`];
           const x = offX + (row - 1) * (YM_CW + YM_D);
           const y = (maxTier - tier) * (YM_CH + 3) + YM_D;
-          svgCells += ymCellSVG(x, y, cont, `${block}-${bay}-${String(row).padStart(2,'0')}-${tier}`);
+          svgCells += ymCellSVG(x, y, cont, `${block}-${bay}-${String(row).padStart(2,'0')}-${tier}`, isLocked);
         }
-        // Tier label
         const ly = (maxTier - tier) * (YM_CH + 3) + YM_D + YM_CH / 2 + 5;
         svgCells += `<text x="${offX - 7}" y="${ly}" text-anchor="end" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif" font-weight="600">T${tier}</text>`;
       }
-      // Row labels
       for (let row = 1; row <= maxRow; row++) {
         const rx = offX + (row - 1) * (YM_CW + YM_D) + YM_CW / 2;
         svgCells += `<text x="${rx}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif">R${String(row).padStart(2,'0')}</text>`;
@@ -4448,8 +4473,6 @@
       const bayBar = bayCap
         ? `<div style="width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:7px;overflow:hidden"><div style="width:${bayCap.pct}%;height:100%;background:${pctColor};border-radius:2px"></div></div>`
         : '<div style="margin-bottom:8px"></div>';
-      // Size type badge
-      const szLabel = setup ? '' : '';
       return `<div style="flex-shrink:0">
         <div style="font-size:10px;font-weight:700;color:var(--cyan);text-align:center;margin-bottom:4px;letter-spacing:.07em;text-transform:uppercase">Bay ${esc(bay)}${bayCapStr}</div>
         ${bayBar}
@@ -4457,7 +4480,7 @@
       </div>`;
     }
 
-    function ymCellSVG(x, y, cont, posKey) {
+    function ymCellSVG(x, y, cont, posKey, isLocked) {
       const eq = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');
       if (cont) {
         const col = ymGetColor(cont);
@@ -4469,13 +4492,20 @@
         const days = parseInt(cont.ngay_luu) || 0;
         const infoData = eq(`${cont.container||''}|${cont.hang||''}|${cont.kich_co||''}|${days}|${posKey}|${cont.tinh_trang||''}`);
         const contKey = eq(String(cont.container || ''));
-        // 3D box: top-cap face + right-side face + front face (render order: back to front)
         const capFace   = `<polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="0.5"/>`;
         const sideFace  = `<polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="0.5"/>`;
         const frontFace = `<rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="${c.top}" stroke="${stroke}" stroke-width="0.5" rx="1.5"/>`;
         const label1   = `<text x="${x+YM_CW/2}" y="${y+YM_CH/2-2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.92)" font-weight="700" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${contId}</text>`;
         const label2   = days > 0 ? `<text x="${x+YM_CW/2}" y="${y+YM_CH/2+10}" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.78)" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${days}d</text>` : '';
         return `<g class="ym-cell" style="${glowStyle}" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip()" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${label1}${label2}</g>`;
+      } else if (isLocked) {
+        // 🔒 Slot bị khoá bởi cont 40ft ở bay cạnh (hoặc 20ft khoá bay 40ft)
+        return `<g class="ym-cell-locked" title="Bị khoá">
+          <polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>
+          <polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="rgba(239,68,68,0.04)" stroke="rgba(239,68,68,0.15)" stroke-width="0.5"/>
+          <rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.3)" stroke-width="0.5" stroke-dasharray="3,2" rx="1.5"/>
+          <text x="${x+YM_CW/2}" y="${y+YM_CH/2+4}" text-anchor="middle" font-size="12" fill="rgba(239,68,68,0.35)" font-family="Tahoma,sans-serif" style="pointer-events:none">🔒</text>
+        </g>`;
       } else {
         return `<g class="ym-cell-empty">
           <polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="rgba(255,255,255,0.008)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
@@ -4546,29 +4576,70 @@
       }
     }
 
-    // ── YARD CONFIG: CAPACITY HELPERS ──
+    // ── YARD CONFIG: CAPACITY HELPERS (Bay Group Model) ──
+    // Physical slot rule: [odd, even] pairs → slot = even bay
+    //   bay 01 + bay 02 → physical slot 02
+    //   bay 03 + bay 04 → physical slot 04
+    // A 40ft at bay 02 locks bay 01 AND bay 03 at same row-tier.
+
+    function ymGetPhysicalSlot(bayNum) {
+      // Map a bay number to its physical slot (always the even bay of the pair)
+      const n = parseInt(String(bayNum).replace(/\D/g,'')) || 0;
+      return n % 2 === 0 ? n : n + 1; // odd → round up to next even
+    }
+
     function ymGetBlockCapacity(block) {
-      if (!S.yardConfig || !S.yardConfig.length) return null;
-      const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-      let totalCapacity = 0, usedSlots = 0, cfgCount = 0;
-      bays.forEach(bay => {
-        const bc = ymGetBayCapacity(block, bay);
-        if (bc) { totalCapacity += bc.totalCap; usedSlots += bc.conts; cfgCount++; }
+      // Use physical slot grouping to avoid double-counting odd+even pairs
+      const allSetup = (S.yardSetup || []).filter(s =>
+        String(s.block).trim().toUpperCase() === String(block).trim().toUpperCase()
+      );
+      if (!allSetup.length) {
+        // Fallback to yardConfig (legacy)
+        if (!S.yardConfig || !S.yardConfig.length) return null;
+        const cfgs = S.yardConfig.filter(c =>
+          String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase()
+        );
+        if (!cfgs.length) return null;
+        const totalCapacity = cfgs.reduce((s,c) => s + (parseInt(c.max_tier)||0), 0);
+        const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
+        const usedSlots = bays.reduce((s,b) => s + ((ymBlocksData[block][b]||[]).length), 0);
+        const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedSlots/totalCapacity*100)) : 0;
+        return { usedSlots, totalCapacity, pct };
+      }
+
+      // Group by physical slot (even bay) — take MAX config per row to avoid double-count
+      const slotMap = {}; // slotKey → { rowTiers: { rowNum: maxTier } }
+      allSetup.forEach(s => {
+        const slot = String(ymGetPhysicalSlot(s.bay)).padStart(2, '0');
+        if (!slotMap[slot]) slotMap[slot] = { rowTiers: {} };
+        const rt = slotMap[slot].rowTiers;
+        rt[s.row] = Math.max(rt[s.row] || 0, s.max_tier);
       });
+
+      let totalCapacity = 0;
+      Object.values(slotMap).forEach(slot => {
+        Object.values(slot.rowTiers).forEach(mt => { totalCapacity += mt; });
+      });
+
+      // Used = all containers in this block (each vi_tri = 1 container = 1 slot used)
+      const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
+      const usedSlots = bays.reduce((s,b) => s + ((ymBlocksData[block][b]||[]).length), 0);
+
       if (totalCapacity === 0) return null;
       const pct = Math.min(100, Math.round(usedSlots / totalCapacity * 100));
-      return { usedSlots, totalCapacity, pct, numBays: bays.length, cfgCount };
+      return { usedSlots, totalCapacity, pct };
     }
 
     function ymGetBayCapacity(block, bay) {
-      if (!S.yardConfig || !S.yardConfig.length) return null;
-      // Sum max_tier for each configured row in this bay
-      const cfgs = S.yardConfig.filter(c =>
-        String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase() &&
-        String(c.bay).trim().toUpperCase()   === String(bay).trim().toUpperCase()
+      // Bay capacity = sum of max_tier for each setup row in this bay
+      // Uses yardSetup first, fallback to yardConfig
+      const norm = s => String(s||'').trim().toUpperCase();
+      const dataSource = S.yardSetup && S.yardSetup.length ? S.yardSetup : (S.yardConfig || []);
+      const cfgs = dataSource.filter(c =>
+        norm(c.block) === norm(block) && norm(c.bay) === norm(bay)
       );
       if (!cfgs.length) return null;
-      const totalCap = cfgs.reduce((sum, c) => sum + (parseInt(c.max_tier) || 0), 0);
+      const totalCap = cfgs.reduce((s,c) => s + (parseInt(c.max_tier)||0), 0);
       const conts = (ymBlocksData[block] && ymBlocksData[block][bay]) ? ymBlocksData[block][bay].length : 0;
       const pct = totalCap > 0 ? Math.min(100, Math.round(conts / totalCap * 100)) : 0;
       return { totalCap, conts, pct };
