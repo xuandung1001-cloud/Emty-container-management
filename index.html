@@ -1566,7 +1566,6 @@
       gap: 16px;
       height: calc(100vh - 210px);
     }
-
     .ym-panel {
       width: 220px;
       flex-shrink: 0;
@@ -1575,7 +1574,6 @@
       gap: 10px;
       overflow: hidden;
     }
-
     .ym-panel-card {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -1583,14 +1581,12 @@
       padding: 12px;
       flex-shrink: 0;
     }
-
     .ym-panel-card.scroll {
       flex: 1;
       overflow-y: auto;
       scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, .15) transparent;
+      scrollbar-color: rgba(0,0,0,.15) transparent;
     }
-
     .ym-panel-title {
       font-size: 9px;
       font-weight: 700;
@@ -1599,7 +1595,6 @@
       color: var(--text3);
       margin-bottom: 8px;
     }
-
     .ym-block-btn {
       display: flex;
       align-items: center;
@@ -1615,19 +1610,8 @@
       margin-bottom: 4px;
       background: var(--bg3);
     }
-
-    .ym-block-btn:hover {
-      border-color: rgba(0, 212, 255, .4);
-      color: var(--cyan);
-      background: var(--cyan-dim);
-    }
-
-    .ym-block-btn.active {
-      background: rgba(0, 212, 255, .12);
-      border-color: rgba(0, 212, 255, .5);
-      color: var(--cyan);
-    }
-
+    .ym-block-btn:hover { border-color: rgba(0,212,255,.4); color: var(--cyan); background: var(--cyan-dim); }
+    .ym-block-btn.active { background: rgba(0,212,255,.12); border-color: rgba(0,212,255,.5); color: var(--cyan); }
     .ym-block-count {
       font-size: 9px;
       font-weight: 700;
@@ -1636,7 +1620,6 @@
       padding: 1px 6px;
       border: 1px solid var(--border);
     }
-
     .ym-legend-row {
       display: flex;
       align-items: center;
@@ -1645,14 +1628,12 @@
       color: var(--text2);
       margin-bottom: 5px;
     }
-
     .ym-legend-dot {
       width: 12px;
       height: 12px;
       border-radius: 3px;
       flex-shrink: 0;
     }
-
     .ym-canvas-wrap {
       flex: 1;
       background: #0a1628;
@@ -1663,23 +1644,20 @@
       display: flex;
       flex-direction: column;
     }
-
     .ym-canvas-header {
       padding: 10px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, .06);
+      border-bottom: 1px solid rgba(255,255,255,.06);
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(0, 0, 0, .25);
+      background: rgba(0,0,0,.25);
       flex-shrink: 0;
     }
-
     #ym-canvas-title {
       font-size: 12px;
       font-weight: 700;
       color: var(--cyan);
     }
-
     .ym-canvas-body {
       flex: 1;
       overflow: auto;
@@ -1691,11 +1669,10 @@
       gap: 40px 48px;
       scrollbar-width: thin;
     }
-
     #ym-tooltip {
       position: fixed;
       background: rgba(10, 22, 40, 0.97);
-      border: 1px solid rgba(0, 212, 255, .3);
+      border: 1px solid rgba(0,212,255,.3);
       border-radius: 9px;
       padding: 10px 14px;
       font-size: 11px;
@@ -1703,10 +1680,9 @@
       pointer-events: none;
       z-index: 9999;
       display: none;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, .6);
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
       min-width: 185px;
     }
-
     .ym-empty-state {
       display: flex;
       flex-direction: column;
@@ -1718,10 +1694,7 @@
       gap: 12px;
       text-align: center;
     }
-
-    .ym-cell {
-      cursor: pointer;
-    }
+    .ym-cell { cursor: pointer; }
   </style>
 </head>
 
@@ -1839,9 +1812,9 @@
         </div>
         <div class="nav-item" id="nav-yardmap" onclick="nav('yardmap',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="7" width="9" height="14" rx="1" />
-            <rect x="13" y="3" width="9" height="18" rx="1" />
-            <path d="M2 11h9M2 15h9M13 7h9M13 11h9M13 15h9" />
+            <rect x="2" y="7" width="9" height="14" rx="1"/>
+            <rect x="13" y="3" width="9" height="18" rx="1"/>
+            <path d="M2 11h9M2 15h9M13 7h9M13 11h9M13 15h9"/>
           </svg>
           <div class="nav-dot"></div>
           Sơ đồ bãi 3D
@@ -2108,8 +2081,7 @@
             <div class="ym-panel">
               <div class="ym-panel-card">
                 <div class="ym-panel-title">🔍 Tìm container</div>
-                <div class="srch" style="flex:none"><span class="srch-ic">🔍</span><input placeholder="Số container..."
-                    id="ym-search" oninput="ymSearch()" style="width:100%"></div>
+                <div class="srch" style="flex:none"><span class="srch-ic">🔍</span><input placeholder="Số container..." id="ym-search" oninput="ymSearch()" style="width:100%"></div>
               </div>
               <div class="ym-panel-card scroll">
                 <div class="ym-panel-title">🏗 Chọn khu vực</div>
@@ -2119,22 +2091,11 @@
               </div>
               <div class="ym-panel-card">
                 <div class="ym-panel-title">📊 Chú thích màu</div>
-                <div class="ym-legend-row">
-                  <div class="ym-legend-dot" style="background:#10b981"></div> ≤ 7 ngày
-                </div>
-                <div class="ym-legend-row">
-                  <div class="ym-legend-dot" style="background:#3b82f6"></div> 8 – 14 ngày
-                </div>
-                <div class="ym-legend-row">
-                  <div class="ym-legend-dot" style="background:#f59e0b"></div> 15 – 30 ngày
-                </div>
-                <div class="ym-legend-row">
-                  <div class="ym-legend-dot" style="background:#ef4444"></div> &gt; 30 ngày
-                </div>
-                <div class="ym-legend-row">
-                  <div class="ym-legend-dot"
-                    style="background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.2)"></div> Ô trống
-                </div>
+                <div class="ym-legend-row"><div class="ym-legend-dot" style="background:#10b981"></div> ≤ 7 ngày</div>
+                <div class="ym-legend-row"><div class="ym-legend-dot" style="background:#3b82f6"></div> 8 – 14 ngày</div>
+                <div class="ym-legend-row"><div class="ym-legend-dot" style="background:#f59e0b"></div> 15 – 30 ngày</div>
+                <div class="ym-legend-row"><div class="ym-legend-dot" style="background:#ef4444"></div> &gt; 30 ngày</div>
+                <div class="ym-legend-row"><div class="ym-legend-dot" style="background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.2)"></div> Ô trống</div>
               </div>
             </div>
             <!-- Canvas bên phải: Isometric 3D -->
@@ -2143,10 +2104,8 @@
                 <span id="ym-canvas-title">Chọn khu vực để xem sơ đồ 3D</span>
                 <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
                   <div id="ym-cap-info" style="font-size:10px;color:var(--text3)"></div>
-                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="openYardConfig()">⚙
-                    Dung tích</button>
-                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="ymRefresh()">⟳ Làm
-                    mới</button>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="openYardConfig()">⚙ Dung tích</button>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="ymRefresh()">⟳ Làm mới</button>
                 </div>
               </div>
               <div class="ym-canvas-body" id="ym-canvas-body">
@@ -2674,33 +2633,24 @@
     <div class="modal" style="max-width:min(96vw,1140px);width:1140px;padding:0;overflow:hidden;border-radius:16px">
 
       <!-- Header -->
-      <div
-        style="background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)">
         <div>
           <div style="font-size:16px;font-weight:800;color:#fff;letter-spacing:-.01em">⚙ Thiết lập dung tích bãi</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px">Khai báo cấu trúc vật lý bãi container ·
-            Hỗ trợ 20ft & 40ft</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px">Khai báo cấu trúc vật lý bãi container · Hỗ trợ 20ft & 40ft</div>
         </div>
         <!-- Step indicator -->
         <div style="display:flex;align-items:center;gap:8px">
-          <div id="ys-step-1-dot"
-            style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:rgba(0,212,255,.2);border:1px solid rgba(0,212,255,.5)">
-            <div
-              style="width:20px;height:20px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff">
-              1</div>
+          <div id="ys-step-1-dot" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:rgba(0,212,255,.2);border:1px solid rgba(0,212,255,.5)">
+            <div style="width:20px;height:20px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff">1</div>
             <span style="font-size:11px;font-weight:600;color:var(--cyan)">Khai báo cấu trúc</span>
           </div>
           <div style="color:rgba(255,255,255,.3);font-size:14px">→</div>
-          <div id="ys-step-2-dot"
-            style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)">
-            <div
-              style="width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:rgba(255,255,255,.5)">
-              2</div>
+          <div id="ys-step-2-dot" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)">
+            <div style="width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:rgba(255,255,255,.5)">2</div>
             <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.4)">Tinh chỉnh từng row</span>
           </div>
         </div>
-        <div style="cursor:pointer;color:rgba(255,255,255,.4);font-size:20px;padding:4px 8px"
-          onclick="closeOv('myardconfig')">✕</div>
+        <div style="cursor:pointer;color:rgba(255,255,255,.4);font-size:20px;padding:4px 8px" onclick="closeOv('myardconfig')">✕</div>
       </div>
 
       <!-- STEP 1: Block/Bay Declaration -->
@@ -2708,9 +2658,7 @@
 
         <!-- Toolbar -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="font-size:11px;color:var(--text3)">Khai báo từng Block → Bay → Số row & Tier mặc định. Bay
-            <b>lẻ</b> = 🟡 20ft, bay <b>chẵn</b> = 🔵 40ft.
-          </div>
+          <div style="font-size:11px;color:var(--text3)">Khai báo từng Block → Bay → Số row & Tier mặc định. Bay <b>lẻ</b> = 🟡 20ft, bay <b>chẵn</b> = 🔵 40ft.</div>
           <button class="btn btn-p" onclick="ysAddBlock()" style="white-space:nowrap">＋ Thêm Block</button>
         </div>
 
@@ -2726,38 +2674,31 @@
         <!-- Legend -->
         <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)">
-            <div style="width:10px;height:10px;border-radius:2px;background:#f59e0b;opacity:.8"></div> Bay lẻ
-            (01,03,33...) = 20ft
+            <div style="width:10px;height:10px;border-radius:2px;background:#f59e0b;opacity:.8"></div> Bay lẻ (01,03,33...) = 20ft
           </div>
           <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)">
-            <div style="width:10px;height:10px;border-radius:2px;background:#3b82f6;opacity:.8"></div> Bay chẵn
-            (02,04,14...) = 40ft
+            <div style="width:10px;height:10px;border-radius:2px;background:#3b82f6;opacity:.8"></div> Bay chẵn (02,04,14...) = 40ft
           </div>
-          <div style="font-size:10px;color:var(--text3)">💡 Số row trong bay: nhập số nguyên, ví dụ bay 02 có 6 row →
-            nhập 6</div>
+          <div style="font-size:10px;color:var(--text3)">💡 Số row trong bay: nhập số nguyên, ví dụ bay 02 có 6 row → nhập 6</div>
         </div>
       </div>
 
       <!-- STEP 2: Per-Row Fine-Tune -->
-      <div id="ys-step2"
-        style="display:none;padding:20px 28px;min-height:60vh;max-height:72vh;overflow-y:auto;scrollbar-width:thin">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Tinh chỉnh Max Tier cho từng Row. Mặc định đã
-          điền từ Bước 1. Bạn có thể sửa từng ô riêng lẻ.</div>
+      <div id="ys-step2" style="display:none;padding:20px 28px;min-height:60vh;max-height:72vh;overflow-y:auto;scrollbar-width:thin">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Tinh chỉnh Max Tier cho từng Row. Mặc định đã điền từ Bước 1. Bạn có thể sửa từng ô riêng lẻ.</div>
         <div id="ys-step2-body">
           <!-- Rendered by ysRenderStep2() -->
         </div>
       </div>
 
       <!-- Footer -->
-      <div
-        style="padding:14px 28px;background:var(--bg3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="padding:14px 28px;background:var(--bg3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
         <div style="font-size:10px;color:var(--text3)" id="ys-footer-info">Khai báo ít nhất 1 block để tiếp tục</div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="closeOv('myardconfig')">Đóng</button>
           <button class="btn btn-ghost" id="ys-btn-back" onclick="ysGoStep(1)" style="display:none">← Quay lại</button>
           <button class="btn btn-p" id="ys-btn-next" onclick="ysGoStep(2)">Tiếp theo →</button>
-          <button class="btn btn-g" id="ys-btn-save" onclick="ysSaveAll()" style="display:none">💾 Lưu cấu trúc
-            bãi</button>
+          <button class="btn btn-g" id="ys-btn-save" onclick="ysSaveAll()" style="display:none">💾 Lưu cấu trúc bãi</button>
         </div>
       </div>
     </div>
@@ -2838,16 +2779,16 @@
       try {
         const res = await api('getAllData');
         const d = res.data || {};
-        S.barges = d.barges || [];
-        S.voyages = d.voyages || [];
-        S.surveys = d.surveys || [];
-        S.tasks = d.tasks || [];
+        S.barges = d.barges || []; 
+        S.voyages = d.voyages || []; 
+        S.surveys = d.surveys || []; 
+        S.tasks = d.tasks || []; 
         S.users = d.users || [];
-        S.tonbai = d.tonbai || [];
+        S.tonbai = d.tonbai || []; 
         S.tonbai_updated = d.tonbai_updated || '';
         S.reportLogs = d.reportLogs || [];
         S.yardConfig = d.yardConfig || [];
-        S.yardSetup = d.yardSetup || [];
+        S.yardSetup  = d.yardSetup  || [];
         renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); renderTonBai(); renderYardMap(); fillDropdowns();
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
@@ -4345,22 +4286,22 @@
       // viTri format: Block-Bay-Row-Tier (e.g. A1-02-05-2)
       // Bay pair mapping: odd bay N → slot "N-(N+1)", even bay N → slot "(N-1)-N"
       function bayToSlot(bayStr) {
-        const n = parseInt(String(bayStr).replace(/\D/g, '')) || 0;
+        const n = parseInt(String(bayStr).replace(/\D/g,'')) || 0;
         const odd = n % 2 === 1 ? n : n - 1;
-        return String(odd).padStart(2, '0') + '-' + String(odd + 1).padStart(2, '0');
+        return String(odd).padStart(2,'0') + '-' + String(odd + 1).padStart(2,'0');
       }
       (S.tonbai || []).forEach(tb => {
         if (!tb.vi_tri) return;
         const parts = String(tb.vi_tri).split('-');
         if (parts.length < 4) return;
         const block = parts[0];
-        const bay = parts[1];
-        const row = parseInt(parts[2], 10);
-        const tier = parseInt(parts[3], 10);
+        const bay   = parts[1];
+        const row   = parseInt(parts[2], 10);
+        const tier  = parseInt(parts[3], 10);
         if (!block || !bay || isNaN(row) || isNaN(tier)) return;
-        const bayN = parseInt(String(bay).replace(/\D/g, '')) || 0;
+        const bayN  = parseInt(String(bay).replace(/\D/g,'')) || 0;
         const is20ft = bayN % 2 === 1;
-        const slot = bayToSlot(bay);
+        const slot  = bayToSlot(bay);
         if (!ymBlocksData[block]) ymBlocksData[block] = {};
         if (!ymBlocksData[block][slot]) ymBlocksData[block][slot] = [];
         ymBlocksData[block][slot].push({ row, tier, is20ft, bay, cont: tb });
@@ -4380,7 +4321,7 @@
         String(s.bay_slot).trim() === String(slot).trim()
       );
       if (!rows.length) return null;
-      const maxRow = Math.max(...rows.map(r => r.row));
+      const maxRow  = Math.max(...rows.map(r => r.row));
       const maxTier = Math.max(...rows.map(r => r.max_tier));
       return { maxRow, maxTier, rows };
     }
@@ -4437,15 +4378,15 @@
 
     function ymDrawBlock(block) {
       // Slots: merge from container data AND yardSetup
-      const slotsFromData = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-      const slotsFromSetup = [...new Set((S.yardSetup || []).filter(s => String(s.block).toUpperCase() === String(block).toUpperCase()).map(s => s.bay_slot))];
+      const slotsFromData  = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
+      const slotsFromSetup = [...new Set((S.yardSetup||[]).filter(s=>String(s.block).toUpperCase()===String(block).toUpperCase()).map(s=>s.bay_slot))];
       const allSlots = [...new Set([...slotsFromData, ...slotsFromSetup])].sort();
       const body = document.getElementById('ym-canvas-body');
-      const totalCont = allSlots.reduce((s, sl) => s + ((ymBlocksData[block] && ymBlocksData[block][sl]) ? ymBlocksData[block][sl].length : 0), 0);
-      const old30 = allSlots.reduce((s, sl) => s + ((ymBlocksData[block] && ymBlocksData[block][sl]) || []).filter(c => (parseInt(c.cont.ngay_luu) || 0) > 30).length, 0);
+      const totalCont = allSlots.reduce((s,sl) => s + ((ymBlocksData[block]&&ymBlocksData[block][sl])?ymBlocksData[block][sl].length:0), 0);
+      const old30 = allSlots.reduce((s,sl) => s + ((ymBlocksData[block]&&ymBlocksData[block][sl])||[]).filter(c=>(parseInt(c.cont.ngay_luu)||0)>30).length, 0);
       const capData = ymGetBlockCapacity(block);
       const capStr = capData ? `  |  ${capData.usedSlots}/${capData.totalCapacity} slots — ${capData.pct}%` : '';
-      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${allSlots.length} Bay-Pair  —  ${totalCont} cont${capStr}${old30 ? '  ⚠' + old30 + ' lưu >30ng' : ''}`;
+      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${allSlots.length} Bay-Pair  —  ${totalCont} cont${capStr}${old30?'  ⚠'+old30+' lưu >30ng':''}`;
       document.getElementById('ym-cap-info').textContent = S.tonbai_updated ? '📅 ' + S.tonbai_updated : '';
       if (!allSlots.length) {
         body.innerHTML = '<div class="ym-empty-state"><div style="font-size:32px">📭</div><div>Chưa có containers và chưa cấu hình yard setup cho block này</div></div>';
@@ -4458,10 +4399,10 @@
 
     function ymGetColor(cont) {
       const days = parseInt(cont ? cont.ngay_luu : 0) || 0;
-      if (days <= 7) return { top: '#10b981', side: '#059669', cap: '#047857' };
+      if (days <= 7)  return { top: '#10b981', side: '#059669', cap: '#047857' };
       if (days <= 14) return { top: '#3b82f6', side: '#2563eb', cap: '#1d4ed8' };
       if (days <= 30) return { top: '#f59e0b', side: '#d97706', cap: '#b45309' };
-      return { top: '#ef4444', side: '#dc2626', cap: '#b91c1c' };
+      return           { top: '#ef4444', side: '#dc2626', cap: '#b91c1c' };
     }
 
     // ── Draw one Bay Pair Slot ──
@@ -4470,13 +4411,13 @@
 
       // Setup from yardSetup
       const setup = ymGetSetupForSlot(block, slot);
-      let maxRow = conts.reduce((m, c) => Math.max(m, c.row), 0);
-      let maxTier = conts.reduce((m, c) => Math.max(m, c.tier), 0);
+      let maxRow  = conts.reduce((m,c) => Math.max(m, c.row),  0);
+      let maxTier = conts.reduce((m,c) => Math.max(m, c.tier), 0);
       if (setup) {
-        maxRow = Math.max(maxRow, setup.maxRow);
+        maxRow  = Math.max(maxRow, setup.maxRow);
         setup.rows.forEach(sr => { maxTier = Math.max(maxTier, sr.max_tier); });
       }
-      maxRow = Math.max(maxRow, 1);
+      maxRow  = Math.max(maxRow, 1);
       maxTier = Math.max(maxTier, 1);
 
       // Per-row max tier
@@ -4527,7 +4468,7 @@
       }
       for (let row = 1; row <= maxRow; row++) {
         const rx = offX + (row - 1) * (YM_CW + YM_D) + YM_CW / 2;
-        svgCells += `<text x="${rx}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif">R${String(row).padStart(2, '0')}</text>`;
+        svgCells += `<text x="${rx}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif">R${String(row).padStart(2,'0')}</text>`;
       }
 
       const slotCap = ymGetSlotCapacity(block, slot, lockedCellsInRange);
@@ -4546,74 +4487,39 @@
 
     // ymCellSVG: cont = container object (has .vi_tri), isLocked = boolean
     function ymCellSVG(x, y, cont, isLocked) {
-      const eq = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
+      const eq = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');
       if (cont) {
         const col = ymGetColor(cont);
         const isHL = ymHighlight && cont.container && cont.container.trim().toUpperCase() === String(ymHighlight).toUpperCase();
-        const c = isHL ? { top: '#ffffff', side: '#e2e8f0', cap: '#cbd5e1' } : col;
+        const c = isHL ? { top:'#ffffff', side:'#e2e8f0', cap:'#cbd5e1' } : col;
         const stroke = isHL ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.22)';
         const glowStyle = isHL ? 'filter:drop-shadow(0 0 5px rgba(255,255,255,0.65))' : '';
         const contId = eq(String(cont.container || '').substring(0, 11));
         const days = parseInt(cont.ngay_luu) || 0;
         // Use actual vi_tri for position display in tooltip
         const pos = eq(cont.vi_tri || '');
-        const infoData = eq(`${cont.container || ''}|${cont.hang || ''}|${cont.kich_co || ''}|${days}|${pos}|${cont.tinh_trang || ''}`);
+        const infoData = eq(`${cont.container||''}|${cont.hang||''}|${cont.kich_co||''}|${days}|${pos}|${cont.tinh_trang||''}`);
         const contKey = eq(String(cont.container || ''));
-        const capFace = `<polygon points="${x},${y} ${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_D},${y - YM_D * 0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="0.5"/>`;
-        const sideFace = `<polygon points="${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_CW + YM_D},${y + YM_CH - YM_D * 0.5} ${x + YM_CW},${y + YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="0.5"/>`;
+        const capFace   = `<polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="0.5"/>`;
+        const sideFace  = `<polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="0.5"/>`;
         const frontFace = `<rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="${c.top}" stroke="${stroke}" stroke-width="0.5" rx="1.5"/>`;
-        const label1 = `<text x="${x + YM_CW / 2}" y="${y + YM_CH / 2 - 2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.92)" font-weight="700" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${contId}</text>`;
-        const label2 = days > 0 ? `<text x="${x + YM_CW / 2}" y="${y + YM_CH / 2 + 10}" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.78)" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${days}d</text>` : '';
+        const label1   = `<text x="${x+YM_CW/2}" y="${y+YM_CH/2-2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.92)" font-weight="700" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${contId}</text>`;
+        const label2  = days > 0 ? `<text x="${x+YM_CW/2}" y="${y+YM_CH/2+10}" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.78)" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${days}d</text>` : '';
         return `<g class="ym-cell" style="${glowStyle}" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip()" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${label1}${label2}</g>`;
       } else if (isLocked) {
         return `<g class="ym-cell-locked" title="Bị khoá bởi 40ft bên cạnh">
-          <polygon points="${x},${y} ${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_D},${y - YM_D * 0.5}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>
-          <polygon points="${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_CW + YM_D},${y + YM_CH - YM_D * 0.5} ${x + YM_CW},${y + YM_CH}" fill="rgba(239,68,68,0.05)" stroke="rgba(239,68,68,0.15)" stroke-width="0.5"/>
+          <polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>
+          <polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="rgba(239,68,68,0.05)" stroke="rgba(239,68,68,0.15)" stroke-width="0.5"/>
           <rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.35)" stroke-width="0.5" stroke-dasharray="3,2" rx="1.5"/>
-          <text x="${x + YM_CW / 2}" y="${y + YM_CH / 2 + 5}" text-anchor="middle" font-size="11" fill="rgba(239,68,68,0.4)" font-family="Tahoma,sans-serif" style="pointer-events:none">🔒</text>
+          <text x="${x+YM_CW/2}" y="${y+YM_CH/2+5}" text-anchor="middle" font-size="11" fill="rgba(239,68,68,0.4)" font-family="Tahoma,sans-serif" style="pointer-events:none">🔒</text>
         </g>`;
       } else {
         return `<g class="ym-cell-empty">
-          <polygon points="${x},${y} ${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_D},${y - YM_D * 0.5}" fill="rgba(255,255,255,0.008)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
-          <polygon points="${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_CW + YM_D},${y + YM_CH - YM_D * 0.5} ${x + YM_CW},${y + YM_CH}" fill="rgba(255,255,255,0.005)" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+          <polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="rgba(255,255,255,0.008)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+          <polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="rgba(255,255,255,0.005)" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
           <rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="4,3" rx="1.5"/>
         </g>`;
       }
-    }
-    const eq = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
-    if (cont) {
-      const col = ymGetColor(cont);
-      const isHL = ymHighlight && cont.container && cont.container.trim().toUpperCase() === String(ymHighlight).toUpperCase();
-      const c = isHL ? { top: '#ffffff', side: '#e2e8f0', cap: '#cbd5e1' } : col;
-      const stroke = isHL ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.22)';
-      const glowStyle = isHL ? 'filter:drop-shadow(0 0 5px rgba(255,255,255,0.65))' : '';
-      const contId = eq(String(cont.container || '').substring(0, 11));
-      const days = parseInt(cont.ngay_luu) || 0;
-      const infoData = eq(`${cont.container || ''}|${cont.hang || ''}|${cont.kich_co || ''}|${days}|${posKey}|${cont.tinh_trang || ''}`);
-      const contKey = eq(String(cont.container || ''));
-      const capFace = `<polygon points="${x},${y} ${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_D},${y - YM_D * 0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="0.5"/>`;
-      const sideFace = `<polygon points="${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_CW + YM_D},${y + YM_CH - YM_D * 0.5} ${x + YM_CW},${y + YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="0.5"/>`;
-      const frontFace = `<rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="${c.top}" stroke="${stroke}" stroke-width="0.5" rx="1.5"/>`;
-      const label1 = `<text x="${x + YM_CW / 2}" y="${y + YM_CH / 2 - 3}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.92)" font-weight="700" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${contId}</text>`;
-      // Size badge: 🟡20 or 🔵40
-      const sizeLbl = is20ft === true ? '20' : is20ft === false ? '40' : '';
-      const sizeClr = is20ft === true ? 'rgba(245,158,11,0.9)' : 'rgba(59,130,246,0.9)';
-      const sizeTag = sizeLbl ? `<text x="${x + YM_CW - 3}" y="${y + 10}" text-anchor="end" font-size="7" fill="${sizeClr}" font-weight="700" font-family="Tahoma,sans-serif" style="pointer-events:none">${sizeLbl}</text>` : '';
-      const label2 = days > 0 ? `<text x="${x + YM_CW / 2}" y="${y + YM_CH / 2 + 10}" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.78)" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${days}d</text>` : '';
-      return `<g class="ym-cell" style="${glowStyle}" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip()" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${label1}${sizeTag}${label2}</g>`;
-    } else if (isLocked) {
-      return `<g class="ym-cell-locked" title="Bị khoá bởi 40ft bên cạnh">
-          <polygon points="${x},${y} ${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_D},${y - YM_D * 0.5}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>
-          <polygon points="${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_CW + YM_D},${y + YM_CH - YM_D * 0.5} ${x + YM_CW},${y + YM_CH}" fill="rgba(239,68,68,0.05)" stroke="rgba(239,68,68,0.15)" stroke-width="0.5"/>
-          <rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.35)" stroke-width="0.5" stroke-dasharray="3,2" rx="1.5"/>
-          <text x="${x + YM_CW / 2}" y="${y + YM_CH / 2 + 5}" text-anchor="middle" font-size="11" fill="rgba(239,68,68,0.4)" font-family="Tahoma,sans-serif" style="pointer-events:none">🔒</text>
-        </g>`;
-    } else {
-      return `<g class="ym-cell-empty">
-          <polygon points="${x},${y} ${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_D},${y - YM_D * 0.5}" fill="rgba(255,255,255,0.008)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
-          <polygon points="${x + YM_CW},${y} ${x + YM_CW + YM_D},${y - YM_D * 0.5} ${x + YM_CW + YM_D},${y + YM_CH - YM_D * 0.5} ${x + YM_CW},${y + YM_CH}" fill="rgba(255,255,255,0.005)" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
-          <rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="4,3" rx="1.5"/>
-        </g>`;
     }
 
     function ymShowTip(e, el) {
@@ -4690,10 +4596,10 @@
           String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase()
         );
         if (!cfgs.length) return null;
-        const totalCapacity = cfgs.reduce((s, c) => s + (parseInt(c.max_tier) || 0), 0);
+        const totalCapacity = cfgs.reduce((s,c) => s+(parseInt(c.max_tier)||0), 0);
         const slots = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-        const usedSlots = slots.reduce((s, sl) => s + ((ymBlocksData[block][sl] || []).length), 0);
-        const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedSlots / totalCapacity * 100)) : 0;
+        const usedSlots = slots.reduce((s,sl) => s+((ymBlocksData[block][sl]||[]).length), 0);
+        const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedSlots/totalCapacity*100)) : 0;
         return { usedSlots, totalCapacity, pct };
       }
       // Bay Pair Model: each bay_slot is its own capacity unit
@@ -4720,7 +4626,7 @@
       }
 
       const slots = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-      const usedSlots = slots.reduce((s, sl) => s + ((ymBlocksData[block][sl] || []).length), 0);
+      const usedSlots = slots.reduce((s,sl) => s+((ymBlocksData[block][sl]||[]).length), 0);
       const effectiveCapacity = Math.max(totalCapacity - lockedTotal, usedSlots);
       if (effectiveCapacity === 0) return null;
       const pct = Math.min(100, Math.round(usedSlots / effectiveCapacity * 100));
@@ -4729,16 +4635,16 @@
 
     function ymGetSlotCapacity(block, slot, lockedCount) {
       // lockedCount: number of locked cells (from previous slot's 40fts), optional
-      const cfgs = (S.yardSetup && S.yardSetup.length ? S.yardSetup : (S.yardConfig || [])).filter(c =>
+      const cfgs = (S.yardSetup && S.yardSetup.length ? S.yardSetup : (S.yardConfig||[])).filter(c =>
         String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase() &&
         (c.bay_slot ? String(c.bay_slot).trim() === String(slot).trim() : false)
       );
       if (!cfgs.length) return null;
-      const totalCap = cfgs.reduce((s, c) => s + (parseInt(c.max_tier) || 0), 0);
+      const totalCap = cfgs.reduce((s,c) => s+(parseInt(c.max_tier)||0), 0);
       const locked = lockedCount || 0;
       const effectiveCap = Math.max(totalCap - locked, 0);
       const conts = (ymBlocksData[block] && ymBlocksData[block][slot]) ? ymBlocksData[block][slot].length : 0;
-      const pct = effectiveCap > 0 ? Math.min(100, Math.round(conts / effectiveCap * 100)) : (conts > 0 ? 100 : 0);
+      const pct = effectiveCap > 0 ? Math.min(100, Math.round(conts/effectiveCap*100)) : (conts > 0 ? 100 : 0);
       return { totalCap, effectiveCap, locked, conts, pct };
     }
 
@@ -4747,7 +4653,7 @@
       return blocks.map(block => {
         const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
         const total = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
-        const old30 = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).filter(c => (parseInt(c.cont.ngay_luu) || 0) > 30).length, 0);
+        const old30 = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
         const cap = ymGetBlockCapacity(block);
         const pctColor = !cap ? '' : cap.pct >= 90 ? 'var(--red)' : cap.pct >= 70 ? 'var(--yellow)' : 'var(--green)';
         const countLabel = cap ? `${total}/${cap.totalCapacity}` : `${total}`;
@@ -4760,7 +4666,7 @@
         return `<div class="ym-block-btn ${ymCurrentBlock === block ? 'active' : ''}" onclick="ymSelectBlock('${esc(block)}')">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span>🏗 Block ${esc(block)}</span>
-            <span class="ym-block-count" style="color:${old30 ? 'var(--red)' : ''}">${countLabel}${old30 ? ' ⚠' + old30 : ''}</span>
+            <span class="ym-block-count" style="color:${old30 ? 'var(--red)' : ''}">${countLabel}${old30 ? ' ⚠'+old30 : ''}</span>
           </div>${bar}
         </div>`;
       }).join('');
@@ -4772,8 +4678,8 @@
       let html = '';
       blocks.forEach(block => {
         const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
-        const totalConts = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
-        const totalRows = bays.reduce((s, bay) => s + [...new Set((ymBlocksData[block][bay] || []).map(c => c.row))].length, 0);
+        const totalConts = bays.reduce((s, bay) => s + (ymBlocksData[block][bay]||[]).length, 0);
+        const totalRows  = bays.reduce((s, bay) => s + [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].length, 0);
         html += '<tr style="background:rgba(0,212,255,.1);border-top:2px solid rgba(0,212,255,.28)">'
           + '<td style="padding:8px 14px">'
           + '<b style="color:var(--cyan);font-size:12px">\uD83C\uDFD7 Block ' + block + '</b>'
@@ -4786,8 +4692,8 @@
           + '</div></td></tr>';
         bays.forEach(bay => {
           const contList = ymBlocksData[block][bay] || [];
-          const rowNums = [...new Set(contList.map(c => c.row))].sort((a, b) => a - b);
-          const bayKey = block + '_' + bay;
+          const rowNums  = [...new Set(contList.map(c => c.row))].sort((a,b) => a-b);
+          const bayKey   = block + '_' + bay;
           html += '<tr style="background:rgba(255,255,255,.04);border-top:1px solid rgba(0,212,255,.1)">'
             + '<td style="padding:6px 14px 6px 24px;font-size:11px;font-weight:600;color:var(--text2)">'
             + '\u251C\u2500 Bay ' + bay
@@ -4799,12 +4705,12 @@
             + '<button class="btn btn-ghost" style="padding:2px 8px;font-size:10px" onclick="ymApplyBay(\'' + block + '\',\'' + bay + '\')">\u2192 \u00c1p</button>'
             + '</div></td></tr>';
           rowNums.forEach(rowNum => {
-            const key = block + '_' + bay + '_' + rowNum;
+            const key      = block + '_' + bay + '_' + rowNum;
             const rowConts = contList.filter(c => c.row === rowNum);
-            const curTier = rowConts.reduce((m, c) => Math.max(m, c.tier), 0);
-            const cfg = (S.yardConfig || []).find(c =>
+            const curTier  = rowConts.reduce((m,c) => Math.max(m, c.tier), 0);
+            const cfg      = (S.yardConfig||[]).find(c =>
               String(c.block).trim().toUpperCase() === block.toUpperCase() &&
-              String(c.bay).trim().toUpperCase() === bay.toUpperCase() &&
+              String(c.bay).trim().toUpperCase()   === bay.toUpperCase() &&
               Number(c.row) === rowNum
             ) || {};
             const maxTierVal = cfg.max_tier || '';
@@ -4814,7 +4720,7 @@
               ? '<span style="color:' + tierColor + ';font-weight:600">T' + curTier + (isFull ? ' \uD83D\uDD34 \u0110\u1EA7y' : '') + '</span>'
               : '<span style="color:var(--text3)">Tr\u1ED1ng</span>';
             html += '<tr>'
-              + '<td style="padding:4px 14px 4px 42px;font-size:10px;color:var(--text3)">\u2502 Row ' + String(rowNum).padStart(2, '0')
+              + '<td style="padding:4px 14px 4px 42px;font-size:10px;color:var(--text3)">\u2502 Row ' + String(rowNum).padStart(2,'0')
               + '<span style="font-size:9px;margin-left:6px">' + rowConts.length + ' cont</span></td>'
               + '<td style="text-align:center">' + tierLabel + '</td>'
               + '<td style="text-align:center"><input type="number" id="yc-tier-' + key + '" value="' + maxTierVal + '" min="1" max="10" class="inp" style="width:62px;text-align:center" placeholder="Max T"></td>'
@@ -4833,7 +4739,7 @@
       const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
       let count = 0;
       bays.forEach(bay => {
-        const rows = [...new Set((ymBlocksData[block][bay] || []).map(c => c.row))].sort((a, b) => a - b);
+        const rows = [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].sort((a,b)=>a-b);
         rows.forEach(row => {
           const el = document.getElementById('yc-tier-' + block + '_' + bay + '_' + row);
           if (el) { el.value = t; count++; }
@@ -4845,7 +4751,7 @@
     function ymApplyBay(block, bay) {
       const t = parseInt(document.getElementById('yc-abay-' + block + '_' + bay)?.value) || 0;
       if (!t) { toast('Nhập Max Tier trước', 'err'); return; }
-      const rows = [...new Set((ymBlocksData[block][bay] || []).map(c => c.row))].sort((a, b) => a - b);
+      const rows = [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].sort((a,b)=>a-b);
       rows.forEach(row => {
         const el = document.getElementById('yc-tier-' + block + '_' + bay + '_' + row);
         if (el) el.value = t;
@@ -4859,7 +4765,7 @@
       blocks.forEach(block => {
         const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
         bays.forEach(bay => {
-          const rows = [...new Set((ymBlocksData[block][bay] || []).map(c => c.row))].sort((a, b) => a - b);
+          const rows = [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].sort((a,b)=>a-b);
           rows.forEach(row => {
             const max_tier = parseInt(document.getElementById('yc-tier-' + block + '_' + bay + '_' + row)?.value) || 0;
             if (max_tier > 0) configs.push({ block, bay, row, max_tier, ghi_chu: '' });
@@ -4877,7 +4783,7 @@
           closeOv('myardconfig');
           buildYmData(); renderYardMap();
         } else { toast(res.error || 'Lỗi lưu config', 'err'); }
-      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
       finally { btn.disabled = false; btn.textContent = 'Lưu config'; }
     }
 
@@ -4891,9 +4797,9 @@
 
     // Helper: odd bay number string → slot string (e.g. "1" → "01-02")
     function ysOddToSlot(oddNum) {
-      const n = parseInt(String(oddNum).replace(/\D/g, '')) || 0;
+      const n = parseInt(String(oddNum).replace(/\D/g,'')) || 0;
       const odd = n % 2 === 1 ? n : n - 1; // ensure odd
-      return String(odd).padStart(2, '0') + '-' + String(odd + 1).padStart(2, '0');
+      return String(odd).padStart(2,'0') + '-' + String(odd + 1).padStart(2,'0');
     }
 
     function openYardConfig() {
@@ -4910,7 +4816,7 @@
           const slots = [];
           Object.keys(blockMap[blk]).sort().forEach(slot => {
             const rows = blockMap[blk][slot];
-            slots.push({ slot, totalRows: rows.length, defaultTier: rows[0]?.max_tier || 5, rowTiers: rows.map(r => r.max_tier) });
+            slots.push({ slot, totalRows: rows.length, defaultTier: rows[0]?.max_tier||5, rowTiers: rows.map(r=>r.max_tier) });
           });
           ysData.blocks.push({ name: blk, slots });
         });
@@ -5025,8 +4931,8 @@
     }
 
     function ysUpdateFooter() {
-      const totalSlots = ysData.blocks.reduce((s, b) => s + b.slots.length, 0);
-      const totalRows = ysData.blocks.reduce((s, b) => s + b.slots.reduce((ss, sl) => ss + (sl.totalRows || 0), 0), 0);
+      const totalSlots = ysData.blocks.reduce((s,b) => s + b.slots.length, 0);
+      const totalRows  = ysData.blocks.reduce((s,b) => s + b.slots.reduce((ss,sl) => ss+(sl.totalRows||0), 0), 0);
       document.getElementById('ys-footer-info').textContent =
         totalSlots ? `${ysData.blocks.length} block · ${totalSlots} cặp bay · ~${totalRows} row khai báo` : 'Khai báo ít nhất 1 block để tiếp tục';
     }
@@ -5040,14 +4946,14 @@
       const btnBack = document.getElementById('ys-btn-back');
       const btnSave = document.getElementById('ys-btn-save');
       if (step === 2) {
-        const totalSlots = ysData.blocks.reduce((s, b) => s + b.slots.length, 0);
+        const totalSlots = ysData.blocks.reduce((s,b) => s+b.slots.length, 0);
         if (!totalSlots) { toast('Khai báo ít nhất 1 block với 1 cặp bay trước', 'err'); return; }
         ysData.blocks.forEach((blk, bi) => {
           blk.slots.forEach((sl, si) => {
             const rEl = document.getElementById('ys-rows-' + bi + '-' + si);
             const tEl = document.getElementById('ys-tier-' + bi + '-' + si);
-            if (rEl) sl.totalRows = parseInt(rEl.value) || sl.totalRows;
-            if (tEl) sl.defaultTier = parseInt(tEl.value) || sl.defaultTier;
+            if (rEl) sl.totalRows    = parseInt(rEl.value) || sl.totalRows;
+            if (tEl) sl.defaultTier  = parseInt(tEl.value) || sl.defaultTier;
           });
         });
         s1.style.display = 'none'; s2.style.display = '';
@@ -5083,14 +4989,14 @@
           const rows = sl.totalRows || 0;
           const tierArr = [];
           for (let r = 1; r <= rows; r++) {
-            tierArr.push(sl.rowTiers && sl.rowTiers[r - 1] != null ? sl.rowTiers[r - 1] : sl.defaultTier);
+            tierArr.push(sl.rowTiers && sl.rowTiers[r-1] != null ? sl.rowTiers[r-1] : sl.defaultTier);
           }
           const rowInputs = tierArr.map((t, ri) => `
             <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
-              <div style="font-size:9px;color:var(--text3);font-weight:600">R${String(ri + 1).padStart(2, '0')}</div>
+              <div style="font-size:9px;color:var(--text3);font-weight:600">R${String(ri+1).padStart(2,'0')}</div>
               <input type="number" id="ys2-${bi}-${si}-${ri}" value="${t}" min="1" max="10"
                 class="inp" style="width:50px;text-align:center;padding:5px 2px"
-                title="Block ${esc(blk.name)} Bay ${sl.slot} Row ${String(ri + 1).padStart(2, '0')}">
+                title="Block ${esc(blk.name)} Bay ${sl.slot} Row ${String(ri+1).padStart(2,'0')}">
             </div>
           `).join('');
           html += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px">
@@ -5151,14 +5057,14 @@
         blk.slots.forEach((sl, si) => {
           for (let ri = 0; ri < (sl.totalRows || 0); ri++) {
             const el = document.getElementById('ys2-' + bi + '-' + si + '-' + ri);
-            const max_tier = el ? (parseInt(el.value) || 0) : (sl.defaultTier || 0);
+            const max_tier = el ? (parseInt(el.value)||0) : (sl.defaultTier||0);
             if (max_tier > 0) {
               setups.push({
-                block: blk.name,
+                block:    blk.name,
                 bay_slot: sl.slot,
-                row: ri + 1,
+                row:      ri + 1,
                 max_tier,
-                ghi_chu: ''
+                ghi_chu:  ''
               });
             }
           }
@@ -5175,7 +5081,7 @@
           closeOv('myardconfig');
           buildYmData(); renderYardMap();
         } else throw new Error(res.error || 'Lỗi lưu');
-      } catch (e) {
+      } catch(e) {
         toast('❌ ' + e.message, 'err');
       } finally {
         btn.disabled = false; btn.innerHTML = '💾 Lưu Yard Setup';
