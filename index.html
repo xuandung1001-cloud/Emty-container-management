@@ -2089,7 +2089,16 @@
             <div class="ym-panel">
               <div class="ym-panel-card">
                 <div class="ym-panel-title">🔍 Tìm container</div>
-                <div class="srch" style="flex:none"><span class="srch-ic">🔍</span><input placeholder="Số container..." id="ym-search" oninput="ymSearch()" onpaste="setTimeout(ymSearch,10)" onkeydown="if(event.key==='Enter')ymSearch()" style="width:100%"></div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <div class="srch" style="flex:1;min-width:0">
+                    <span class="srch-ic">🔍</span>
+                    <input placeholder="Nhập / paste số cont..." id="ym-search"
+                      onkeydown="if(event.key==='Enter')ymSearch()"
+                      onpaste="setTimeout(ymSearch,50)"
+                      style="width:100%">
+                  </div>
+                  <button class="btn btn-p" style="padding:5px 9px;font-size:11px;flex-shrink:0" onclick="ymSearch()">↵</button>
+                </div>
               </div>
               <div class="ym-panel-card scroll">
                 <div class="ym-panel-title">🏗 Chọn khu vực</div>
