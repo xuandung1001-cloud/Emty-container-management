@@ -2104,6 +2104,7 @@
                 <span id="ym-canvas-title">Chọn khu vực để xem sơ đồ 3D</span>
                 <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
                   <div id="ym-cap-info" style="font-size:10px;color:var(--text3)"></div>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="openYardConfig()">⚙ Dung tích</button>
                   <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="ymRefresh()">⟳ Làm mới</button>
                 </div>
               </div>
@@ -2627,6 +2628,32 @@
     </div>
   </div>
 
+  <!-- ══ YARD CONFIG MODAL ══ -->
+  <div class="ov" id="myardconfig">
+    <div class="modal" style="max-width:660px">
+      <div class="mh">
+        <div class="mt">⚙ Thiết lập dung tích bãi</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">Nhập số Row và Tier tối đa cho từng Block &middot; Capacity/Bay — MaxRow × MaxTier &middot; Lưu vào Sheet <b>yard_config</b></div>
+      </div>
+      <div class="mb" style="padding:0 20px 8px;max-height:58vh;overflow-y:auto">
+        <table class="table" style="width:100%">
+          <thead><tr>
+            <th>Block</th>
+            <th style="text-align:center;width:88px">Max Row</th>
+            <th style="text-align:center;width:88px">Max Tier</th>
+            <th style="text-align:center;width:105px">Cap/Bay</th>
+            <th>Ghi chú</th>
+          </tr></thead>
+          <tbody id="yc-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Đang tải...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('myardconfig')">Hủy</button>
+        <button class="btn btn-primary" id="btn-save-yardconfig" onclick="saveYardConfigData()">Lưu config</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbwTOQVHyAfhDUQPaAdN_qfTtqqbqQ9OIf67IOuHodcAZuQi9l5FjBj77ifX1bvVbpY2-A/exec';
 
@@ -2641,7 +2668,7 @@
       users: { title: 'Quản lý Users', badge: '' }
     };
 
-    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [] };
+    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [] };
 
     // ══════════════════════════════════════════
     // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -2709,6 +2736,7 @@
         S.tonbai = d.tonbai || []; 
         S.tonbai_updated = d.tonbai_updated || '';
         S.reportLogs = d.reportLogs || [];
+        S.yardConfig = d.yardConfig || [];
         renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); renderTonBai(); renderYardMap(); fillDropdowns();
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
@@ -4226,25 +4254,21 @@
       const totalWithPos = (S.tonbai || []).filter(tb => tb.vi_tri).length;
       const noPos = (S.tonbai || []).filter(tb => !tb.vi_tri).length;
       const oldConts = (S.tonbai || []).filter(tb => (parseInt(tb.ngay_luu) || 0) > 30).length;
+      let ymTotalCap = 0, ymTotalUsed = 0;
+      blocks.forEach(b => { const c = ymGetBlockCapacity(b); if (c) { ymTotalCap += c.totalCapacity; ymTotalUsed += c.usedSlots; } });
+      const ymCapPct = ymTotalCap > 0 ? Math.min(100, Math.round(ymTotalUsed / ymTotalCap * 100)) : -1;
       document.getElementById('ymstats').innerHTML =
         sc('BLOCK / KHU VỰC', fmt(blocks.length), 'c-cyan') +
         sc('CONTAINER CÓ VỊ TRÍ', fmt(totalWithPos), 'c-green') +
-        sc('LƯU > 30 NGÀY', fmt(oldConts), 'c-red') +
-        sc('CHƯA CÓ VỊ TRÍ', fmt(noPos), 'c-yellow');
+        (ymTotalCap > 0
+          ? sc('TỔNG CAPACITY', fmt(ymTotalCap) + ' slots', 'c-purple') + sc('% Sử DỤNG', ymCapPct + '%', ymCapPct >= 90 ? 'c-red' : ymCapPct >= 70 ? 'c-yellow' : 'c-green')
+          : sc('LƯU > 30 NGÀY', fmt(oldConts), 'c-red') + sc('CHƯA CÓ VỊ TRÍ', fmt(noPos), 'c-yellow'));
       const listEl = document.getElementById('ym-block-list');
       if (!blocks.length) {
         listEl.innerHTML = '<div style="color:var(--text3);font-size:11px;padding:4px 0">Không có container nào có dữ liệu vị trí.</div>';
         return;
       }
-      listEl.innerHTML = blocks.map(block => {
-        const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-        const total = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
-        const old30 = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
-        return `<div class="ym-block-btn ${ymCurrentBlock === block ? 'active' : ''}" onclick="ymSelectBlock('${esc(block)}')">
-          <span>🏗 Block ${esc(block)}</span>
-          <span class="ym-block-count" style="${old30 ? 'color:var(--red)' : ''}">${total}${old30 ? ' ⚠' + old30 : ''}</span>
-        </div>`;
-      }).join('');
+      listEl.innerHTML = ymBuildBlockListHTML(blocks);
       if (!ymCurrentBlock && blocks.length) {
         ymSelectBlock(blocks[0]);
       } else if (ymCurrentBlock && ymBlocksData[ymCurrentBlock]) {
@@ -4266,15 +4290,7 @@
       // Re-render block list to update active state
       const blocks = Object.keys(ymBlocksData).sort();
       const listEl = document.getElementById('ym-block-list');
-      listEl.innerHTML = blocks.map(b => {
-        const bays = ymBlocksData[b] ? Object.keys(ymBlocksData[b]) : [];
-        const total = bays.reduce((s, bay) => s + (ymBlocksData[b][bay] || []).length, 0);
-        const old30 = bays.reduce((s, bay) => s + (ymBlocksData[b][bay] || []).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
-        return `<div class="ym-block-btn ${ymCurrentBlock === b ? 'active' : ''}" onclick="ymSelectBlock('${esc(b)}')">
-          <span>🏗 Block ${esc(b)}</span>
-          <span class="ym-block-count" style="${old30 ? 'color:var(--red)' : ''}">${total}${old30 ? ' ⚠' + old30 : ''}</span>
-        </div>`;
-      }).join('');
+      listEl.innerHTML = ymBuildBlockListHTML(blocks);
       ymDrawBlock(block);
     }
 
@@ -4283,7 +4299,9 @@
       const body = document.getElementById('ym-canvas-body');
       const totalCont = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
       const old30 = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
-      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${bays.length} Bay  —  ${totalCont} containers${old30 ? '  ⚠ ' + old30 + ' lưu >30 ngày' : ''}`;
+      const capData = ymGetBlockCapacity(block);
+      const capStr = capData ? `  |  ${capData.usedSlots}/${capData.totalCapacity} slots — ${capData.pct}%` : '';
+      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${bays.length} Bay  —  ${totalCont} cont${capStr}${old30 ? '  ⚠'+old30+' lưu >30ng' : ''}`;
       document.getElementById('ym-cap-info').textContent = S.tonbai_updated ? '📅 ' + S.tonbai_updated : '';
       if (!bays.length) {
         body.innerHTML = '<div class="ym-empty-state"><div style="font-size:32px">📭</div><div>Không có containers trong block này</div></div>';
@@ -4430,6 +4448,96 @@
       } else {
         toast('Không tìm thấy container: ' + q, 'err');
       }
+    }
+
+    // ── YARD CONFIG: CAPACITY HELPERS ──
+    function ymGetBlockCapacity(block) {
+      if (!S.yardConfig || !S.yardConfig.length) return null;
+      const cfg = S.yardConfig.find(c => String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase());
+      if (!cfg || !cfg.max_row || !cfg.max_tier) return null;
+      const maxRow = parseInt(cfg.max_row) || 0;
+      const maxTier = parseInt(cfg.max_tier) || 0;
+      const numBays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).length : 0;
+      const usedSlots = ymBlocksData[block]
+        ? Object.keys(ymBlocksData[block]).reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0)
+        : 0;
+      const slotPerBay  = maxRow * maxTier;
+      const totalCapacity = slotPerBay * numBays;
+      const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedSlots / totalCapacity * 100)) : 0;
+      return { maxRow, maxTier, numBays, usedSlots, slotPerBay, totalCapacity, pct };
+    }
+
+    function ymBuildBlockListHTML(blocks) {
+      return blocks.map(block => {
+        const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
+        const total = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
+        const old30 = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
+        const cap = ymGetBlockCapacity(block);
+        const pctColor = !cap ? '' : cap.pct >= 90 ? 'var(--red)' : cap.pct >= 70 ? 'var(--yellow)' : 'var(--green)';
+        const countLabel = cap ? `${total}/${cap.totalCapacity}` : `${total}`;
+        const bar = cap ? `<div style="display:flex;align-items:center;gap:5px;margin-top:5px">
+            <div style="flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden">
+              <div style="width:${cap.pct}%;height:100%;background:${pctColor};border-radius:2px"></div>
+            </div>
+            <span style="font-size:9px;color:${pctColor};font-weight:700;min-width:30px;text-align:right">${cap.pct}%</span>
+          </div>` : '';
+        return `<div class="ym-block-btn ${ymCurrentBlock === block ? 'active' : ''}" onclick="ymSelectBlock('${esc(block)}')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>🏗 Block ${esc(block)}</span>
+            <span class="ym-block-count" style="color:${old30 ? 'var(--red)' : ''}">${countLabel}${old30 ? ' ⚠'+old30 : ''}</span>
+          </div>${bar}
+        </div>`;
+      }).join('');
+    }
+
+    function openYardConfig() {
+      const blocks = Object.keys(ymBlocksData).sort();
+      if (!blocks.length) { toast('Chưa có dữ liệu bãi để thiết lập', 'err'); return; }
+      const tbody = document.getElementById('yc-tbody');
+      tbody.innerHTML = blocks.map(block => {
+        const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
+        const total = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
+        const cfg = (S.yardConfig || []).find(c => String(c.block).trim().toUpperCase() === block.toUpperCase()) || {};
+        const slotPerBay = (parseInt(cfg.max_row) > 0 && parseInt(cfg.max_tier) > 0) ? parseInt(cfg.max_row) * parseInt(cfg.max_tier) : 0;
+        return `<tr>
+          <td><b style="color:var(--cyan)">${esc(block)}</b><div style="font-size:9px;color:var(--text3)">${bays.length} bay &middot; ${total} cont hiện tại</div></td>
+          <td style="text-align:center"><input type="number" id="yc-row-${esc(block)}" value="${cfg.max_row || ''}" min="1" max="30" class="inp" style="width:62px;text-align:center" oninput="ymUpdateCap('${esc(block)}')" placeholder="VD: 6"></td>
+          <td style="text-align:center"><input type="number" id="yc-tier-${esc(block)}" value="${cfg.max_tier || ''}" min="1" max="10" class="inp" style="width:62px;text-align:center" oninput="ymUpdateCap('${esc(block)}')" placeholder="VD: 5"></td>
+          <td style="text-align:center;font-weight:700;color:var(--cyan)" id="yc-cap-${esc(block)}">${slotPerBay ? slotPerBay + ' slots' : '—'}</td>
+          <td><input type="text" id="yc-note-${esc(block)}" value="${esc(cfg.ghi_chu || '')}" class="inp" style="width:120px" placeholder="VD: Khu 20ft..."></td>
+        </tr>`;
+      }).join('');
+      openOv('myardconfig');
+    }
+
+    function ymUpdateCap(block) {
+      const r = parseInt(document.getElementById('yc-row-'  + block)?.value) || 0;
+      const t = parseInt(document.getElementById('yc-tier-' + block)?.value) || 0;
+      const el = document.getElementById('yc-cap-' + block);
+      if (el) el.textContent = (r > 0 && t > 0) ? (r * t) + ' slots' : '—';
+    }
+
+    async function saveYardConfigData() {
+      const blocks = Object.keys(ymBlocksData).sort();
+      const configs = blocks.map(block => ({
+        block,
+        max_row:  parseInt(document.getElementById('yc-row-'  + block)?.value) || 0,
+        max_tier: parseInt(document.getElementById('yc-tier-' + block)?.value) || 0,
+        ghi_chu:  document.getElementById('yc-note-' + block)?.value || ''
+      })).filter(c => c.max_row > 0 && c.max_tier > 0);
+      if (!configs.length) { toast('Nhập MaxRow và MaxTier cho ít nhất 1 block', 'err'); return; }
+      const btn = document.getElementById('btn-save-yardconfig');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
+      try {
+        const res = await post({ action: 'saveYardConfig', configs });
+        if (res.success) {
+          S.yardConfig = configs;
+          toast('✅ Đã lưu ' + res.saved + ' blocks vào Sheet yard_config', 'ok');
+          closeOv('myardconfig');
+          buildYmData(); renderYardMap();
+        } else { toast(res.error || 'Lỗi lưu config', 'err'); }
+      } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = 'Lưu config'; }
     }
   </script>
 </body>
