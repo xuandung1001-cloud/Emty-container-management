@@ -4402,6 +4402,16 @@
         return;
       }
       body.innerHTML = allSlots.map(slot => ymDrawSlotSVG(block, slot, allSlots)).join('');
+      // Auto-scroll tới container tìm được nếu đang có highlight
+      if (ymHighlight) {
+        setTimeout(() => {
+          const hlEl = body.querySelector('.ym-hl');
+          if (hlEl) {
+            const bayDiv = hlEl.closest('div');
+            (bayDiv || hlEl).scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          }
+        }, 120);
+      }
     }
 
     const YM_CW = 72, YM_CH = 36, YM_D = 12; // cell width, height, depth
