@@ -4387,7 +4387,7 @@
       const old30 = allSlots.reduce((s,sl) => s + ((ymBlocksData[block]&&ymBlocksData[block][sl])||[]).filter(c=>(parseInt(c.cont.ngay_luu)||0)>30).length, 0);
       const capData = ymGetBlockCapacity(block);
       const capStr = capData ? `  |  ${capData.usedTeus}/${capData.totalCapacity} TEUs — ${capData.pct}%` : '';
-      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${allSlots.length} Bay-Pair  —  ${totalCont} cont${capStr}${old30?'  ⚠'+old30+' lưu >30ng':''}`;
+      document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${totalCont} cont${capStr}${old30?'  ⚠'+old30+' lưu >30ng':''}`;
       document.getElementById('ym-cap-info').textContent = S.tonbai_updated ? '📅 ' + S.tonbai_updated : '';
       if (!allSlots.length) {
         body.innerHTML = '<div class="ym-empty-state"><div style="font-size:32px">📭</div><div>Chưa có containers và chưa cấu hình yard setup cho block này</div></div>';
@@ -4536,26 +4536,37 @@
       if (!info) return;
       const [contNo, hang, size, days, pos, tinh_trang, cont_status] = info.split('|');
       const d = parseInt(days) || 0;
-      const dColor = d > 30 ? 'var(--red)' : d > 14 ? 'var(--yellow)' : d > 7 ? 'var(--cyan)' : 'var(--green)';
+      const dColor = d > 30 ? '#dc2626' : d > 14 ? '#d97706' : d > 7 ? '#0891b2' : '#059669';
       const tip = document.getElementById('ym-tooltip');
       tip.innerHTML = `
-        <div style="font-weight:700;color:var(--cyan);margin-bottom:7px;font-size:12px">📦 ${contNo}</div>
-        <div style="color:var(--text2);margin-bottom:3px">🏢 Hãng: <b style="color:var(--text)">${hang || '—'}</b></div>
-        <div style="color:var(--text2);margin-bottom:3px">📐 Kích cỡ: <b style="color:var(--text)">${size || '—'}</b></div>
-        <div style="color:var(--text2);margin-bottom:3px">🔖 Status: <b style="color:var(--cyan)">${cont_status || '—'}</b></div>
-        <div style="color:var(--text2);margin-bottom:3px">✅ Tình trạng: <b style="color:var(--text)">${tinh_trang || '—'}</b></div>
-        <div style="color:var(--text2);margin-bottom:6px">📅 Lưu bãi: <b style="color:${dColor}">${d} ngày</b></div>
-        <div style="color:var(--text3);font-size:9.5px;border-top:1px solid rgba(255,255,255,.08);padding-top:5px">📍 ${pos}</div>
+        <div style="font-weight:800;color:#0f172a;margin-bottom:8px;font-size:12px;border-bottom:1px solid #e2e8f0;padding-bottom:6px">📦 ${contNo}</div>
+        <div style="color:#475569;margin-bottom:3px;font-size:11px">🏢 Hãng: <b style="color:#1e293b">${hang || '—'}</b></div>
+        <div style="color:#475569;margin-bottom:3px;font-size:11px">📐 Kích cỡ: <b style="color:#1e293b">${size || '—'}</b></div>
+        <div style="color:#475569;margin-bottom:3px;font-size:11px">🔖 Status: <b style="color:#0369a1">${cont_status || '—'}</b></div>
+        <div style="color:#475569;margin-bottom:3px;font-size:11px">✅ Tình trạng: <b style="color:#1e293b">${tinh_trang || '—'}</b></div>
+        <div style="color:#475569;margin-bottom:6px;font-size:11px">📅 Lưu bãi: <b style="color:${dColor}">${d} ngày</b></div>
+        <div style="color:#94a3b8;font-size:9.5px;border-top:1px solid #e2e8f0;padding-top:5px">📍 ${pos}</div>
       `;
-      tip.style.display = 'block';
-      const tx = Math.min(e.clientX + 16, window.innerWidth - 210);
-      const ty = Math.min(e.clientY - 10, window.innerHeight - 200);
+      tip.style.cssText = [
+        'display:block',
+        'position:fixed',
+        'background:#ffffff',
+        'border:1px solid #e2e8f0',
+        'border-radius:10px',
+        'padding:12px 14px',
+        'min-width:190px',
+        'box-shadow:0 8px 24px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.08)',
+        'z-index:9999',
+        'pointer-events:none',
+        'backdrop-filter:none'
+      ].join(';');
+      const tx = Math.min(e.clientX + 16, window.innerWidth - 220);
+      const ty = Math.min(e.clientY - 10, window.innerHeight - 210);
       tip.style.left = tx + 'px';
-      tip.style.top = ty + 'px';
+      tip.style.top  = ty + 'px';
       // Sáng chữ trên container khi hover
       el.querySelectorAll('.ym-lbl').forEach(t => {
         t.setAttribute('fill', 'rgba(255,255,255,1)');
-        t.style.textShadow = '0 0 4px rgba(255,255,255,0.8)';
       });
     }
 
