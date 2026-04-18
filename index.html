@@ -4583,74 +4583,45 @@
       }
     }
 
-    // ── CAPACITY HELPERS (Bay Pair Model) ──
-    // Tính TEUs: mỗi slot được xác định bay lẻ/chẵn trong slot "01-02":
-    //   bay lẻ (bên trái, is20ft=true)  → mỗi ô = 1 TEU
-    //   bay chẵn (bên phải, is20ft=false) → mỗi ô = 2 TEUs (40ft span)
-    //   Mỗi slot "01-02" gồm 1 bay 20ft + khả năng 40ft overhanging
-    //   Đơn giản hoá: tổng capacity (rows × max_tier) × 1.5 TEUs/ô (TB giữa 20ft và 40ft)
-    //   Chính xác hơn: đếm số ô × hệ số theo loại slot
-    //   Cách tiếp cận: mỗi slot = 1 cặp bay (20ft + 40ft) → capacity của slot = max_row × max_tier × 1 (20ft slots)
-    //   nhưng vì mỗi slot có thể chứa 40ft, ta tính:
-    //     totalTeus = Σ (row_max_tier) × teuFactor
-    //     teu_factor: slot bay lẻ đơn = 1, nhưng slot trong cặp "01-02" đã gộp 2 bay
-    //   Cách thực tế nhất: tính used TEUs từ container thực (cont.is20ft → 1, else → 2)
-    //   và total TEUs từ setup: mỗi ô capacity = 1 TEU (đơn vị thiết kế), 
-    //   nhưng hiển thị used theo giá trị thực tế của containers.
-    //   → APPROACH: usedTeus = Σ containers × (is20ft ? 1 : 2)
-    //               totalTeus = Σ (max_tier per row) × 1 (chứa 1 box/slot, không phân biệt size)
-    //               Thực ra mỗi slot capacity = số ô × 1 cont (which can be 20 or 40)
-    //   FINAL DECISION: totalCapacity (TEUs) = Σ max_tier (tổng ô có thể chứa) × 1.5
-    //   usedTeus = Σ cont.is20ft ? 1 : 2
+    // ── CAPACITY HELPERS ──
+    // Đơn vị: TEU (1 slot 20ft = 1 TEU, 1 slot 40ft = 2 TEUs)
+    // totalCapacity = tổng ô setup (rows × max_tier) = số slot 20ft tương đương
+    // usedTeus      = Σ containers × (20ft→1 TEU, 40ft→2 TEUs)
 
     function ymGetBlockCapacity(block) {
       const allSetup = (S.yardSetup || []).filter(s =>
         String(s.block).trim().toUpperCase() === String(block).trim().toUpperCase()
       );
 
-      // Tính used TEUs từ containers thực tế trong block
+      // Used TEUs từ containers thực tế: 20ft=1, 40ft=2
       const blockConts = ymBlocksData[block] ? Object.values(ymBlocksData[block]).flat() : [];
-      const usedTeus = blockConts.reduce((s, c) => s + (c.is20ft ? 1 : 2), 0);
+      const usedTeus  = blockConts.reduce((s, c) => s + (c.is20ft ? 1 : 2), 0);
       const usedSlots = blockConts.length;
 
       if (!allSetup.length) {
-        // Fallback legacy yardConfig (bay-based)
+        // Fallback legacy yardConfig
         if (!S.yardConfig || !S.yardConfig.length) return null;
         const cfgs = S.yardConfig.filter(c =>
           String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase()
         );
         if (!cfgs.length) return null;
-        // Legacy: không biết size → estimate totalTeus = tổng slots × 1.5
-        const totalSlots = cfgs.reduce((s,c) => s+(parseInt(c.max_tier)||0), 0);
-        const totalCapacity = Math.round(totalSlots * 1.5);
+        const totalCapacity = cfgs.reduce((s,c) => s+(parseInt(c.max_tier)||0), 0);
         const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedTeus/totalCapacity*100)) : 0;
         return { usedSlots, usedTeus, totalCapacity, pct };
       }
 
-      // Bay Pair Model: tính tổng TEU capacity
-      // Mỗi slot "01-02" là 1 cặp bay. Mỗi ô (row-tier) có thể chứa 1 cont:
-      //   - 20ft cont → 1 TEU (chiếm 1 ô trong bay lẻ)
-      //   - 40ft cont → 2 TEUs (trải qua 2 bay = chiếm ô trong cả bay lẻ + bay chẵn)
-      // Slot capacity (TEUs) = max_tier × rows × 2 (vì 40ft span qua cả cặp bay)
-      // Nhưng thực tế mixed 20ft+40ft, nên dùng: capacity_teus = Σ (max_tier per row)
-      // Lý do: mỗi cell của slot có thể chứa:
-      //   - 1 cont 20ft (= 1 TEU) ở bay lẻ, và
-      //   - 1 cont 40ft (= 2 TEUs) dùng cả slot →
-      // Ta chọn: 1 slot = khả năng chứa 2 TEUs nếu 40ft, hoặc 2 cont 20ft = 2 TEUs
-      // → Mỗi cell/ô trong slot = 2 TEUs potential (= 1 cặp bay)
+      // Bay Pair Model: totalCapacity = tổng ô (rows × max_tier) = TEU capacity
+      // Mỗi ô chứa được 1× cont: 20ft chiếm 1 TEU, 40ft chiếm 2 TEUs
       const slotMap = {};
       allSetup.forEach(s => {
         const sl = s.bay_slot;
         if (!slotMap[sl]) slotMap[sl] = {};
         slotMap[sl][s.row] = Math.max(slotMap[sl][s.row] || 0, s.max_tier);
       });
-      let totalCells = 0; // total slots/cells (each cell = 1 position in a bay-pair)
+      let totalCapacity = 0;
       Object.values(slotMap).forEach(rows => {
-        Object.values(rows).forEach(mt => { totalCells += mt; });
+        Object.values(rows).forEach(mt => { totalCapacity += mt; });
       });
-      // totalCapacity in TEUs: each cell supports either 1×40ft (2TEU) OR 2×20ft (2TEU)
-      // → effectively 2 TEUs per cell
-      const totalCapacity = totalCells * 2;
 
       if (totalCapacity === 0) return null;
       const pct = Math.min(100, Math.round(usedTeus / totalCapacity * 100));
