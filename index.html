@@ -2638,14 +2638,12 @@
       <div class="mb" style="padding:0 20px 8px;max-height:74vh;overflow-y:auto">
         <table class="table" style="width:100%">
           <thead><tr>
-            <th style="width:100px">Block</th>
-            <th style="width:80px">Bay</th>
-            <th style="text-align:center;width:88px">Max Row</th>
-            <th style="text-align:center;width:88px">Max Tier</th>
-            <th style="text-align:center;width:105px">Capacity</th>
-            <th style="text-align:center">Áp dụng toàn block (Row × Tier)</th>
+            <th>Block / Bay / Row</th>
+            <th style="text-align:center;width:170px">Tầng cao nhất hiện tại</th>
+            <th style="text-align:center;width:135px">Max Tier (cấu hình)</th>
+            <th style="text-align:center;width:210px">Áp dụng nhanh</th>
           </tr></thead>
-          <tbody id="yc-tbody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Đang tải...</td></tr></tbody>
+          <tbody id="yc-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Đang tải...</td></tr></tbody>
         </table>
       </div>
       <div class="mf">
@@ -4464,15 +4462,8 @@
       const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
       let totalCapacity = 0, usedSlots = 0, cfgCount = 0;
       bays.forEach(bay => {
-        const cfg = S.yardConfig.find(c =>
-          String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase() &&
-          String(c.bay).trim().toUpperCase()   === String(bay).trim().toUpperCase()
-        );
-        if (cfg && cfg.max_row && cfg.max_tier) {
-          totalCapacity += parseInt(cfg.max_row) * parseInt(cfg.max_tier);
-          cfgCount++;
-        }
-        usedSlots += (ymBlocksData[block][bay] || []).length;
+        const bc = ymGetBayCapacity(block, bay);
+        if (bc) { totalCapacity += bc.totalCap; usedSlots += bc.conts; cfgCount++; }
       });
       if (totalCapacity === 0) return null;
       const pct = Math.min(100, Math.round(usedSlots / totalCapacity * 100));
@@ -4481,17 +4472,16 @@
 
     function ymGetBayCapacity(block, bay) {
       if (!S.yardConfig || !S.yardConfig.length) return null;
-      const cfg = S.yardConfig.find(c =>
+      // Sum max_tier for each configured row in this bay
+      const cfgs = S.yardConfig.filter(c =>
         String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase() &&
         String(c.bay).trim().toUpperCase()   === String(bay).trim().toUpperCase()
       );
-      if (!cfg || !cfg.max_row || !cfg.max_tier) return null;
-      const maxRow = parseInt(cfg.max_row) || 0;
-      const maxTier = parseInt(cfg.max_tier) || 0;
+      if (!cfgs.length) return null;
+      const totalCap = cfgs.reduce((sum, c) => sum + (parseInt(c.max_tier) || 0), 0);
       const conts = (ymBlocksData[block] && ymBlocksData[block][bay]) ? ymBlocksData[block][bay].length : 0;
-      const totalCap = maxRow * maxTier;
       const pct = totalCap > 0 ? Math.min(100, Math.round(conts / totalCap * 100)) : 0;
-      return { maxRow, maxTier, conts, totalCap, pct };
+      return { totalCap, conts, pct };
     }
 
     function ymBuildBlockListHTML(blocks) {
@@ -4520,45 +4510,88 @@
     function openYardConfig() {
       const blocks = Object.keys(ymBlocksData).sort();
       if (!blocks.length) { toast('Chưa có dữ liệu bãi để thiết lập', 'err'); return; }
-      const tbody = document.getElementById('yc-tbody');
-      tbody.innerHTML = blocks.map(block => {
-        const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-        const total = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0);
-        const cfg = (S.yardConfig || []).find(c => String(c.block).trim().toUpperCase() === block.toUpperCase()) || {};
-        const slotPerBay = (parseInt(cfg.max_row) > 0 && parseInt(cfg.max_tier) > 0) ? parseInt(cfg.max_row) * parseInt(cfg.max_tier) : 0;
-        return `<tr>
-          <td><b style="color:var(--cyan)">${esc(block)}</b><div style="font-size:9px;color:var(--text3)">${bays.length} bay &middot; ${total} cont hiện tại</div></td>
-          <td style="text-align:center"><input type="number" id="yc-row-${esc(block)}" value="${cfg.max_row || ''}" min="1" max="30" class="inp" style="width:62px;text-align:center" oninput="ymUpdateCap('${esc(block)}')" placeholder="VD: 6"></td>
-          <td style="text-align:center"><input type="number" id="yc-tier-${esc(block)}" value="${cfg.max_tier || ''}" min="1" max="10" class="inp" style="width:62px;text-align:center" oninput="ymUpdateCap('${esc(block)}')" placeholder="VD: 5"></td>
-          <td style="text-align:center;font-weight:700;color:var(--cyan)" id="yc-cap-${esc(block)}">${slotPerBay ? slotPerBay + ' slots' : '—'}</td>
-          <td><input type="text" id="yc-note-${esc(block)}" value="${esc(cfg.ghi_chu || '')}" class="inp" style="width:120px" placeholder="VD: Khu 20ft..."></td>
-        </tr>`;
-      }).join('');
+      let html = '';
+      blocks.forEach(block => {
+        const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
+        const totalConts = bays.reduce((s, bay) => s + (ymBlocksData[block][bay]||[]).length, 0);
+        const totalRows  = bays.reduce((s, bay) => s + [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].length, 0);
+        html += '<tr style="background:rgba(0,212,255,.1);border-top:2px solid rgba(0,212,255,.28)">'
+          + '<td style="padding:8px 14px">'
+          + '<b style="color:var(--cyan);font-size:12px">\uD83C\uDFD7 Block ' + block + '</b>'
+          + '<span style="color:var(--text3);font-size:9.5px;margin-left:8px">' + bays.length + ' bay \u00b7 ' + totalRows + ' row \u00b7 ' + totalConts + ' cont</span>'
+          + '</td><td></td><td></td>'
+          + '<td style="padding:6px 10px"><div style="display:flex;gap:5px;align-items:center;justify-content:center;font-size:10px">'
+          + '<span style="color:var(--text3)">\u2193 T\u1ea5t c\u1ea3 row Max Tier:</span>'
+          + '<input type="number" id="yc-ablock-' + block + '" min="1" max="10" class="inp" style="width:50px;text-align:center" placeholder="T">'
+          + '<button class="btn btn-ghost" style="padding:2px 8px;font-size:10px" onclick="ymApplyBlock(\'' + block + '\')">\u2192 \u00c1p</button>'
+          + '</div></td></tr>';
+        bays.forEach(bay => {
+          const contList = ymBlocksData[block][bay] || [];
+          const rowNums  = [...new Set(contList.map(c => c.row))].sort((a,b) => a-b);
+          const bayKey   = block + '_' + bay;
+          html += '<tr style="background:rgba(255,255,255,.04);border-top:1px solid rgba(0,212,255,.1)">'
+            + '<td style="padding:6px 14px 6px 24px;font-size:11px;font-weight:600;color:var(--text2)">'
+            + '\u251C\u2500 Bay ' + bay
+            + '<span style="color:var(--text3);font-weight:400;font-size:9.5px;margin-left:6px">' + rowNums.length + ' row \u00b7 ' + contList.length + ' cont</span>'
+            + '</td><td></td><td></td>'
+            + '<td style="padding:4px 10px"><div style="display:flex;gap:5px;align-items:center;justify-content:center;font-size:10px">'
+            + '<span style="color:var(--text3)">\u00c1p t\u1ea5t c\u1ea3 row:</span>'
+            + '<input type="number" id="yc-abay-' + bayKey + '" min="1" max="10" class="inp" style="width:48px;text-align:center" placeholder="T">'
+            + '<button class="btn btn-ghost" style="padding:2px 8px;font-size:10px" onclick="ymApplyBay(\'' + block + '\',\'' + bay + '\')">\u2192 \u00c1p</button>'
+            + '</div></td></tr>';
+          rowNums.forEach(rowNum => {
+            const key      = block + '_' + bay + '_' + rowNum;
+            const rowConts = contList.filter(c => c.row === rowNum);
+            const curTier  = rowConts.reduce((m,c) => Math.max(m, c.tier), 0);
+            const cfg      = (S.yardConfig||[]).find(c =>
+              String(c.block).trim().toUpperCase() === block.toUpperCase() &&
+              String(c.bay).trim().toUpperCase()   === bay.toUpperCase() &&
+              Number(c.row) === rowNum
+            ) || {};
+            const maxTierVal = cfg.max_tier || '';
+            const isFull = maxTierVal && curTier >= Number(maxTierVal);
+            const tierColor = isFull ? '#ef4444' : 'var(--text)';
+            const tierLabel = curTier > 0
+              ? '<span style="color:' + tierColor + ';font-weight:600">T' + curTier + (isFull ? ' \uD83D\uDD34 \u0110\u1EA7y' : '') + '</span>'
+              : '<span style="color:var(--text3)">Tr\u1ED1ng</span>';
+            html += '<tr>'
+              + '<td style="padding:4px 14px 4px 42px;font-size:10px;color:var(--text3)">\u2502 Row ' + String(rowNum).padStart(2,'0')
+              + '<span style="font-size:9px;margin-left:6px">' + rowConts.length + ' cont</span></td>'
+              + '<td style="text-align:center">' + tierLabel + '</td>'
+              + '<td style="text-align:center"><input type="number" id="yc-tier-' + key + '" value="' + maxTierVal + '" min="1" max="10" class="inp" style="width:62px;text-align:center" placeholder="Max T"></td>'
+              + '<td></td></tr>';
+          });
+        });
+      });
+      document.getElementById('yc-tbody').innerHTML = html;
       openOv('myardconfig');
     }
 
-    function ymUpdateCap(block, bay) {
-      const key = block + '_' + bay;
-      const r = parseInt(document.getElementById('yc-row-'  + key)?.value) || 0;
-      const t = parseInt(document.getElementById('yc-tier-' + key)?.value) || 0;
-      const el = document.getElementById('yc-cap-' + key);
-      if (el) el.textContent = (r > 0 && t > 0) ? (r * t) + ' slots' : '—';
+
+    function ymApplyBlock(block) {
+      const t = parseInt(document.getElementById('yc-ablock-' + block)?.value) || 0;
+      if (!t) { toast('Nhập Max Tier trước', 'err'); return; }
+      const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
+      let count = 0;
+      bays.forEach(bay => {
+        const rows = [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].sort((a,b)=>a-b);
+        rows.forEach(row => {
+          const el = document.getElementById('yc-tier-' + block + '_' + bay + '_' + row);
+          if (el) { el.value = t; count++; }
+        });
+      });
+      toast('Áp T' + t + ' cho ' + count + ' row trong Block ' + block, 'ok');
     }
 
-    function ymApplyAllBays(block) {
-      const r = parseInt(document.getElementById('yc-arow-' + block)?.value) || 0;
-      const t = parseInt(document.getElementById('yc-atier-' + block)?.value) || 0;
-      if (!r && !t) return;
-      const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
-      bays.forEach(bay => {
-        const key = block + '_' + bay;
-        const rowEl  = document.getElementById('yc-row-'  + key);
-        const tierEl = document.getElementById('yc-tier-' + key);
-        if (r > 0 && rowEl)  rowEl.value  = r;
-        if (t > 0 && tierEl) tierEl.value = t;
-        ymUpdateCap(block, bay);
+    function ymApplyBay(block, bay) {
+      const t = parseInt(document.getElementById('yc-abay-' + block + '_' + bay)?.value) || 0;
+      if (!t) { toast('Nhập Max Tier trước', 'err'); return; }
+      const rows = [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].sort((a,b)=>a-b);
+      rows.forEach(row => {
+        const el = document.getElementById('yc-tier-' + block + '_' + bay + '_' + row);
+        if (el) el.value = t;
       });
-      toast('Áp dụng ' + (r||'?') + '×' + (t||'?') + ' cho ' + bays.length + ' bay trong Block ' + block, 'ok');
+      toast('Áp T' + t + ' cho ' + rows.length + ' row trong Bay ' + bay, 'ok');
     }
 
     async function saveYardConfigData() {
@@ -4567,20 +4600,21 @@
       blocks.forEach(block => {
         const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
         bays.forEach(bay => {
-          const key = block + '_' + bay;
-          const max_row  = parseInt(document.getElementById('yc-row-'  + key)?.value) || 0;
-          const max_tier = parseInt(document.getElementById('yc-tier-' + key)?.value) || 0;
-          if (max_row > 0 && max_tier > 0) configs.push({ block, bay, max_row, max_tier, ghi_chu: '' });
+          const rows = [...new Set((ymBlocksData[block][bay]||[]).map(c=>c.row))].sort((a,b)=>a-b);
+          rows.forEach(row => {
+            const max_tier = parseInt(document.getElementById('yc-tier-' + block + '_' + bay + '_' + row)?.value) || 0;
+            if (max_tier > 0) configs.push({ block, bay, row, max_tier, ghi_chu: '' });
+          });
         });
       });
-      if (!configs.length) { toast('Nhập MaxRow và MaxTier cho ít nhất 1 bay', 'err'); return; }
+      if (!configs.length) { toast('Nhập Max Tier cho ít nhất 1 row', 'err'); return; }
       const btn = document.getElementById('btn-save-yardconfig');
       btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
       try {
         const res = await post({ action: 'saveYardConfig', configs });
         if (res.success) {
           S.yardConfig = configs;
-          toast('✅ Đã lưu ' + res.saved + ' bays vào Sheet yard_config', 'ok');
+          toast('✅ Đã lưu ' + res.saved + ' row configs vào Sheet yard_config', 'ok');
           closeOv('myardconfig');
           buildYmData(); renderYardMap();
         } else { toast(res.error || 'Lỗi lưu config', 'err'); }
