@@ -4528,9 +4528,10 @@
       if (cont) {
         const col = ymGetColor(cont);
         const isHL = ymHighlight && cont.container && cont.container.trim().toUpperCase() === String(ymHighlight).toUpperCase();
-        const c = isHL ? { top:'#ffffff', side:'#e2e8f0', cap:'#cbd5e1' } : col;
-        const stroke = isHL ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.22)';
-        const glowStyle = isHL ? 'filter:drop-shadow(0 0 5px rgba(255,255,255,0.65))' : '';
+        // Giữ màu gốc, chỉ đổi stroke khi HL
+        const c = col;
+        const stroke = isHL ? '#2563eb' : 'rgba(0,0,0,0.18)';
+        const strokeW = isHL ? '2' : '0.5';
         const contId = eq(String(cont.container || '').substring(0, 11));
         const days = parseInt(cont.ngay_luu) || 0;
         const kich_co = eq(String(cont.kich_co || '').trim());
@@ -4539,16 +4540,17 @@
         const pos = eq(cont.vi_tri || '');
         const infoData = eq(`${cont.container||''}|${cont.hang||''}|${cont.kich_co||''}|${days}|${pos}|${cont.tinh_trang||''}|${cont.cont_status||''}`);
         const contKey = eq(String(cont.container || ''));
-        const capFace   = `<polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="0.5"/>`;
-        const sideFace  = `<polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="0.5"/>`;
-        const frontFace = `<rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="${c.top}" stroke="${stroke}" stroke-width="0.5" rx="1.5"/>`;
+        const capFace   = `<polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
+        const sideFace  = `<polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
+        const frontFace = `<rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="${c.top}" stroke="${stroke}" stroke-width="${strokeW}" rx="1.5"/>`;
+        // SVG native animation border khi highlight (đáng tin cậy hơn CSS)
+        const hlAnim = isHL ? `<rect x="${x-2}" y="${y-2}" width="${YM_CW+4}" height="${YM_CH+4}" fill="none" stroke="#3b82f6" stroke-width="2.5" rx="3"><animate attributeName="stroke-opacity" values="0.1;1;0.1" dur="0.7s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="2;4;2" dur="0.7s" repeatCount="indefinite"/></rect>` : '';
         // Dòng 1: số cont — lớn hơn, đậm hơn
         const label1 = `<text class="ym-lbl" x="${x+YM_CW/2}" y="${y+YM_CH/2-3}" text-anchor="middle" font-size="8.5" fill="#1e293b" font-weight="800" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${contId}</text>`;
         // Dòng 2: 40HC-AV-19 (size - cont_status - days, không có chữ d)
         const info2 = [kich_co, contStatus, days > 0 ? days : ''].filter(Boolean).join('-');
         const label2 = info2 ? `<text class="ym-lbl" x="${x+YM_CW/2}" y="${y+YM_CH/2+9}" text-anchor="middle" font-size="7.5" fill="#334155" font-weight="600" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${info2}</text>` : '';
-        const hlClass = isHL ? 'ym-cell ym-hl' : 'ym-cell';
-        return `<g class="${hlClass}" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip(this)" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${label1}${label2}</g>`;
+        return `<g class="ym-cell" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip(this)" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${hlAnim}${label1}${label2}</g>`;
       } else if (isLocked) {
         return `<g class="ym-cell-locked" title="Bị khoá bởi 40ft bên cạnh">
           <polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>
