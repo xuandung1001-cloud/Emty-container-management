@@ -2630,21 +2630,22 @@
 
   <!-- ══ YARD CONFIG MODAL ══ -->
   <div class="ov" id="myardconfig">
-    <div class="modal" style="max-width:660px">
+    <div class="modal" style="max-width:min(94vw,960px);width:960px">
       <div class="mh">
-        <div class="mt">⚙ Thiết lập dung tích bãi</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:4px">Nhập số Row và Tier tối đa cho từng Block &middot; Capacity/Bay — MaxRow × MaxTier &middot; Lưu vào Sheet <b>yard_config</b></div>
+        <div class="mt">⚙ Thiết lập dung tích bãi — Chi tiết theo Bay</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">Nhập Max Row × Max Tier cho từng Bay. Dùng cột <b>'Áp dụng toàn block'</b> để điền nhanh cho tất cả bay cùng lúc.</div>
       </div>
-      <div class="mb" style="padding:0 20px 8px;max-height:58vh;overflow-y:auto">
+      <div class="mb" style="padding:0 20px 8px;max-height:74vh;overflow-y:auto">
         <table class="table" style="width:100%">
           <thead><tr>
-            <th>Block</th>
+            <th style="width:100px">Block</th>
+            <th style="width:80px">Bay</th>
             <th style="text-align:center;width:88px">Max Row</th>
             <th style="text-align:center;width:88px">Max Tier</th>
-            <th style="text-align:center;width:105px">Cap/Bay</th>
-            <th>Ghi chú</th>
+            <th style="text-align:center;width:105px">Capacity</th>
+            <th style="text-align:center">Áp dụng toàn block (Row × Tier)</th>
           </tr></thead>
-          <tbody id="yc-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Đang tải...</td></tr></tbody>
+          <tbody id="yc-tbody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Đang tải...</td></tr></tbody>
         </table>
       </div>
       <div class="mf">
@@ -4355,8 +4356,15 @@
         svgCells += `<text x="${rx}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif">R${String(row).padStart(2,'0')}</text>`;
       }
 
+      const bayCap = ymGetBayCapacity(block, bay);
+      const bayCapStr = bayCap ? ` — ${conts.length}/${bayCap.totalCap} slots` : '';
+      const pctColor = bayCap ? (bayCap.pct >= 90 ? '#ef4444' : bayCap.pct >= 70 ? '#f59e0b' : '#10b981') : 'transparent';
+      const bayBar = bayCap
+        ? `<div style="width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:7px;overflow:hidden"><div style="width:${bayCap.pct}%;height:100%;background:${pctColor};border-radius:2px"></div></div>`
+        : '<div style="margin-bottom:8px"></div>';
       return `<div style="flex-shrink:0">
-        <div style="font-size:10px;font-weight:700;color:var(--cyan);text-align:center;margin-bottom:8px;letter-spacing:.07em;text-transform:uppercase">Bay ${esc(bay)}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--cyan);text-align:center;margin-bottom:4px;letter-spacing:.07em;text-transform:uppercase">Bay ${esc(bay)}${bayCapStr}</div>
+        ${bayBar}
         <svg width="${W}" height="${H}" style="overflow:visible;display:block">${svgCells}</svg>
       </div>`;
     }
@@ -4453,18 +4461,37 @@
     // ── YARD CONFIG: CAPACITY HELPERS ──
     function ymGetBlockCapacity(block) {
       if (!S.yardConfig || !S.yardConfig.length) return null;
-      const cfg = S.yardConfig.find(c => String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase());
+      const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
+      let totalCapacity = 0, usedSlots = 0, cfgCount = 0;
+      bays.forEach(bay => {
+        const cfg = S.yardConfig.find(c =>
+          String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase() &&
+          String(c.bay).trim().toUpperCase()   === String(bay).trim().toUpperCase()
+        );
+        if (cfg && cfg.max_row && cfg.max_tier) {
+          totalCapacity += parseInt(cfg.max_row) * parseInt(cfg.max_tier);
+          cfgCount++;
+        }
+        usedSlots += (ymBlocksData[block][bay] || []).length;
+      });
+      if (totalCapacity === 0) return null;
+      const pct = Math.min(100, Math.round(usedSlots / totalCapacity * 100));
+      return { usedSlots, totalCapacity, pct, numBays: bays.length, cfgCount };
+    }
+
+    function ymGetBayCapacity(block, bay) {
+      if (!S.yardConfig || !S.yardConfig.length) return null;
+      const cfg = S.yardConfig.find(c =>
+        String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase() &&
+        String(c.bay).trim().toUpperCase()   === String(bay).trim().toUpperCase()
+      );
       if (!cfg || !cfg.max_row || !cfg.max_tier) return null;
       const maxRow = parseInt(cfg.max_row) || 0;
       const maxTier = parseInt(cfg.max_tier) || 0;
-      const numBays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).length : 0;
-      const usedSlots = ymBlocksData[block]
-        ? Object.keys(ymBlocksData[block]).reduce((s, bay) => s + (ymBlocksData[block][bay] || []).length, 0)
-        : 0;
-      const slotPerBay  = maxRow * maxTier;
-      const totalCapacity = slotPerBay * numBays;
-      const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedSlots / totalCapacity * 100)) : 0;
-      return { maxRow, maxTier, numBays, usedSlots, slotPerBay, totalCapacity, pct };
+      const conts = (ymBlocksData[block] && ymBlocksData[block][bay]) ? ymBlocksData[block][bay].length : 0;
+      const totalCap = maxRow * maxTier;
+      const pct = totalCap > 0 ? Math.min(100, Math.round(conts / totalCap * 100)) : 0;
+      return { maxRow, maxTier, conts, totalCap, pct };
     }
 
     function ymBuildBlockListHTML(blocks) {
@@ -4510,29 +4537,50 @@
       openOv('myardconfig');
     }
 
-    function ymUpdateCap(block) {
-      const r = parseInt(document.getElementById('yc-row-'  + block)?.value) || 0;
-      const t = parseInt(document.getElementById('yc-tier-' + block)?.value) || 0;
-      const el = document.getElementById('yc-cap-' + block);
+    function ymUpdateCap(block, bay) {
+      const key = block + '_' + bay;
+      const r = parseInt(document.getElementById('yc-row-'  + key)?.value) || 0;
+      const t = parseInt(document.getElementById('yc-tier-' + key)?.value) || 0;
+      const el = document.getElementById('yc-cap-' + key);
       if (el) el.textContent = (r > 0 && t > 0) ? (r * t) + ' slots' : '—';
+    }
+
+    function ymApplyAllBays(block) {
+      const r = parseInt(document.getElementById('yc-arow-' + block)?.value) || 0;
+      const t = parseInt(document.getElementById('yc-atier-' + block)?.value) || 0;
+      if (!r && !t) return;
+      const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
+      bays.forEach(bay => {
+        const key = block + '_' + bay;
+        const rowEl  = document.getElementById('yc-row-'  + key);
+        const tierEl = document.getElementById('yc-tier-' + key);
+        if (r > 0 && rowEl)  rowEl.value  = r;
+        if (t > 0 && tierEl) tierEl.value = t;
+        ymUpdateCap(block, bay);
+      });
+      toast('Áp dụng ' + (r||'?') + '×' + (t||'?') + ' cho ' + bays.length + ' bay trong Block ' + block, 'ok');
     }
 
     async function saveYardConfigData() {
       const blocks = Object.keys(ymBlocksData).sort();
-      const configs = blocks.map(block => ({
-        block,
-        max_row:  parseInt(document.getElementById('yc-row-'  + block)?.value) || 0,
-        max_tier: parseInt(document.getElementById('yc-tier-' + block)?.value) || 0,
-        ghi_chu:  document.getElementById('yc-note-' + block)?.value || ''
-      })).filter(c => c.max_row > 0 && c.max_tier > 0);
-      if (!configs.length) { toast('Nhập MaxRow và MaxTier cho ít nhất 1 block', 'err'); return; }
+      const configs = [];
+      blocks.forEach(block => {
+        const bays = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
+        bays.forEach(bay => {
+          const key = block + '_' + bay;
+          const max_row  = parseInt(document.getElementById('yc-row-'  + key)?.value) || 0;
+          const max_tier = parseInt(document.getElementById('yc-tier-' + key)?.value) || 0;
+          if (max_row > 0 && max_tier > 0) configs.push({ block, bay, max_row, max_tier, ghi_chu: '' });
+        });
+      });
+      if (!configs.length) { toast('Nhập MaxRow và MaxTier cho ít nhất 1 bay', 'err'); return; }
       const btn = document.getElementById('btn-save-yardconfig');
       btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang lưu...';
       try {
         const res = await post({ action: 'saveYardConfig', configs });
         if (res.success) {
           S.yardConfig = configs;
-          toast('✅ Đã lưu ' + res.saved + ' blocks vào Sheet yard_config', 'ok');
+          toast('✅ Đã lưu ' + res.saved + ' bays vào Sheet yard_config', 'ok');
           closeOv('myardconfig');
           buildYmData(); renderYardMap();
         } else { toast(res.error || 'Lỗi lưu config', 'err'); }
