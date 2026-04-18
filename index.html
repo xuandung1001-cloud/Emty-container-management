@@ -4500,6 +4500,8 @@
         const glowStyle = isHL ? 'filter:drop-shadow(0 0 5px rgba(255,255,255,0.65))' : '';
         const contId = eq(String(cont.container || '').substring(0, 11));
         const days = parseInt(cont.ngay_luu) || 0;
+        const kich_co = eq(String(cont.kich_co || '').trim());
+        const tt = eq(String(cont.tinh_trang || '').trim());
         // Use actual vi_tri for position display in tooltip
         const pos = eq(cont.vi_tri || '');
         const infoData = eq(`${cont.container||''}|${cont.hang||''}|${cont.kich_co||''}|${days}|${pos}|${cont.tinh_trang||''}`);
@@ -4507,9 +4509,12 @@
         const capFace   = `<polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="0.5"/>`;
         const sideFace  = `<polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="0.5"/>`;
         const frontFace = `<rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="${c.top}" stroke="${stroke}" stroke-width="0.5" rx="1.5"/>`;
-        const label1   = `<text x="${x+YM_CW/2}" y="${y+YM_CH/2-2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.92)" font-weight="700" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${contId}</text>`;
-        const label2  = days > 0 ? `<text x="${x+YM_CW/2}" y="${y+YM_CH/2+10}" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.78)" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${days}d</text>` : '';
-        return `<g class="ym-cell" style="${glowStyle}" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip()" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${label1}${label2}</g>`;
+        // Dòng 1: số cont
+        const label1 = `<text class="ym-lbl" x="${x+YM_CW/2}" y="${y+YM_CH/2-4}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.93)" font-weight="700" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${contId}</text>`;
+        // Dòng 2: 40HC-B-19 (size-status-days, không có chữ d)
+        const info2 = [kich_co, tt, days > 0 ? days : ''].filter(Boolean).join('-');
+        const label2 = info2 ? `<text class="ym-lbl" x="${x+YM_CW/2}" y="${y+YM_CH/2+8}" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.72)" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${info2}</text>` : '';
+        return `<g class="ym-cell" style="${glowStyle}" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip(this)" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${label1}${label2}</g>`;
       } else if (isLocked) {
         return `<g class="ym-cell-locked" title="Bị khoá bởi 40ft bên cạnh">
           <polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>
@@ -4546,11 +4551,22 @@
       const ty = Math.min(e.clientY - 10, window.innerHeight - 200);
       tip.style.left = tx + 'px';
       tip.style.top = ty + 'px';
+      // Sáng chữ trên container khi hover
+      el.querySelectorAll('.ym-lbl').forEach(t => {
+        t.setAttribute('fill', 'rgba(255,255,255,1)');
+        t.style.textShadow = '0 0 4px rgba(255,255,255,0.8)';
+      });
     }
 
-    function ymHideTip() {
+    function ymHideTip(el) {
       const tip = document.getElementById('ym-tooltip');
       if (tip) tip.style.display = 'none';
+      // Khôi phục màu chữ khi rời chuột
+      if (el) {
+        const lbls = el.querySelectorAll('.ym-lbl');
+        if (lbls.length >= 1) lbls[0].setAttribute('fill', 'rgba(255,255,255,0.93)');
+        if (lbls.length >= 2) lbls[1].setAttribute('fill', 'rgba(255,255,255,0.72)');
+      }
     }
 
     function ymClickCell(contNo) {
