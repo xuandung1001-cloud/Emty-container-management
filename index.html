@@ -4335,13 +4335,13 @@
       const noPos = (S.tonbai || []).filter(tb => !tb.vi_tri).length;
       const oldConts = (S.tonbai || []).filter(tb => (parseInt(tb.ngay_luu) || 0) > 30).length;
       let ymTotalCap = 0, ymTotalUsed = 0;
-      blocks.forEach(b => { const c = ymGetBlockCapacity(b); if (c) { ymTotalCap += c.totalCapacity; ymTotalUsed += c.usedSlots; } });
+      blocks.forEach(b => { const c = ymGetBlockCapacity(b); if (c) { ymTotalCap += c.totalCapacity; ymTotalUsed += c.usedTeus; } });
       const ymCapPct = ymTotalCap > 0 ? Math.min(100, Math.round(ymTotalUsed / ymTotalCap * 100)) : -1;
       document.getElementById('ymstats').innerHTML =
         sc('BLOCK / KHU VỰC', fmt(blocks.length), 'c-cyan') +
         sc('CONTAINER CÓ VỊ TRÍ', fmt(totalWithPos), 'c-green') +
         (ymTotalCap > 0
-          ? sc('TỔNG CAPACITY', fmt(ymTotalCap) + ' slots', 'c-purple') + sc('% Sử DỤNG', ymCapPct + '%', ymCapPct >= 90 ? 'c-red' : ymCapPct >= 70 ? 'c-yellow' : 'c-green')
+          ? sc('TỔNG CAPACITY', fmt(ymTotalCap) + ' TEUs', 'c-purple') + sc('% Sử DỤNG', ymCapPct + '%', ymCapPct >= 90 ? 'c-red' : ymCapPct >= 70 ? 'c-yellow' : 'c-green')
           : sc('LƯU > 30 NGÀY', fmt(oldConts), 'c-red') + sc('CHƯA CÓ VỊ TRÍ', fmt(noPos), 'c-yellow'));
       const listEl = document.getElementById('ym-block-list');
       if (!blocks.length) {
@@ -4385,7 +4385,7 @@
       const totalCont = allSlots.reduce((s,sl) => s + ((ymBlocksData[block]&&ymBlocksData[block][sl])?ymBlocksData[block][sl].length:0), 0);
       const old30 = allSlots.reduce((s,sl) => s + ((ymBlocksData[block]&&ymBlocksData[block][sl])||[]).filter(c=>(parseInt(c.cont.ngay_luu)||0)>30).length, 0);
       const capData = ymGetBlockCapacity(block);
-      const capStr = capData ? `  |  ${capData.usedSlots}/${capData.totalCapacity} slots — ${capData.pct}%` : '';
+      const capStr = capData ? `  |  ${capData.usedTeus}/${capData.totalCapacity} TEUs — ${capData.pct}%` : '';
       document.getElementById('ym-canvas-title').textContent = `Block ${block}  —  ${allSlots.length} Bay-Pair  —  ${totalCont} cont${capStr}${old30?'  ⚠'+old30+' lưu >30ng':''}`;
       document.getElementById('ym-cap-info').textContent = S.tonbai_updated ? '📅 ' + S.tonbai_updated : '';
       if (!allSlots.length) {
@@ -4584,11 +4584,35 @@
     }
 
     // ── CAPACITY HELPERS (Bay Pair Model) ──
+    // Tính TEUs: mỗi slot được xác định bay lẻ/chẵn trong slot "01-02":
+    //   bay lẻ (bên trái, is20ft=true)  → mỗi ô = 1 TEU
+    //   bay chẵn (bên phải, is20ft=false) → mỗi ô = 2 TEUs (40ft span)
+    //   Mỗi slot "01-02" gồm 1 bay 20ft + khả năng 40ft overhanging
+    //   Đơn giản hoá: tổng capacity (rows × max_tier) × 1.5 TEUs/ô (TB giữa 20ft và 40ft)
+    //   Chính xác hơn: đếm số ô × hệ số theo loại slot
+    //   Cách tiếp cận: mỗi slot = 1 cặp bay (20ft + 40ft) → capacity của slot = max_row × max_tier × 1 (20ft slots)
+    //   nhưng vì mỗi slot có thể chứa 40ft, ta tính:
+    //     totalTeus = Σ (row_max_tier) × teuFactor
+    //     teu_factor: slot bay lẻ đơn = 1, nhưng slot trong cặp "01-02" đã gộp 2 bay
+    //   Cách thực tế nhất: tính used TEUs từ container thực (cont.is20ft → 1, else → 2)
+    //   và total TEUs từ setup: mỗi ô capacity = 1 TEU (đơn vị thiết kế), 
+    //   nhưng hiển thị used theo giá trị thực tế của containers.
+    //   → APPROACH: usedTeus = Σ containers × (is20ft ? 1 : 2)
+    //               totalTeus = Σ (max_tier per row) × 1 (chứa 1 box/slot, không phân biệt size)
+    //               Thực ra mỗi slot capacity = số ô × 1 cont (which can be 20 or 40)
+    //   FINAL DECISION: totalCapacity (TEUs) = Σ max_tier (tổng ô có thể chứa) × 1.5
+    //   usedTeus = Σ cont.is20ft ? 1 : 2
 
     function ymGetBlockCapacity(block) {
       const allSetup = (S.yardSetup || []).filter(s =>
         String(s.block).trim().toUpperCase() === String(block).trim().toUpperCase()
       );
+
+      // Tính used TEUs từ containers thực tế trong block
+      const blockConts = ymBlocksData[block] ? Object.values(ymBlocksData[block]).flat() : [];
+      const usedTeus = blockConts.reduce((s, c) => s + (c.is20ft ? 1 : 2), 0);
+      const usedSlots = blockConts.length;
+
       if (!allSetup.length) {
         // Fallback legacy yardConfig (bay-based)
         if (!S.yardConfig || !S.yardConfig.length) return null;
@@ -4596,41 +4620,41 @@
           String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase()
         );
         if (!cfgs.length) return null;
-        const totalCapacity = cfgs.reduce((s,c) => s+(parseInt(c.max_tier)||0), 0);
-        const slots = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-        const usedSlots = slots.reduce((s,sl) => s+((ymBlocksData[block][sl]||[]).length), 0);
-        const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedSlots/totalCapacity*100)) : 0;
-        return { usedSlots, totalCapacity, pct };
+        // Legacy: không biết size → estimate totalTeus = tổng slots × 1.5
+        const totalSlots = cfgs.reduce((s,c) => s+(parseInt(c.max_tier)||0), 0);
+        const totalCapacity = Math.round(totalSlots * 1.5);
+        const pct = totalCapacity > 0 ? Math.min(100, Math.round(usedTeus/totalCapacity*100)) : 0;
+        return { usedSlots, usedTeus, totalCapacity, pct };
       }
-      // Bay Pair Model: each bay_slot is its own capacity unit
+
+      // Bay Pair Model: tính tổng TEU capacity
+      // Mỗi slot "01-02" là 1 cặp bay. Mỗi ô (row-tier) có thể chứa 1 cont:
+      //   - 20ft cont → 1 TEU (chiếm 1 ô trong bay lẻ)
+      //   - 40ft cont → 2 TEUs (trải qua 2 bay = chiếm ô trong cả bay lẻ + bay chẵn)
+      // Slot capacity (TEUs) = max_tier × rows × 2 (vì 40ft span qua cả cặp bay)
+      // Nhưng thực tế mixed 20ft+40ft, nên dùng: capacity_teus = Σ (max_tier per row)
+      // Lý do: mỗi cell của slot có thể chứa:
+      //   - 1 cont 20ft (= 1 TEU) ở bay lẻ, và
+      //   - 1 cont 40ft (= 2 TEUs) dùng cả slot →
+      // Ta chọn: 1 slot = khả năng chứa 2 TEUs nếu 40ft, hoặc 2 cont 20ft = 2 TEUs
+      // → Mỗi cell/ô trong slot = 2 TEUs potential (= 1 cặp bay)
       const slotMap = {};
       allSetup.forEach(s => {
         const sl = s.bay_slot;
         if (!slotMap[sl]) slotMap[sl] = {};
         slotMap[sl][s.row] = Math.max(slotMap[sl][s.row] || 0, s.max_tier);
       });
-      let totalCapacity = 0;
+      let totalCells = 0; // total slots/cells (each cell = 1 position in a bay-pair)
       Object.values(slotMap).forEach(rows => {
-        Object.values(rows).forEach(mt => { totalCapacity += mt; });
+        Object.values(rows).forEach(mt => { totalCells += mt; });
       });
+      // totalCapacity in TEUs: each cell supports either 1×40ft (2TEU) OR 2×20ft (2TEU)
+      // → effectively 2 TEUs per cell
+      const totalCapacity = totalCells * 2;
 
-      // Subtract locked slots: for each slot (except first), count 40ft containers in previous slot
-      const allSlotsSorted = Object.keys(slotMap).sort();
-      let lockedTotal = 0;
-      for (let i = 1; i < allSlotsSorted.length; i++) {
-        const prevSlot = allSlotsSorted[i - 1];
-        const prevConts = (ymBlocksData[block] && ymBlocksData[block][prevSlot]) || [];
-        const locked40 = prevConts.filter(c => !c.is20ft).length;
-        // Each 40ft in prevSlot locks 1 cell in current slot → subtract from total
-        lockedTotal += locked40;
-      }
-
-      const slots = ymBlocksData[block] ? Object.keys(ymBlocksData[block]) : [];
-      const usedSlots = slots.reduce((s,sl) => s+((ymBlocksData[block][sl]||[]).length), 0);
-      const effectiveCapacity = Math.max(totalCapacity - lockedTotal, usedSlots);
-      if (effectiveCapacity === 0) return null;
-      const pct = Math.min(100, Math.round(usedSlots / effectiveCapacity * 100));
-      return { usedSlots, totalCapacity: effectiveCapacity, pct };
+      if (totalCapacity === 0) return null;
+      const pct = Math.min(100, Math.round(usedTeus / totalCapacity * 100));
+      return { usedSlots, usedTeus, totalCapacity, pct };
     }
 
     function ymGetSlotCapacity(block, slot, lockedCount) {
@@ -4656,7 +4680,8 @@
         const old30 = bays.reduce((s, bay) => s + (ymBlocksData[block][bay] || []).filter(c => (parseInt(c.cont.ngay_luu)||0) > 30).length, 0);
         const cap = ymGetBlockCapacity(block);
         const pctColor = !cap ? '' : cap.pct >= 90 ? 'var(--red)' : cap.pct >= 70 ? 'var(--yellow)' : 'var(--green)';
-        const countLabel = cap ? `${total}/${cap.totalCapacity}` : `${total}`;
+        // Hiển thị TEUs: usedTeus/totalCapacity
+        const countLabel = cap ? `${cap.usedTeus} TEUs / ${cap.totalCapacity} TEUs` : `${total} cont`;
         const bar = cap ? `<div style="display:flex;align-items:center;gap:5px;margin-top:5px">
             <div style="flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden">
               <div style="width:${cap.pct}%;height:100%;background:${pctColor};border-radius:2px"></div>
