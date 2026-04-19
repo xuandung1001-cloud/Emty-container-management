@@ -1473,93 +1473,6 @@
       transform: scale(1.05);
     }
 
-    .yard-grid {
-      display: grid;
-      gap: 4px;
-      background: #111b2b;
-      /* Nền tối phong cách bãi */
-      padding: 10px;
-      border-radius: 8px;
-    }
-
-    .yard-cell {
-      background: rgba(255, 255, 255, 0.03);
-      /* Ô trống */
-      border: 1px dashed rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 6px;
-      font-size: 9px;
-      color: var(--text3);
-      min-height: 48px;
-      min-width: 65px;
-      text-align: center;
-    }
-
-    .yard-cont {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .yard-cont.grade-a {
-      background: rgba(16, 185, 129, 0.2);
-      border-color: var(--green);
-      color: var(--green);
-    }
-
-    .yard-cont.grade-b {
-      background: rgba(245, 158, 11, 0.2);
-      border-color: var(--yellow);
-      color: var(--yellow);
-    }
-
-    .yard-cont.target {
-      background: var(--danger) !important;
-      color: #fff !important;
-      border-color: #ffb3c1 !important;
-      box-shadow: 0 0 10px var(--danger), 0 0 20px var(--danger);
-      animation: pulseYard 1.5s infinite;
-    }
-
-    @keyframes pulseYard {
-      0% {
-        transform: scale(1);
-      }
-
-      50% {
-        transform: scale(1.05);
-      }
-
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    .yard-row-label {
-      font-weight: 700;
-      color: var(--cyan);
-      font-size: 10px;
-      text-align: center;
-      margin-top: 4px;
-    }
-
-    .yard-tier-label {
-      font-weight: 700;
-      color: var(--text2);
-      font-size: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding-right: 8px;
-    }
-
     /* ── SƠ ĐỒ BÃI 3D SCREEN ── */
     .ym-dd-item {
       padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);
@@ -2630,40 +2543,31 @@
 
   <!-- ══ MODAL YARD MAP ══ -->
   <div class="ov" id="myard">
-    <div class="modal modal-lg" style="max-width: 95vw; width: 100%;">
-      <div class="m-title" id="myard-title">🗺️ Sơ đồ bãi: <span id="myard-block-bay" style="color:var(--cyan)"></span>
+    <div class="modal" style="max-width:95vw;width:720px;padding:0;overflow:hidden;border-radius:14px">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#0a1628,#1a2d50);padding:16px 24px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#fff">🗺️ Sơ đồ bãi: <span id="myard-block-bay" style="color:var(--cyan)"></span></div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">Isometric 3D · Bay Pair View</div>
+        </div>
+        <div style="cursor:pointer;color:rgba(255,255,255,.4);font-size:18px;padding:4px 8px" onclick="closeOv('myard')">✕</div>
       </div>
-      <div class="m-sub">Mặt cắt ngang</div>
-
-      <div class="yard-container" id="yard-grid" style="margin-top: 15px; overflow-x: auto; padding-bottom: 15px;">
-        <!-- CSS Grid rendered by JS -->
+      <!-- Target info card -->
+      <div id="myard-info" style="display:none;margin:14px 20px 0;padding:10px 14px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:8px;font-size:11px"></div>
+      <!-- SVG container -->
+      <div id="myard-svg" style="padding:16px 20px;overflow-x:auto;text-align:center"></div>
+      <!-- Legend -->
+      <div style="padding:0 20px 14px;display:flex;gap:14px;font-size:10px;justify-content:center;flex-wrap:wrap;color:var(--text2)">
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:9px;border-radius:2px;background:#10b981"></div> ≤ 7 ngày</div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:9px;border-radius:2px;background:#3b82f6"></div> 8–14 ngày</div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:9px;border-radius:2px;background:#f59e0b"></div> 15–30 ngày</div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:9px;border-radius:2px;background:#ef4444"></div> > 30 ngày</div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:9px;border-radius:2px;border:1px dashed rgba(100,116,139,.3);background:rgba(100,116,139,.05)"></div> Ô trống</div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:9px;border-radius:2px;border:1px dashed rgba(239,68,68,.35);background:rgba(239,68,68,.07)"></div> Bị khoá (40ft)</div>
       </div>
-
-      <div style="margin-top: 15px; display:flex; gap:16px; font-size:11px; justify-content:center; flex-wrap:wrap">
-        <div style="display:flex; align-items:center; gap:6px">
-          <div
-            style="width:14px;height:14px;background:rgba(16,185,129,0.2);border:1px solid var(--green);border-radius:3px">
-          </div> Rỗng Tốt (A)
-        </div>
-        <div style="display:flex; align-items:center; gap:6px">
-          <div
-            style="width:14px;height:14px;background:rgba(245,158,11,0.2);border:1px solid var(--yellow);border-radius:3px">
-          </div> Rỗng Bình Thường (B)
-        </div>
-        <div style="display:flex; align-items:center; gap:6px">
-          <div
-            style="width:14px;height:14px;background:var(--danger);border-radius:3px;box-shadow:0 0 5px var(--danger)">
-          </div> Cont Mục Tiêu
-        </div>
-        <div style="display:flex; align-items:center; gap:6px">
-          <div
-            style="width:14px;height:14px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.1);border-radius:3px">
-          </div> Vị trí trống
-        </div>
-      </div>
-
-      <div class="mf">
+      <div style="padding:0 20px 16px;text-align:right">
         <button class="btn btn-ghost" onclick="closeOv('myard')">Đóng</button>
+        <button class="btn btn-p" style="margin-left:6px" onclick="ymGoToFullView()">🏗 Xem toàn bộ Block →</button>
       </div>
     </div>
   </div>
@@ -3375,73 +3279,133 @@
   `;
     }
 
+    let myardTargetBlock = null; // lưu block để nút "Xem toàn bộ" dùng
+
     function openYardMap(viTri, targetContainer) {
       if (!viTri) return;
-      // viTri: Block-Bay-Row-Tier (vd: A1-02-03-2)
       const parts = String(viTri).split('-');
-      if (parts.length < 4) {
-        toast('Định dạng toạ độ rỗng không chuẩn (cần Block-Bay-Row-Tier)', 'warn');
-        return;
-      }
+      if (parts.length < 4) { toast('Toạ độ không hợp lệ (cần Block-Bay-Row-Tier)', 'err'); return; }
+
       const block = parts[0];
       const bay = parts[1];
-      const targetRow = parseInt(parts[2], 10);
-      const targetTier = parseInt(parts[3], 10);
+      const targetCont = String(targetContainer || '').trim().toUpperCase();
 
-      document.getElementById('myard-block-bay').textContent = `${block} — Bay ${bay}`;
+      // Bay pair slot
+      const bayN = parseInt(String(bay).replace(/\D/g, '')) || 0;
+      const oddBay = bayN % 2 === 1 ? bayN : bayN - 1;
+      const slot = String(oddBay).padStart(2, '0') + '-' + String(oddBay + 1).padStart(2, '0');
 
-      const prefix = `${block}-${bay}-`;
-      const bayConts = (S.tonbai || []).filter(tb => String(tb.vi_tri).startsWith(prefix));
+      document.getElementById('myard-block-bay').textContent = `${block} — Bay ${slot}`;
+      myardTargetBlock = block;
 
-      let maxRow = targetRow || 3;
-      let maxTier = targetTier || 5;
+      // Build data nếu chưa có
+      if (!ymBlocksData || !Object.keys(ymBlocksData).length) buildYmData();
 
-      bayConts.forEach(tb => {
-        const p = String(tb.vi_tri).split('-');
-        if (p.length >= 4) {
-          const r = parseInt(p[2], 10);
-          const t = parseInt(p[3], 10);
-          if (r > maxRow) maxRow = r;
-          if (t > maxTier) maxTier = t;
-        }
-      });
-      maxTier = Math.max(5, maxTier); // Luôn vẽ tối thiểu 5 tầng cho đẹp
+      // Lấy containers trong slot này
+      const conts = (ymBlocksData[block] && ymBlocksData[block][slot]) ? ymBlocksData[block][slot] : [];
 
-      let html = `<div class="yard-grid" style="grid-template-columns: 30px repeat(${maxRow}, minmax(75px, 95px)); justify-content: center;">`;
+      // Setup
+      const setup = ymGetSetupForSlot(block, slot);
+      let maxRow = conts.reduce((m, c) => Math.max(m, c.row), 0);
+      let maxTier = 0;
+      if (setup) {
+        maxRow = Math.max(maxRow, setup.maxRow);
+        maxTier = setup.maxTier;
+      } else {
+        maxTier = conts.reduce((m, c) => Math.max(m, c.tier), 0);
+      }
+      maxRow = Math.max(maxRow, 1);
+      maxTier = Math.max(maxTier, 1);
 
-      // Vẽ từ tầng trên cùng xuống mặt đất (Tier Max -> 1)
-      for (let t = maxTier; t >= 1; t--) {
-        html += `<div class="yard-tier-label">T${t}</div>`;
-        for (let r = 1; r <= maxRow; r++) {
-          const rowStr = String(r).padStart(2, '0');
-          const vtLookup = `${prefix}${rowStr}-${t}`;
+      const rowMaxTierMap = {};
+      if (setup) setup.rows.forEach(sr => { rowMaxTierMap[sr.row] = sr.max_tier; });
 
-          const cont = bayConts.find(tb => String(tb.vi_tri) === vtLookup);
-          if (cont) {
-            const isTarget = cont.container.trim().toUpperCase() === targetContainer.trim().toUpperCase();
-            let gradeClass = 'grade-a';
-            if (String(cont.tinh_trang).includes('B') || String(cont.tinh_trang).toLowerCase().includes('bình')) gradeClass = 'grade-b';
+      const map = {};
+      conts.forEach(c => { map[`${c.row}-${c.tier}`] = c; });
 
-            html += `<div class="yard-cell yard-cont ${gradeClass} ${isTarget ? 'target' : ''}" title="${esc(cont.container)} | ${esc(cont.hang)} | ${esc(cont.tinh_trang)}">
-              <div style="font-size:10px">${esc(cont.container)}</div>
-              <div style="font-size:8px;opacity:0.8">${esc(cont.hang)} ${esc(cont.kich_co || '')}</div>
-              ${isTarget ? '<div style="font-size:8px;margin-top:2px;font-weight:800">🎯 TARGET</div>' : ''}
-            </div>`;
-          } else {
-            html += `<div class="yard-cell">(Trống)</div>`;
-          }
-        }
+      // Lock map (40ft từ slot trước)
+      const lockMap = {};
+      const blocks = ymBlocksData[block] ? Object.keys(ymBlocksData[block]).sort() : [];
+      const slotIdx = blocks.indexOf(slot);
+      if (slotIdx > 0) {
+        const prevSlot = blocks[slotIdx - 1];
+        const prevConts = ymBlocksData[block][prevSlot] || [];
+        prevConts.filter(c => !c.is20ft).forEach(c => { lockMap[`${c.row}-${c.tier}`] = true; });
       }
 
-      // Hàng Label Row ngang
-      html += `<div></div>`; // Góc dưới cùng bên trái trống
-      for (let r = 1; r <= maxRow; r++) {
-        html += `<div class="yard-row-label">R${String(r).padStart(2, '0')}</div>`;
+      // Render SVG
+      const offX = 30;
+      const W = offX + maxRow * (YM_CW + YM_D) + YM_D + 10;
+      const H = maxTier * (YM_CH + 3) + YM_D + 34;
+
+      // Tạm set highlight
+      const prevHL = ymHighlight;
+      ymHighlight = targetCont;
+
+      let svgCells = '';
+      for (let tier = maxTier; tier >= 1; tier--) {
+        for (let row = 1; row <= maxRow; row++) {
+          const rowMaxT = rowMaxTierMap[row] || maxTier;
+          if (tier > rowMaxT) continue;
+          const cellData = map[`${row}-${tier}`];
+          const cont = cellData ? cellData.cont : null;
+          const isLocked = !cont && !!lockMap[`${row}-${tier}`];
+          const x = offX + (row - 1) * (YM_CW + YM_D);
+          const y = (maxTier - tier) * (YM_CH + 3) + YM_D;
+          svgCells += ymCellSVG(x, y, cont, isLocked);
+        }
+        const ly = (maxTier - tier) * (YM_CH + 3) + YM_D + YM_CH / 2 + 5;
+        svgCells += `<text x="${offX - 7}" y="${ly}" text-anchor="end" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif" font-weight="600">T${tier}</text>`;
+      }
+      for (let row = 1; row <= maxRow; row++) {
+        const rx = offX + (row - 1) * (YM_CW + YM_D) + YM_CW / 2;
+        svgCells += `<text x="${rx}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif">R${String(row).padStart(2, '0')}</text>`;
       }
 
-      html += `</div>`;
-      document.getElementById('yard-grid').innerHTML = html;
+      // Capacity info
+      const slotCap = ymGetSlotCapacity(block, slot, Object.keys(lockMap).length);
+      const capStr = slotCap ? `${conts.length + Object.keys(lockMap).length}/${slotCap.totalCap} TEUs` : `${conts.length} cont`;
+
+      const svgEl = document.getElementById('myard-svg');
+      svgEl.innerHTML = `
+        <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:8px;letter-spacing:.05em">BAY ${slot} — ${capStr}</div>
+        <svg width="${W}" height="${H}" style="overflow:visible;display:inline-block">${svgCells}</svg>`;
+
+      // Restore highlight
+      ymHighlight = prevHL;
+
+      // Target info card
+      const infoEl = document.getElementById('myard-info');
+      const tb = (S.tonbai || []).find(t => t.container && t.container.trim().toUpperCase() === targetCont);
+      if (tb) {
+        const days = parseInt(tb.ngay_luu) || 0;
+        const dColor = days > 30 ? 'var(--red)' : days > 14 ? 'var(--orange)' : days > 7 ? 'var(--cyan)' : 'var(--green)';
+        infoEl.innerHTML = `
+          <div style="font-weight:800;color:var(--cyan);font-size:13px;margin-bottom:6px;font-family:monospace">🎯 ${esc(tb.container)}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px 12px;font-size:10px;color:var(--text2)">
+            <div>📍 <b style="color:var(--text)">${esc(tb.vi_tri)}</b></div>
+            <div>🏢 <b style="color:var(--text)">${esc(tb.hang)}</b></div>
+            <div>📐 <b>${esc(tb.kich_co)}</b></div>
+            <div>✅ Grade: <b>${esc(tb.tinh_trang)}</b></div>
+            <div>📅 Lưu: <b style="color:${dColor}">${days} ngày</b></div>
+            <div>🔖 <b>${esc(tb.cont_status)}</b></div>
+          </div>`;
+        infoEl.style.display = 'block';
+      } else {
+        infoEl.style.display = 'none';
+      }
+
       openOv('myard');
+    }
+
+    function ymGoToFullView() {
+      closeOv('myard');
+      if (myardTargetBlock) {
+        nav('yardmap', document.getElementById('nav-yardmap'));
+        setTimeout(() => {
+          if (ymBlocksData[myardTargetBlock]) ymSelectBlock(myardTargetBlock);
+        }, 100);
+      }
     }
 
     function generateKCard(v, st) {
