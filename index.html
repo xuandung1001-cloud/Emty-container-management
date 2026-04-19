@@ -1754,6 +1754,7 @@
         <div class="sb-user" id="sb-fullname">—</div>
         <div class="sb-role" id="sb-role">—</div>
         <div style="display:flex;gap:12px;margin-top:8px">
+          <div class="sb-logout" onclick="openChangePassword()" style="color:var(--cyan);opacity:.6">🔑 Đổi mật khẩu</div>
           <div class="sb-logout" onclick="doLogout()">⎋ Đăng xuất</div>
         </div>
       </div>
@@ -2285,6 +2286,21 @@
     </div>
   </div>
 
+  <!-- ══ ĐỔI MẬT KHẨU ══ -->
+  <div class="ov" id="mchgpw">
+    <div class="modal modal-sm">
+      <div class="m-title">🔑 Đổi mật khẩu</div>
+      <div class="m-sub">Nhập mật khẩu cũ và mật khẩu mới</div>
+      <div class="fg"><label class="fl">Mật khẩu hiện tại *</label><input class="fi" id="cpw-old" type="password" placeholder="Nhập key hiện tại"></div>
+      <div class="fg mt"><label class="fl">Mật khẩu mới *</label><input class="fi" id="cpw-new" type="password" placeholder="Nhập key mới"></div>
+      <div class="fg mt"><label class="fl">Xác nhận mật khẩu mới *</label><input class="fi" id="cpw-confirm" type="password" placeholder="Nhập lại key mới"></div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mchgpw')">Huỷ</button>
+        <button class="btn btn-p" id="btn-chgpw" onclick="doChangePassword()">Đổi mật khẩu</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ CONFIRM DELETE ══ -->
   <div class="ov" id="mconf">
     <div class="modal modal-sm">
@@ -2680,6 +2696,7 @@
         console.log('[LOGIN] response:', JSON.stringify(res));
         if (res.success) {
           S.user = res;
+          S.user._username = u; // lưu username để đổi pass
           document.getElementById('sb-fullname').textContent = res.fullname;
           document.getElementById('sb-role').textContent = res.title || (res.role === 'admin' ? 'Quản trị viên' : 'Nhân viên');
           document.getElementById('topbar-badge').textContent = res.fullname;
@@ -3986,6 +4003,36 @@
       const res = await post({ action: 'deleteReportEmail', email });
       if (res.success) { toast('Đã xoá', 'ok'); await openEmailListModal(); }
       else toast(res.error || 'Lỗi', 'err');
+    }
+
+    // ── ĐỔI MẬT KHẨU ──
+    function openChangePassword() {
+      _v('cpw-old', ''); _v('cpw-new', ''); _v('cpw-confirm', '');
+      openOv('mchgpw');
+    }
+
+    async function doChangePassword() {
+      const oldPw = _g('cpw-old').trim();
+      const newPw = _g('cpw-new').trim();
+      const confirmPw = _g('cpw-confirm').trim();
+
+      if (!oldPw || !newPw) { toast('Vui lòng nhập đầy đủ', 'err'); return; }
+      if (newPw.length < 3) { toast('Mật khẩu mới phải ít nhất 3 ký tự', 'err'); return; }
+      if (newPw !== confirmPw) { toast('Mật khẩu mới không khớp', 'err'); return; }
+
+      const btn = document.getElementById('btn-chgpw');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang xử lý...';
+      try {
+        const username = S.user ? S.user._username : '';
+        const res = await post({ action: 'changePassword', username: username, old_key: oldPw, new_key: newPw });
+        if (res.success) {
+          toast('Đã đổi mật khẩu thành công!', 'ok');
+          closeOv('mchgpw');
+        } else {
+          toast(res.error || 'Lỗi đổi mật khẩu', 'err');
+        }
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = 'Đổi mật khẩu'; }
     }
 
     // ── GANTT ──
