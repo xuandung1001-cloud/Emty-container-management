@@ -1561,6 +1561,18 @@
     }
 
     /* ── SƠ ĐỒ BÃI 3D SCREEN ── */
+    .ym-dd-item {
+      padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);
+      display:flex;align-items:center;gap:10px;transition:background .1s;
+    }
+    .ym-dd-item:hover,.ym-dd-item.active { background:rgba(0,212,255,.08); }
+    .ym-dd-item:last-child { border-bottom:none; }
+    .ym-dd-cont { font-size:12px;font-weight:700;color:var(--cyan);font-family:monospace;letter-spacing:.03em; }
+    .ym-dd-info { font-size:10px;color:var(--text2); }
+    .ym-dd-pos { font-size:9px;color:var(--text3);margin-left:auto;font-family:monospace; }
+    /* Dim effect: khi search active, các cont không match mờ đi */
+    .ym-canvas-body.search-active .ym-cell { opacity:0.2; transition:opacity .2s; }
+    .ym-canvas-body.search-active .ym-cell.ym-hl { opacity:1; }
     .ym-layout {
       display: flex;
       gap: 16px;
@@ -2089,15 +2101,26 @@
             <div class="ym-panel">
               <div class="ym-panel-card">
                 <div class="ym-panel-title">🔍 Tìm container</div>
-                <div style="display:flex;gap:6px;align-items:center">
+                <div style="position:relative">
                   <div class="srch" style="flex:1;min-width:0">
                     <span class="srch-ic">🔍</span>
-                    <input placeholder="Nhập / paste số cont..." id="ym-search"
-                      onkeydown="if(event.key==='Enter')ymSearch()"
-                      onpaste="setTimeout(ymSearch,50)"
-                      style="width:100%">
+                    <input placeholder="Nhập số cont... (VD: MSMU)" id="ym-search"
+                      oninput="ymSearchLive()" onkeydown="ymSearchKey(event)"
+                      onpaste="setTimeout(ymSearchLive,50)"
+                      autocomplete="off" style="width:100%">
                   </div>
-                  <button class="btn btn-p" style="padding:5px 9px;font-size:11px;flex-shrink:0" onclick="ymSearch()">↵</button>
+                  <!-- Dropdown gợi ý -->
+                  <div id="ym-search-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:50;
+                    background:var(--bg2);border:1px solid var(--border2);border-radius:0 0 8px 8px;
+                    max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
+                </div>
+                <!-- Kết quả tìm kiếm: mini card -->
+                <div id="ym-search-result" style="display:none;margin-top:8px;padding:8px 10px;
+                  background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:7px;font-size:11px">
+                </div>
+                <!-- Nút xoá tìm kiếm -->
+                <div id="ym-search-clear" style="display:none;margin-top:6px;text-align:center">
+                  <span style="font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline" onclick="ymClearSearch()">✕ Xoá tìm kiếm</span>
                 </div>
               </div>
               <div class="ym-panel-card scroll">
@@ -4377,6 +4400,7 @@
     }
 
     function ymRefresh() {
+      ymClearSearch();
       buildYmData();
       renderYardMap();
       toast('Đã cập nhật sơ đồ bãi', 'ok');
@@ -4384,9 +4408,12 @@
 
     function ymSelectBlock(block) {
       ymCurrentBlock = block;
-      ymHighlight = null;
-      const searchEl = document.getElementById('ym-search');
-      if (searchEl) searchEl.value = '';
+      // Nếu không đang search → clear highlight
+      if (!ymHighlight) {
+        const searchEl = document.getElementById('ym-search');
+        if (searchEl) searchEl.value = '';
+        ymSetDimMode_(false);
+      }
       // Re-render block list to update active state
       const blocks = Object.keys(ymBlocksData).sort();
       const listEl = document.getElementById('ym-block-list');
@@ -4543,6 +4570,7 @@
         const pos = eq(cont.vi_tri || '');
         const infoData = eq(`${cont.container||''}|${cont.hang||''}|${cont.kich_co||''}|${days}|${pos}|${cont.tinh_trang||''}|${cont.cont_status||''}`);
         const contKey = eq(String(cont.container || ''));
+        const hlClass = isHL ? ' ym-hl' : '';
         const capFace   = `<polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
         const sideFace  = `<polygon points="${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_CW+YM_D},${y+YM_CH-YM_D*0.5} ${x+YM_CW},${y+YM_CH}" fill="${c.side}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
         const frontFace = `<rect x="${x}" y="${y}" width="${YM_CW}" height="${YM_CH}" fill="${c.top}" stroke="${stroke}" stroke-width="${strokeW}" rx="1.5"/>`;
@@ -4553,7 +4581,7 @@
         // Dòng 2: 40HC-AV-19 (size - cont_status - days, không có chữ d)
         const info2 = [kich_co, contStatus, days > 0 ? days : ''].filter(Boolean).join('-');
         const label2 = info2 ? `<text class="ym-lbl" x="${x+YM_CW/2}" y="${y+YM_CH/2+9}" text-anchor="middle" font-size="7.5" fill="#334155" font-weight="600" font-family="Tahoma,sans-serif" style="pointer-events:none;user-select:none">${info2}</text>` : '';
-        return `<g class="ym-cell" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip(this)" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${hlAnim}${label1}${label2}</g>`;
+        return `<g class="ym-cell${hlClass}" data-info="${infoData}" onmouseenter="ymShowTip(event,this)" onmouseleave="ymHideTip(this)" onclick="ymClickCell('${contKey}')">${capFace}${sideFace}${frontFace}${hlAnim}${label1}${label2}</g>`;
       } else if (isLocked) {
         return `<g class="ym-cell-locked" title="Bị khoá bởi 40ft bên cạnh">
           <polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>
@@ -4625,35 +4653,140 @@
     function ymClickCell(contNo) {
       if (!contNo) return;
       const normalized = String(contNo).trim().toUpperCase();
-      ymHighlight = (ymHighlight === normalized) ? null : normalized;
-      ymDrawBlock(ymCurrentBlock);
+      // Toggle highlight
+      if (ymHighlight === normalized) {
+        ymClearSearch();
+      } else {
+        ymHighlight = normalized;
+        _v('ym-search', normalized);
+        ymShowResult_(normalized);
+        ymSetDimMode_(true);
+        ymDrawBlock(ymCurrentBlock);
+      }
     }
 
-    function ymSearch() {
+    // ── SEARCH MỚI: dropdown gợi ý realtime ──
+    let ymDDIndex = -1; // index item đang chọn trong dropdown
+
+    function ymSearchLive() {
       const q = (_g('ym-search') || '').trim().toUpperCase();
-      if (!q) {
-        ymHighlight = null;
-        if (ymCurrentBlock) ymDrawBlock(ymCurrentBlock);
+      const dd = document.getElementById('ym-search-dropdown');
+      if (!q || q.length < 2) {
+        dd.style.display = 'none';
+        ymDDIndex = -1;
+        if (!q) ymClearSearch();
         return;
       }
-      const found = (S.tonbai || []).find(tb =>
+      // Tìm tất cả container match (tối đa 20)
+      const matches = (S.tonbai || []).filter(tb =>
         tb.container && tb.container.trim().toUpperCase().includes(q) && tb.vi_tri
-      );
-      if (found) {
-        const parts = String(found.vi_tri).split('-');
-        if (parts.length >= 2) {
-          const block = parts[0];
-          ymHighlight = found.container.trim().toUpperCase();
-          if (block !== ymCurrentBlock) {
-            ymCurrentBlock = block;
-            buildYmData();
-          }
-          ymSelectBlock(block);
-          toast('📍 Tìm thấy: ' + found.container + ' tại ' + found.vi_tri, 'ok');
-        }
-      } else {
-        toast('Không tìm thấy container: ' + q, 'err');
+      ).slice(0, 20);
+
+      if (!matches.length) {
+        dd.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--text3);text-align:center">Không tìm thấy "' + esc(q) + '"</div>';
+        dd.style.display = 'block';
+        ymDDIndex = -1;
+        return;
       }
+
+      dd.innerHTML = matches.map((tb, i) => {
+        const days = parseInt(tb.ngay_luu) || 0;
+        const dColor = days > 30 ? 'var(--red)' : days > 14 ? 'var(--orange)' : 'var(--green)';
+        // Highlight match trong số cont
+        const contDisplay = esc(tb.container).replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'), '<b style="color:#fff;background:rgba(0,212,255,.3);padding:0 2px;border-radius:2px">$1</b>');
+        return `<div class="ym-dd-item" data-idx="${i}" onclick="ymPickResult(${i})" onmouseenter="ymDDIndex=${i};ymDDHighlight()">
+          <div>
+            <div class="ym-dd-cont">${contDisplay}</div>
+            <div class="ym-dd-info">${esc(tb.hang)} · ${esc(tb.kich_co)} · <span style="color:${dColor}">${days}d</span> · ${esc(tb.tinh_trang || '')}</div>
+          </div>
+          <div class="ym-dd-pos">📍 ${esc(tb.vi_tri)}</div>
+        </div>`;
+      }).join('');
+      dd.style.display = 'block';
+      dd.dataset.matches = JSON.stringify(matches.map(m => ({ container: m.container, vi_tri: m.vi_tri, hang: m.hang, kich_co: m.kich_co, ngay_luu: m.ngay_luu, tinh_trang: m.tinh_trang, cont_status: m.cont_status })));
+      ymDDIndex = -1;
+    }
+
+    function ymSearchKey(e) {
+      const dd = document.getElementById('ym-search-dropdown');
+      if (dd.style.display === 'none') {
+        if (e.key === 'Enter') ymSearchLive();
+        return;
+      }
+      const items = dd.querySelectorAll('.ym-dd-item');
+      if (e.key === 'ArrowDown') { e.preventDefault(); ymDDIndex = Math.min(ymDDIndex + 1, items.length - 1); ymDDHighlight(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); ymDDIndex = Math.max(ymDDIndex - 1, 0); ymDDHighlight(); }
+      else if (e.key === 'Enter' && ymDDIndex >= 0) { e.preventDefault(); ymPickResult(ymDDIndex); }
+      else if (e.key === 'Escape') { dd.style.display = 'none'; }
+    }
+
+    function ymDDHighlight() {
+      const dd = document.getElementById('ym-search-dropdown');
+      dd.querySelectorAll('.ym-dd-item').forEach((el, i) => el.classList.toggle('active', i === ymDDIndex));
+      // Scroll into view
+      const active = dd.querySelector('.ym-dd-item.active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+
+    function ymPickResult(idx) {
+      const dd = document.getElementById('ym-search-dropdown');
+      let matches;
+      try { matches = JSON.parse(dd.dataset.matches || '[]'); } catch(e) { matches = []; }
+      if (idx < 0 || idx >= matches.length) return;
+      const found = matches[idx];
+      dd.style.display = 'none';
+
+      // Navigate tới block + highlight
+      const parts = String(found.vi_tri).split('-');
+      if (parts.length >= 2) {
+        const block = parts[0];
+        ymHighlight = String(found.container).trim().toUpperCase();
+        _v('ym-search', found.container);
+        if (block !== ymCurrentBlock) {
+          ymCurrentBlock = block;
+          buildYmData();
+        }
+        ymSelectBlock(block);
+        ymShowResult_(found.container);
+        ymSetDimMode_(true);
+        toast('📍 ' + found.container + ' → ' + found.vi_tri, 'ok');
+      }
+    }
+
+    function ymShowResult_(contNo) {
+      const tb = (S.tonbai || []).find(t => t.container && t.container.trim().toUpperCase() === String(contNo).toUpperCase());
+      const el = document.getElementById('ym-search-result');
+      const clearEl = document.getElementById('ym-search-clear');
+      if (!tb) { el.style.display = 'none'; clearEl.style.display = 'none'; return; }
+      const days = parseInt(tb.ngay_luu) || 0;
+      const dColor = days > 30 ? 'var(--red)' : days > 14 ? 'var(--orange)' : days > 7 ? 'var(--cyan)' : 'var(--green)';
+      el.innerHTML = `
+        <div style="font-weight:800;color:var(--cyan);font-size:13px;margin-bottom:6px;font-family:monospace">📦 ${esc(tb.container)}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:10px">
+          <div>📍 Vị trí: <b style="color:var(--text)">${esc(tb.vi_tri)}</b></div>
+          <div>🏢 Hãng: <b style="color:var(--text)">${esc(tb.hang)}</b></div>
+          <div>📐 Size: <b>${esc(tb.kich_co)}</b></div>
+          <div>✅ Grade: <b>${esc(tb.tinh_trang)}</b></div>
+          <div>📅 Lưu bãi: <b style="color:${dColor}">${days} ngày</b></div>
+          <div>🔖 Status: <b>${esc(tb.cont_status)}</b></div>
+        </div>`;
+      el.style.display = 'block';
+      clearEl.style.display = 'block';
+    }
+
+    function ymClearSearch() {
+      ymHighlight = null;
+      _v('ym-search', '');
+      document.getElementById('ym-search-dropdown').style.display = 'none';
+      document.getElementById('ym-search-result').style.display = 'none';
+      document.getElementById('ym-search-clear').style.display = 'none';
+      ymSetDimMode_(false);
+      if (ymCurrentBlock) ymDrawBlock(ymCurrentBlock);
+    }
+
+    function ymSetDimMode_(on) {
+      const body = document.getElementById('ym-canvas-body');
+      if (body) body.classList.toggle('search-active', on);
     }
 
     // ── CAPACITY HELPERS ──
