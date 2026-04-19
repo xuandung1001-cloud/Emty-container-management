@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Empty Container — Inspection & Barging</title>
+  <title>Empty Container Management — ICD Thạnh Phước</title>
   <style>
     * {
       box-sizing: border-box;
@@ -50,110 +50,149 @@
     #login-screen {
       position: fixed;
       inset: 0;
-      background: var(--bg);
+      background: #0a1628;
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 200;
-      background-image: radial-gradient(ellipse at 20% 50%, rgba(0, 212, 255, .04) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(155, 114, 246, .04) 0%, transparent 50%)
+      overflow: hidden;
+    }
+    #login-screen::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(59,130,246,.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(139,92,246,.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(6,182,212,.04) 0%, transparent 60%);
+      animation: loginBgDrift 20s ease-in-out infinite;
+    }
+    @keyframes loginBgDrift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(2%, -1%) rotate(1deg); }
+      66% { transform: translate(-1%, 2%) rotate(-1deg); }
+    }
+    #login-screen .login-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px);
+      background-size: 60px 60px;
     }
 
     .lw {
-      width: 360px
+      width: 400px;
+      position: relative;
+      z-index: 1;
     }
-
-    .lbadge {
-      display: inline-flex;
+    .login-card {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 16px;
+      padding: 36px 32px 32px;
+      backdrop-filter: blur(20px);
+    }
+    .login-logo {
+      display: flex;
       align-items: center;
-      gap: 7px;
-      background: rgba(0, 212, 255, .08);
-      border: 1px solid rgba(0, 212, 255, .2);
-      color: var(--cyan);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .1em;
-      padding: 5px 14px;
-      border-radius: 99px;
-      margin-bottom: 22px
+      gap: 12px;
+      margin-bottom: 28px;
     }
-
-    .ltitle {
-      font-size: 24px;
+    .login-logo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .login-logo-icon svg { width: 24px; height: 24px; }
+    .login-logo-text h1 {
+      font-size: 15px;
       font-weight: 800;
-      color: var(--text);
+      color: #fff;
+      letter-spacing: -.01em;
       line-height: 1.2;
-      margin-bottom: 3px;
-      letter-spacing: -.01em
+    }
+    .login-logo-text p {
+      font-size: 11px;
+      color: rgba(255,255,255,.4);
+      margin-top: 2px;
+      letter-spacing: .04em;
     }
 
-    .ltitle span {
-      color: var(--cyan)
-    }
+    .lbadge { display: none; }
 
-    .lsub {
-      color: var(--text2);
-      font-size: 12px;
-      margin-bottom: 28px
-    }
+    .ltitle { display: none; }
+    .ltitle span { display: none; }
+
+    .lsub { display: none; }
 
     .llbl {
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: .1em;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      color: var(--text3);
+      color: rgba(255,255,255,.35);
       margin-bottom: 5px;
       display: block
     }
 
     .linp {
       width: 100%;
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      padding: 10px 13px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      color: #fff;
+      padding: 11px 14px;
       font-size: 13px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-family: inherit;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       transition: all .2s
     }
 
     .linp:focus {
       outline: none;
-      border-color: var(--cyan);
-      background: var(--cyan-dim);
-      box-shadow: 0 0 0 3px var(--cyan-dim)
+      border-color: #3b82f6;
+      background: rgba(59,130,246,.06);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12)
     }
+
+    .linp::placeholder { color: rgba(255,255,255,.2); }
 
     .lbtn {
       width: 100%;
-      padding: 11px;
-      background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+      padding: 12px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: #ffffff;
       font-size: 13px;
       font-weight: 700;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       font-family: inherit;
-      margin-top: 4px;
+      margin-top: 6px;
       transition: all .2s;
       letter-spacing: .02em
     }
 
     .lbtn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(59, 130, 246, 0.35)
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4)
     }
 
     .lerr {
-      background: var(--red-dim);
-      border: 1px solid rgba(255, 69, 96, .3);
-      color: var(--red);
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.25);
+      color: #ef4444;
       padding: 8px 12px;
-      border-radius: 7px;
+      border-radius: 8px;
       font-size: 12px;
       margin-top: 8px;
       display: none
@@ -236,44 +275,28 @@
     }
 
     .sb-sec-label {
-      padding: 6px 13px 3px;
+      padding: 8px 13px 4px;
       font-size: 9px;
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: var(--text3);
+      color: rgba(255,255,255,.2);
       display: block;
-      border-bottom: 1.5px solid;
-      margin: 0 9px 3px
+      margin: 4px 9px 3px
     }
 
-    /* color-coded section labels like MNR */
-    .sb-sec-label.blue {
-      color: #4fa3e0;
-      border-color: #4fa3e0
-    }
-
-    .sb-sec-label.green {
-      color: #48bb78;
-      border-color: #48bb78
-    }
-
-    .sb-sec-label.cyan {
-      color: var(--cyan);
-      border-color: var(--cyan)
-    }
-
-    .sb-sec-label.yellow {
-      color: var(--yellow);
-      border-color: var(--yellow)
+    /* bỏ color-coded border */
+    .sb-sec-label.blue, .sb-sec-label.green, .sb-sec-label.cyan, .sb-sec-label.yellow {
+      color: rgba(255,255,255,.2);
+      border-color: transparent;
     }
 
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      margin: 1px 8px;
+      gap: 9px;
+      padding: 7px 12px;
+      margin: 2px 8px;
       font-size: 11.5px;
       color: var(--text2);
       cursor: pointer;
@@ -288,7 +311,7 @@
     }
 
     .nav-item.active {
-      background: rgba(2, 132, 199, .08);
+      background: rgba(59, 130, 246, .08);
       color: var(--cyan2);
       font-weight: 600
     }
@@ -306,22 +329,16 @@
     }
 
     .nav-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: currentColor;
-      opacity: .3;
-      flex-shrink: 0
+      display: none
     }
 
     .nav-item.active .nav-dot {
-      opacity: 1;
-      background: var(--cyan)
+      display: none
     }
 
     .nav-item svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       flex-shrink: 0;
       opacity: .7
     }
@@ -1635,17 +1652,26 @@
 
   <!-- ══ LOGIN ══ -->
   <div id="login-screen">
+    <div class="login-grid"></div>
     <div class="lw">
-      <div class="lbadge">🚢 Empty Container Management Department</div>
-      <!-- FIX #1: Typo EMTY → EMPTY -->
-      <div class="ltitle">EMPTY CONTAINER<br><span>INSPECTION</span> — BARGING</div>
-      <div class="lsub">Cảng Thạnh Phước — Hệ thống quản lý sà lan</div>
-      <label class="llbl">Username</label>
-      <input class="linp" id="lu" placeholder="Nhập username" autocomplete="off">
-      <label class="llbl">Key</label>
-      <input class="linp" id="lk" type="password" placeholder="Nhập key" onkeydown="if(event.key==='Enter')doLogin()">
-      <div class="lerr" id="lerr"></div>
-      <button class="lbtn" onclick="doLogin()" id="lbtn">Đăng nhập</button>
+      <div class="login-card">
+        <div class="login-logo">
+          <div class="login-logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2"/><path d="M2 11h20"/><path d="M9 7v13M15 7v13"/></svg>
+          </div>
+          <div class="login-logo-text">
+            <h1>EMPTY CONTAINER<br>MANAGEMENT</h1>
+            <p>ICD THẠNH PHƯỚC</p>
+          </div>
+        </div>
+        <label class="llbl">Username</label>
+        <input class="linp" id="lu" placeholder="Nhập username" autocomplete="off">
+        <label class="llbl">Key</label>
+        <input class="linp" id="lk" type="password" placeholder="Nhập key" onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="lerr" id="lerr"></div>
+        <button class="lbtn" onclick="doLogin()" id="lbtn">Đăng nhập</button>
+        <div style="text-align:center;margin-top:14px;font-size:10px;color:rgba(255,255,255,.2)">© 2026 · Cảng Thạnh Phước</div>
+      </div>
     </div>
   </div>
 
@@ -1656,115 +1682,68 @@
     <div id="sidebar">
       <div class="sb-head">
         <div class="sb-logo">
-          <div class="sb-icon">🚢</div>
+          <div class="sb-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" style="width:16px;height:16px"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2"/><path d="M2 11h20"/></svg>
+          </div>
           <div>
-            <div class="sb-brand">Barging System</div>
-            <div class="sb-brand-sub">ICD Thạnh Phước</div>
+            <div class="sb-brand">Empty Cont. Mgmt</div>
+            <div class="sb-brand-sub">ICD THẠNH PHƯỚC</div>
           </div>
         </div>
       </div>
 
       <!-- Nav: Quản lý -->
       <div class="sb-section">
-        <span class="sb-sec-label blue">Quản lý</span>
+        <span class="sb-sec-label">Quản lý</span>
         <div class="nav-item active" id="nav-barges" onclick="nav('barges',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 17l2-8h14l2 8H3z" />
-            <path d="M12 17v3m-4-3v3m8-3v3" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M3 17l2-8h14l2 8H3z"/><path d="M12 17v3m-4-3v3m8-3v3"/></svg>
           Quản lý sà lan
         </div>
         <div class="nav-item" id="nav-voyages" onclick="nav('voyages',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Kế hoạch sà lan
         </div>
       </div>
 
       <!-- Nav: Theo dõi -->
       <div class="sb-section">
-        <span class="sb-sec-label cyan">Theo dõi</span>
+        <span class="sb-sec-label">Theo dõi</span>
         <div class="nav-item" id="nav-kanban" onclick="nav('kanban',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M8 7v7" />
-            <path d="M16 7v4" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7v7"/><path d="M16 7v4"/></svg>
           Theo dõi tiến độ
         </div>
         <div class="nav-item" id="nav-gantt" onclick="nav('gantt',this)" style="display:none">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="15" y2="12" />
-            <line x1="3" y1="18" x2="18" y2="18" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
           Sơ đồ Gantt
         </div>
       </div>
 
       <!-- Nav: Báo cáo -->
       <div class="sb-section">
-        <span class="sb-sec-label green">Báo cáo</span>
+        <span class="sb-sec-label">Báo cáo</span>
         <div class="nav-item" id="nav-survey" onclick="nav('survey',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Báo cáo Survey
         </div>
         <div class="nav-item" id="nav-report" onclick="nav('report',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="18" rx="2" />
-            <path d="M8 7h8" />
-            <path d="M8 11h8" />
-            <path d="M8 15h4" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>
           Báo cáo ca
         </div>
         <div class="nav-item" id="nav-tonbai" onclick="nav('tonbai',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="1" y="6" width="22" height="15" rx="2" />
-            <path d="M1 10h22" />
-            <path d="M8 6v15" />
-            <path d="M16 6v15" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="1" y="6" width="22" height="15" rx="2"/><path d="M1 10h22"/><path d="M8 6v15"/><path d="M16 6v15"/></svg>
           Tồn bãi
         </div>
         <div class="nav-item" id="nav-yardmap" onclick="nav('yardmap',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="7" width="9" height="14" rx="1"/>
-            <rect x="13" y="3" width="9" height="18" rx="1"/>
-            <path d="M2 11h9M2 15h9M13 7h9M13 11h9M13 15h9"/>
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           Sơ đồ bãi 3D
         </div>
       </div>
 
       <!-- Nav: Hệ thống (admin only) -->
       <div class="sb-section" id="nav-section-admin" style="display:none">
-        <span class="sb-sec-label yellow">Hệ thống</span>
+        <span class="sb-sec-label">Hệ thống</span>
         <div class="nav-item" id="nav-users" onclick="nav('users',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 00-3-3.87" />
-            <path d="M16 3.13a4 4 0 010 7.75" />
-          </svg>
-          <div class="nav-dot"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Quản lý Users
         </div>
       </div>
