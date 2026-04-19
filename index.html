@@ -4307,7 +4307,9 @@
           imported_by: S.user ? S.user.fullname : ''
         });
         if (res.success) {
-          toast('Import thành công! ' + res.raw_rows + ' dòng → ' + res.daily_rows + ' dòng tổng hợp', 'ok');
+          let msg = 'Import thành công! ' + res.raw_rows + ' dòng → ' + res.daily_rows + ' dòng tổng hợp, tổng SL=' + (res.debug ? res.debug.sum_sl : '?');
+          toast(msg, 'ok');
+          if (res.debug) console.log('[SLXD Import Debug]', JSON.stringify(res.debug, null, 2));
           closeOv('mslxd');
           S.slxdDaily = null; S.slxdCustomer = null; S.slxdImportLog = null;
           slxdParsedRows = null;
