@@ -275,20 +275,23 @@
     }
 
     .sb-sec-label {
-      padding: 8px 13px 4px;
+      padding: 6px 13px 4px;
       font-size: 9px;
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: rgba(255,255,255,.35);
       display: block;
-      margin: 4px 9px 3px
+      margin: 6px 9px 4px;
+      border-bottom: 1.5px solid;
+      padding-bottom: 4px;
     }
 
-    .sb-sec-label.blue, .sb-sec-label.green, .sb-sec-label.cyan, .sb-sec-label.yellow {
-      color: rgba(255,255,255,.35);
-      border-color: transparent;
-    }
+    .sb-sec-label.blue { color: #3b82f6; border-color: #3b82f6; }
+    .sb-sec-label.green { color: #10b981; border-color: #10b981; }
+    .sb-sec-label.cyan { color: #06b6d4; border-color: #06b6d4; }
+    .sb-sec-label.yellow { color: #f59e0b; border-color: #f59e0b; }
+    /* default (no class) */
+    .sb-sec-label:not(.blue):not(.green):not(.cyan):not(.yellow) { color: #64748b; border-color: #e2e8f0; }
 
     .nav-item {
       display: flex;
@@ -1693,7 +1696,7 @@
 
       <!-- Nav: Quản lý -->
       <div class="sb-section">
-        <span class="sb-sec-label">Quản lý</span>
+        <span class="sb-sec-label blue">Quản lý</span>
         <div class="nav-item active" id="nav-barges" onclick="nav('barges',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M3 17l2-8h14l2 8H3z"/><path d="M12 17v3m-4-3v3m8-3v3"/></svg>
           Quản lý sà lan
@@ -1706,7 +1709,7 @@
 
       <!-- Nav: Theo dõi -->
       <div class="sb-section">
-        <span class="sb-sec-label">Theo dõi</span>
+        <span class="sb-sec-label cyan">Theo dõi</span>
         <div class="nav-item" id="nav-kanban" onclick="nav('kanban',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7v7"/><path d="M16 7v4"/></svg>
           Theo dõi tiến độ
@@ -1719,7 +1722,7 @@
 
       <!-- Nav: Báo cáo -->
       <div class="sb-section">
-        <span class="sb-sec-label">Báo cáo</span>
+        <span class="sb-sec-label green">Báo cáo</span>
         <div class="nav-item" id="nav-survey" onclick="nav('survey',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Báo cáo Survey
@@ -1740,7 +1743,7 @@
 
       <!-- Nav: Hệ thống (admin only) -->
       <div class="sb-section" id="nav-section-admin" style="display:none">
-        <span class="sb-sec-label">Hệ thống</span>
+        <span class="sb-sec-label yellow">Hệ thống</span>
         <div class="nav-item" id="nav-users" onclick="nav('users',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Quản lý Users
