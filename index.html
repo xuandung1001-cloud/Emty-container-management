@@ -4028,8 +4028,8 @@
       // Stats
       const totalSL = filtered.reduce((s, r) => s + (+r.so_luong || 0), 0);
       const totalTeus = filtered.reduce((s, r) => s + (+r.teus || 0), 0);
-      const nhap = filtered.filter(r => ['NRCK', 'NRKH', 'HRKH', 'HBCX'].indexOf(r.phuong_an) >= 0).reduce((s, r) => s + (+r.so_luong || 0), 0);
-      const xuat = filtered.filter(r => ['CRKH', 'CRCK', 'XHCK', 'XRCK'].indexOf(r.phuong_an) >= 0).reduce((s, r) => s + (+r.so_luong || 0), 0);
+      const nhap = filtered.filter(r => ['NRCK', 'NRKH', 'HRKH', 'HBCX', 'TRAR', 'HBAI'].indexOf(r.phuong_an) >= 0).reduce((s, r) => s + (+r.so_luong || 0), 0);
+      const xuat = filtered.filter(r => ['CRKH', 'CRCK', 'XHCK', 'XRCK', 'CAPR', 'LAYN'].indexOf(r.phuong_an) >= 0).reduce((s, r) => s + (+r.so_luong || 0), 0);
       const empty = filtered.filter(r => r.fe === 'E').reduce((s, r) => s + (+r.so_luong || 0), 0);
       const full = filtered.filter(r => r.fe === 'F').reduce((s, r) => s + (+r.so_luong || 0), 0);
 
@@ -4117,7 +4117,7 @@
       filtered.forEach(r => {
         const d = r.ngay;
         if (!byDay[d]) byDay[d] = { nhap: 0, xuat: 0 };
-        if (['NRCK', 'NRKH', 'HRKH', 'HBCX'].indexOf(r.phuong_an) >= 0) byDay[d].nhap += (+r.so_luong || 0);
+        if (['NRCK', 'NRKH', 'HRKH', 'HBCX', 'TRAR', 'HBAI'].indexOf(r.phuong_an) >= 0) byDay[d].nhap += (+r.so_luong || 0);
         else byDay[d].xuat += (+r.so_luong || 0);
       });
       const labels = Object.keys(byDay).sort();
