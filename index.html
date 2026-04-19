@@ -4505,11 +4505,11 @@
         svgCells += `<text x="${rx}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#64748b" font-family="Tahoma,sans-serif">R${String(row).padStart(2,'0')}</text>`;
       }
 
-      // Tính TEUs thực tế của slot này
-      const slotUsedTeus = conts.reduce((s, c) => s + (c.is20ft ? 1 : 2), 0);
+      // Tính TEUs thực tế của slot này: cont thực + ô bị lock bởi 40ft slot trước
+      const slotUsedTeus = conts.length + lockedCellsInRange;
       const slotCap = ymGetSlotCapacity(block, slot, lockedCellsInRange);
-      const slotCapStr = slotCap ? ` — ${slotUsedTeus}/${slotCap.effectiveCap} TEUs` : '';
-      const slotPct = slotCap && slotCap.effectiveCap > 0 ? Math.min(100, Math.round(slotUsedTeus / slotCap.effectiveCap * 100)) : (conts.length > 0 ? 100 : 0);
+      const slotCapStr = slotCap ? ` — ${slotUsedTeus}/${slotCap.totalCap} TEUs` : '';
+      const slotPct = slotCap && slotCap.totalCap > 0 ? Math.min(100, Math.round(slotUsedTeus / slotCap.totalCap * 100)) : (conts.length > 0 ? 100 : 0);
       const pctColor = slotCap ? (slotPct >= 90 ? '#ef4444' : slotPct >= 70 ? '#f59e0b' : '#10b981') : 'transparent';
       const slotBar = slotCap
         ? `<div style="width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:7px;overflow:hidden"><div style="width:${slotPct}%;height:100%;background:${pctColor};border-radius:2px"></div></div>`
@@ -4661,10 +4661,13 @@
         String(s.block).trim().toUpperCase() === String(block).trim().toUpperCase()
       );
 
-      // Used TEUs từ containers thực tế: 20ft=1, 40ft=2
+      // Used = số ô bị chiếm: mỗi cont chiếm 1 ô tại slot nó đứng
+      // + cont 40ft chiếm thêm 1 ô ở slot kế (locked)
       const blockConts = ymBlocksData[block] ? Object.values(ymBlocksData[block]).flat() : [];
-      const usedTeus  = blockConts.reduce((s, c) => s + (c.is20ft ? 1 : 2), 0);
-      const usedSlots = blockConts.length;
+      const contCount = blockConts.length;
+      const lockedCount = blockConts.filter(c => !c.is20ft).length; // 40ft lock thêm 1 ô ở slot kế
+      const usedTeus = contCount + lockedCount; // tổng ô bị chiếm
+      const usedSlots = contCount;
 
       if (!allSetup.length) {
         // Fallback legacy yardConfig
@@ -4678,8 +4681,7 @@
         return { usedSlots, usedTeus, totalCapacity, pct };
       }
 
-      // Bay Pair Model: totalCapacity = tổng ô (rows × max_tier) = TEU capacity
-      // Mỗi ô chứa được 1× cont: 20ft chiếm 1 TEU, 40ft chiếm 2 TEUs
+      // totalCapacity = tổng ô (rows × max_tier) của tất cả slots
       const slotMap = {};
       allSetup.forEach(s => {
         const sl = s.bay_slot;
@@ -4697,7 +4699,6 @@
     }
 
     function ymGetSlotCapacity(block, slot, lockedCount) {
-      // lockedCount: number of locked cells (from previous slot's 40fts), optional
       const cfgs = (S.yardSetup && S.yardSetup.length ? S.yardSetup : (S.yardConfig||[])).filter(c =>
         String(c.block).trim().toUpperCase() === String(block).trim().toUpperCase() &&
         (c.bay_slot ? String(c.bay_slot).trim() === String(slot).trim() : false)
@@ -4705,10 +4706,10 @@
       if (!cfgs.length) return null;
       const totalCap = cfgs.reduce((s,c) => s+(parseInt(c.max_tier)||0), 0);
       const locked = lockedCount || 0;
-      const effectiveCap = Math.max(totalCap - locked, 0);
       const conts = (ymBlocksData[block] && ymBlocksData[block][slot]) ? ymBlocksData[block][slot].length : 0;
-      const pct = effectiveCap > 0 ? Math.min(100, Math.round(conts/effectiveCap*100)) : (conts > 0 ? 100 : 0);
-      return { totalCap, effectiveCap, locked, conts, pct };
+      const used = conts + locked; // tổng ô bị chiếm = cont thực + ô bị lock bởi 40ft slot trước
+      const pct = totalCap > 0 ? Math.min(100, Math.round(used / totalCap * 100)) : (conts > 0 ? 100 : 0);
+      return { totalCap, used, locked, conts, pct };
     }
 
 
