@@ -4241,7 +4241,8 @@
           const data = new Uint8Array(ev.target.result);
           const wb = XLSX.read(data, { type: 'array', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+          // raw: true → date cells ra Date object (tránh SheetJS xuất US M/D/Y string gây lệch năm)
+          const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
           slxdParsedRows = json;
 
           // Auto detect khoảng ngày — tìm cột "Cont ra bãi" bằng fuzzy match
