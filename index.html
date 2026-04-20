@@ -2095,7 +2095,14 @@
             <div>
               <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">📋 Sản lượng theo phương án</div>
               <div class="tbl"><table>
-                <thead><tr><th>PHƯƠNG ÁN</th><th>20ft</th><th>40ft</th><th>TỔNG</th><th>TEUs</th><th>%</th></tr></thead>
+                <thead><tr>
+                  <th style="width:30%">PHƯƠNG ÁN</th>
+                  <th style="width:12%;text-align:right">20ft</th>
+                  <th style="width:12%;text-align:right">40ft</th>
+                  <th style="width:14%;text-align:right">TỔNG</th>
+                  <th style="width:12%;text-align:right">TEUs</th>
+                  <th style="width:10%;text-align:right">%</th>
+                </tr></thead>
                 <tbody id="slxd-pa-tbody"></tbody>
               </table></div>
             </div>
@@ -4247,39 +4254,52 @@
           const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
           slxdParsedRows = json;
 
-          // Auto detect khoảng ngày từ cột "Cont ra bãi"
-          // raw:true + cellDates:true → date cells là Date object trực tiếp
-          let minDate = null, maxDate = null;
+          // Auto detect khoảng ngày: quét CẢ HAI cột vào bãi + ra bãi,
+          // đếm theo tháng → snap về first/last day của tháng chiếm đa số.
+          // Tránh bug: file T11 có ra bãi tháng 1/2026 → den_ngay lấn sang T12.
           const allKeys = Object.keys(json[0] || {});
-          const raCol = allKeys.find(k => {
-            const kl = k.toLowerCase();
-            return (kl.includes('ra b') || kl.includes('ra ba')) && !kl.includes('vao');
-          }) || 'Cont ra bãi';
-          const cutoff = new Date(); // hôm nay — loại bỏ ngày tương lai (placeholder TOS)
+          const findColH = kws => { for (const kw of kws) { const f = allKeys.find(k => k.toLowerCase().includes(kw.toLowerCase())); if (f) return f; } return null; };
+          const raCol  = findColH(['ra b', 'ra ba']) || 'Cont ra bãi';
+          const vaoCol = findColH(['vào b', 'vao b']) || 'Cont vào bãi';
+          const cutoff = new Date();
+          const parseDateVal = v => {
+            if (!v) return null;
+            if (v instanceof Date && !isNaN(v)) return v;
+            const s = String(v).trim();
+            const n = parseFloat(s);
+            if (!isNaN(n) && n > 40000 && n < 60000) return new Date(Math.round((n - 25568) * 86400) * 1000);
+            if (s.match(/^\d{4}-\d{2}-\d{2}/)) { const p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+            if (s.includes('/')) { const p = s.split('/'); let y = parseInt(p[2]); if (y < 100) y += 2000; if (p.length === 3 && +p[0] <= 31 && +p[1] <= 12) return new Date(y, +p[1]-1, +p[0]); }
+            return null;
+          };
+          const monthCount = {};
           json.forEach(r => {
-            const v = r[raCol];
-            if (!v) return;
-            let d = (v instanceof Date && !isNaN(v)) ? v : null;
-            if (!d) {
-              const s = String(v).trim();
-              const n = parseFloat(s);
-              if (!isNaN(n) && n > 40000 && n < 60000) d = new Date(Math.round((n - 25568) * 86400) * 1000);
-              else if (s.match(/^\d{4}-\d{2}-\d{2}/)) { const p = s.split('-'); d = new Date(+p[0], +p[1]-1, +p[2]); }
-              else if (s.includes('/')) { const p = s.split('/'); let y = parseInt(p[2]); if (y < 100) y += 2000; if (p.length === 3 && +p[0] <= 31 && +p[1] <= 12) d = new Date(y, +p[1]-1, +p[0]); }
-            }
-            if (!d || isNaN(d) || d > cutoff) return; // bỏ qua placeholder future date
-            if (!minDate || d < minDate) minDate = d;
-            if (!maxDate || d > maxDate) maxDate = d;
+            [r[vaoCol], r[raCol]].forEach(v => {
+              const d = parseDateVal(v);
+              if (!d || isNaN(d) || d > cutoff) return;
+              const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+              monthCount[k] = (monthCount[k] || 0) + 1;
+            });
           });
-          // toISOString() → UTC, dùng local date để tránh lệch ngày ở timezone +7
+          // Tháng chiếm đa số → snap về first/last day
+          let domMonth = null, domCount = 0;
+          Object.entries(monthCount).forEach(([k, c]) => { if (c > domCount) { domCount = c; domMonth = k; } });
           const toLocalISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+          let minDate = null, maxDate = null;
+          if (domMonth) {
+            const [y, m] = domMonth.split('-').map(Number);
+            minDate = new Date(y, m - 1, 1);
+            maxDate = new Date(y, m, 0); // last day of that month
+          }
           if (minDate) _v('slxd-imp-tu', toLocalISO(minDate));
           if (maxDate) _v('slxd-imp-den', toLocalISO(maxDate));
 
           const preview = document.getElementById('slxd-imp-preview');
           preview.style.display = 'block';
+          const monthNames = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+          const domLabel = domMonth ? monthNames[parseInt(domMonth.split('-')[1])-1] + '/' + domMonth.split('-')[0] : '?';
           preview.innerHTML = `✅ Đọc được <b>${json.length}</b> dòng từ sheet "${wb.SheetNames[0]}"<br>
-            📅 Khoảng ngày: <b>${minDate ? minDate.toLocaleDateString('vi-VN') : '?'}</b> → <b>${maxDate ? maxDate.toLocaleDateString('vi-VN') : '?'}</b><br>
+            📅 Tháng import: <b>${domLabel}</b> (${minDate ? minDate.toLocaleDateString('vi-VN') : '?'} → ${maxDate ? maxDate.toLocaleDateString('vi-VN') : '?'})<br>
             📋 Cột: ${Object.keys(json[0] || {}).slice(0, 8).join(', ')}...`;
           document.getElementById('btn-slxd-import').disabled = false;
         } catch (err) {
