@@ -4247,21 +4247,26 @@
         try {
           if (typeof XLSX === 'undefined') { toast('Thư viện XLSX chưa tải xong, thử lại sau', 'err'); return; }
           const data = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(data, { type: 'array' });
-          // Lấy sheet đầu tiên
+          const wb = XLSX.read(data, { type: 'array', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
           slxdParsedRows = json;
 
-          // Auto detect khoảng ngày từ cột "Cont ra bãi"
+          // Auto detect khoảng ngày — tìm cột "Cont ra bãi" bằng fuzzy match
           let minDate = null, maxDate = null;
+          const raCol = Object.keys(json[0] || {}).find(k => k.toLowerCase().includes('ra') && k.toLowerCase().includes('i')) || 'Cont ra bãi';
           json.forEach(r => {
-            const v = r['Cont ra bãi'];
+            const v = r[raCol];
             if (!v) return;
             let d;
-            const n = parseFloat(v);
-            if (!isNaN(n) && n > 40000) d = new Date((n - 25569) * 86400000);
-            else d = new Date(v);
+            const s = String(v).trim();
+            const n = parseFloat(s);
+            if (!isNaN(n) && n > 40000 && n < 60000) d = new Date(Math.round((n - 25568) * 86400) * 1000);
+            else if (s.match(/^\d{4}-/)) d = new Date(s);
+            else if (s.includes('/')) {
+              const p = s.split('/'); let yr = parseInt(p[2]); if (yr < 100) yr += 2000;
+              if (p.length === 3) d = new Date(yr, parseInt(p[0]) - 1, parseInt(p[1]));
+            } else d = new Date(s);
             if (d && !isNaN(d)) {
               if (!minDate || d < minDate) minDate = d;
               if (!maxDate || d > maxDate) maxDate = d;
