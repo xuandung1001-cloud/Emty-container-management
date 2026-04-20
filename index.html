@@ -2079,15 +2079,13 @@
           </div>
 
           <!-- Biểu đồ -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:320px;position:relative;background:var(--bg2)">
-              <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📅 Xu hướng 12 tuần gần nhất (theo phương án)</div>
-              <canvas id="slxd-canvas-weeks"></canvas>
-            </div>
-            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:320px;position:relative;background:var(--bg2)">
-              <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📆 Xu hướng 12 tháng gần nhất (theo phương án)</div>
-              <canvas id="slxd-canvas-months"></canvas>
-            </div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:300px;position:relative;background:var(--bg2);margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📅 Xu hướng 12 tuần gần nhất (theo phương án)</div>
+            <canvas id="slxd-canvas-weeks"></canvas>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:300px;position:relative;background:var(--bg2);margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📆 Xu hướng 12 tháng gần nhất (theo phương án)</div>
+            <canvas id="slxd-canvas-months"></canvas>
           </div>
 
           <!-- Bảng pivot phương án -->
@@ -4058,6 +4056,13 @@
       renderSlxdLog();
     }
 
+    const PA_DESC = {
+      CRCK: 'Cấp rỗng cảng khác', CRKH: 'Cấp rỗng khách hàng',
+      HBCX: 'Hạ bãi container xuất', HRKH: 'Hạ rỗng khách hàng',
+      NRCK: 'Nhận rỗng cảng khác', NRKH: 'Nhận rỗng khách hàng',
+      XHCK: 'Xuất hàng cảng khác', XRCK: 'Xuất rỗng cảng khác',
+      GIHN: 'Giao nhận hàng', TRAR: 'Trả rỗng'
+    };
     function renderSlxdPaTable(filtered) {
       const tb = document.getElementById('slxd-pa-tbody');
       if (!tb) return;
@@ -4075,8 +4080,9 @@
       const rows = Object.entries(map).sort((a, b) => (b[1].ft20+b[1].ft40) - (a[1].ft20+a[1].ft40));
       tb.innerHTML = rows.map(([pa, v]) => {
         const sl = v.ft20 + v.ft40;
+        const desc = PA_DESC[pa] ? `<span style="font-size:10px;color:var(--text3);margin-left:4px">${esc(PA_DESC[pa])}</span>` : '';
         return `<tr>
-        <td>${esc(pa)}</td>
+        <td>${esc(pa)}${desc}</td>
         <td style="text-align:right;color:var(--cyan)">${v.ft20 || ''}</td>
         <td style="text-align:right;color:var(--green)">${v.ft40 || ''}</td>
         <td style="text-align:right;font-weight:600">${fmt(sl)}</td>
@@ -4212,6 +4218,13 @@
       });
     }
 
+    function fmtLogDate(s) {
+      // Chuyển "YYYY-MM-DDT..." hoặc "YYYY-MM-DD" → "dd/MM/yyyy"
+      const str = String(s || '').trim();
+      const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) return iso[3] + '/' + iso[2] + '/' + iso[1];
+      return str;
+    }
     function renderSlxdLog() {
       const logs = S.slxdImportLog || [];
       const tb = document.getElementById('slxd-log-tbody');
@@ -4219,8 +4232,8 @@
       tb.innerHTML = logs.slice(0, 20).map((l, i) => `<tr>
         <td style="color:var(--text3)">${i + 1}</td>
         <td><span class="badge ${l.loai === 'thang' ? 'b-sv' : 'b-ns'}">${l.loai === 'thang' ? '📆 Tháng' : '📅 Tuần'}</span></td>
-        <td style="font-size:11px">${esc(l.tu_ngay)}</td>
-        <td style="font-size:11px">${esc(l.den_ngay)}</td>
+        <td style="font-size:11px">${esc(fmtLogDate(l.tu_ngay))}</td>
+        <td style="font-size:11px">${esc(fmtLogDate(l.den_ngay))}</td>
         <td style="font-size:11px;color:var(--text2)">${esc(l.file_name)}</td>
         <td style="text-align:right">${fmt(l.so_dong_raw)}</td>
         <td style="text-align:right">${fmt(l.so_dong_daily)}</td>
