@@ -2080,38 +2080,58 @@
 
           <!-- Biểu đồ -->
           <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:300px;position:relative;background:var(--bg2);margin-bottom:14px">
-            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📅 Xu hướng 12 tuần gần nhất (theo phương án)</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">📅 Xu hướng 12 tuần gần nhất &nbsp;<span style="font-weight:400;color:var(--text3)">CRKH · CRCK · HBCX</span></div>
+              <button id="btn-slxd-labels" onclick="toggleSlxdLabels()" class="btn btn-ghost" style="font-size:10px;padding:2px 8px;height:auto">Hiện số</button>
+            </div>
             <canvas id="slxd-canvas-weeks"></canvas>
           </div>
           <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:300px;position:relative;background:var(--bg2);margin-bottom:14px">
-            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📆 Xu hướng 12 tháng gần nhất (theo phương án)</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">📆 Xu hướng 12 tháng gần nhất &nbsp;<span style="font-weight:400;color:var(--text3)">CRKH · CRCK · HBCX</span></div>
+            </div>
             <canvas id="slxd-canvas-months"></canvas>
           </div>
 
-          <!-- Bảng pivot phương án -->
-          <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px">
-            <div>
-              <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">📋 Sản lượng theo phương án</div>
-              <div class="tbl"><table>
-                <thead><tr>
-                  <th style="width:30%">PHƯƠNG ÁN</th>
-                  <th style="width:12%;text-align:right">20ft</th>
-                  <th style="width:12%;text-align:right">40ft</th>
-                  <th style="width:14%;text-align:right">TỔNG</th>
-                  <th style="width:12%;text-align:right">TEUs</th>
-                  <th style="width:10%;text-align:right">%</th>
-                </tr></thead>
-                <tbody id="slxd-pa-tbody"></tbody>
-              </table></div>
-            </div>
-          </div>
+          <!-- 2 bảng cân đối: PA table | Pivot cross-tab -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:start">
 
-          <!-- Lịch sử import -->
-          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">📜 Lịch sử import</div>
-          <div class="tbl"><table>
-            <thead><tr><th>STT</th><th>LOẠI</th><th>TỪ NGÀY</th><th>ĐẾN NGÀY</th><th>FILE</th><th>RAW</th><th>DAILY</th><th>NGƯỜI IMPORT</th><th>THỜI GIAN</th></tr></thead>
-            <tbody id="slxd-log-tbody"></tbody>
-          </table></div>
+            <!-- Trái: Sản lượng theo phương án -->
+            <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg2)">
+              <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px">📋 Sản lượng theo phương án</div>
+              <div style="max-height:220px;overflow-y:auto">
+                <table style="font-size:11px;width:100%;border-collapse:collapse">
+                  <thead><tr>
+                    <th style="width:36%;padding:5px 8px;text-align:left;position:sticky;top:0;background:var(--bg2)">PHƯƠNG ÁN</th>
+                    <th style="width:10%;text-align:right;padding:5px 8px;position:sticky;top:0;background:var(--bg2)">20ft</th>
+                    <th style="width:10%;text-align:right;padding:5px 8px;position:sticky;top:0;background:var(--bg2)">40ft</th>
+                    <th style="width:14%;text-align:right;padding:5px 8px;position:sticky;top:0;background:var(--bg2)">TỔNG</th>
+                    <th style="width:12%;text-align:right;padding:5px 8px;position:sticky;top:0;background:var(--bg2)">TEUs</th>
+                    <th style="width:10%;text-align:right;padding:5px 8px;position:sticky;top:0;background:var(--bg2)">%</th>
+                  </tr></thead>
+                  <tbody id="slxd-pa-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Phải: Pivot cross-tab kỳ × phương án -->
+            <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg2)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:11px;font-weight:700;color:var(--text)">📊 Thống kê theo kỳ</div>
+                <div style="display:flex;gap:4px">
+                  <button id="btn-pivot-thang" onclick="switchPivot('thang')" class="btn btn-p" style="font-size:10px;padding:2px 10px;height:auto">Tháng</button>
+                  <button id="btn-pivot-tuan"  onclick="switchPivot('tuan')"  class="btn btn-ghost" style="font-size:10px;padding:2px 10px;height:auto">Tuần</button>
+                </div>
+              </div>
+              <div style="max-height:220px;overflow:auto">
+                <table id="slxd-pivot-table" style="font-size:11px;width:100%;border-collapse:collapse;min-width:400px">
+                  <thead id="slxd-pivot-thead"></thead>
+                  <tbody id="slxd-pivot-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         <!-- ══ BÁO CÁO CA ══ -->
@@ -4016,10 +4036,9 @@
       // Load data
       if (!S.slxdDaily) {
         try {
-          const [d, l] = await Promise.all([api('getSlxdDaily'), api('getSlxdImportLog')]);
+          const d = await api('getSlxdDaily');
           S.slxdDaily = d.data || [];
-          S.slxdImportLog = l.data || [];
-        } catch (e) { S.slxdDaily = []; S.slxdImportLog = []; }
+        } catch (e) { S.slxdDaily = []; }
       }
 
       const view = _g('slxd-view'); // tuan, thang, quy, nam
@@ -4049,11 +4068,9 @@
       renderSlxdTrend('weeks');
       renderSlxdTrend('months');
 
-      // PA table
+      // PA table + Pivot
       renderSlxdPaTable(filtered);
-
-      // Import log
-      renderSlxdLog();
+      renderSlxdPivot(S.slxdDaily);
     }
 
     const PA_DESC = {
@@ -4082,14 +4099,100 @@
         const sl = v.ft20 + v.ft40;
         const desc = PA_DESC[pa] ? `<span style="font-size:10px;color:var(--text3);margin-left:4px">${esc(PA_DESC[pa])}</span>` : '';
         return `<tr>
-        <td>${esc(pa)}${desc}</td>
-        <td style="text-align:right;color:var(--cyan)">${v.ft20 || ''}</td>
-        <td style="text-align:right;color:var(--green)">${v.ft40 || ''}</td>
-        <td style="text-align:right;font-weight:600">${fmt(sl)}</td>
-        <td style="text-align:right">${fmt(v.teus)}</td>
-        <td style="text-align:right">${(sl / total * 100).toFixed(1)}%</td>
+        <td style="padding:4px 8px">${esc(pa)}${desc}</td>
+        <td style="text-align:right;color:var(--cyan);padding:4px 8px">${v.ft20 || ''}</td>
+        <td style="text-align:right;color:var(--green);padding:4px 8px">${v.ft40 || ''}</td>
+        <td style="text-align:right;font-weight:600;padding:4px 8px">${fmt(sl)}</td>
+        <td style="text-align:right;padding:4px 8px">${fmt(v.teus)}</td>
+        <td style="text-align:right;padding:4px 8px">${(sl / total * 100).toFixed(1)}%</td>
       </tr>`;
       }).join('');
+    }
+
+    // ── Pivot cross-tab: kỳ × phương án ──
+    let slxdPivotMode = 'thang';
+
+    function switchPivot(mode) {
+      slxdPivotMode = mode;
+      const btnT = document.getElementById('btn-pivot-thang');
+      const btnW = document.getElementById('btn-pivot-tuan');
+      if (btnT) { btnT.className = 'btn ' + (mode === 'thang' ? 'btn-p' : 'btn-ghost'); btnT.style.cssText = 'font-size:10px;padding:2px 10px;height:auto'; }
+      if (btnW) { btnW.className = 'btn ' + (mode === 'tuan'  ? 'btn-p' : 'btn-ghost'); btnW.style.cssText = 'font-size:10px;padding:2px 10px;height:auto'; }
+      renderSlxdPivot(S.slxdDaily);
+    }
+
+    function renderSlxdPivot(daily) {
+      const mode = slxdPivotMode;
+      const thead = document.getElementById('slxd-pivot-thead');
+      const tb    = document.getElementById('slxd-pivot-tbody');
+      if (!tb || !thead) return;
+      if (!daily || !daily.length) {
+        thead.innerHTML = ''; tb.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text3);padding:16px">Chưa có dữ liệu</td></tr>'; return;
+      }
+
+      // Tổng hợp period × PA
+      const periodMap = {};
+      const allPAs = new Set();
+      daily.forEach(r => {
+        const p = parsNgay(r.ngay);
+        if (!p) return;
+        const d = new Date(p.yy, p.mm - 1, p.dd);
+        const key = mode === 'tuan'
+          ? 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + d.getFullYear()
+          : String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+        if (!periodMap[key]) periodMap[key] = {};
+        const pa = r.phuong_an || 'OTHER';
+        allPAs.add(pa);
+        periodMap[key][pa] = (periodMap[key][pa] || 0) + (+r.so_luong || 0);
+      });
+
+      // Sắp xếp kỳ tăng dần
+      const allPeriods = Object.keys(periodMap).sort((a, b) => {
+        const ap = a.split('/'), bp = b.split('/');
+        if (ap[1] !== bp[1]) return ap[1] - bp[1];
+        return parseInt(ap[0].replace('W', '')) - parseInt(bp[0].replace('W', ''));
+      });
+      const periods = mode === 'tuan' ? allPeriods.slice(-12) : allPeriods;
+      const pas = [...allPAs].sort();
+
+      // Tiêu đề cột sticky
+      const thStyle = 'text-align:right;padding:5px 8px;position:sticky;top:0;background:var(--bg2);white-space:nowrap';
+      const thStyleL = 'text-align:left;padding:5px 8px;position:sticky;top:0;background:var(--bg2);white-space:nowrap';
+      thead.innerHTML = `<tr>
+        <th style="${thStyleL}">KỲ</th>
+        ${pas.map(pa => `<th style="${thStyle}">${esc(pa)}</th>`).join('')}
+        <th style="${thStyle};color:var(--cyan)">TỔNG</th>
+      </tr>`;
+
+      // Tính tổng cột
+      const colTotals = {};
+      let grandTotal = 0;
+
+      const bodyRows = periods.map(period => {
+        const rowData = periodMap[period] || {};
+        let rowTotal = 0;
+        const cells = pas.map(pa => {
+          const v = rowData[pa] || 0;
+          rowTotal += v;
+          colTotals[pa] = (colTotals[pa] || 0) + v;
+          return `<td style="text-align:right;padding:4px 8px">${v ? fmt(v) : ''}</td>`;
+        });
+        grandTotal += rowTotal;
+        return `<tr>
+          <td style="padding:4px 8px;font-weight:500;white-space:nowrap">${period}</td>
+          ${cells.join('')}
+          <td style="text-align:right;padding:4px 8px;font-weight:700;color:var(--cyan)">${fmt(rowTotal)}</td>
+        </tr>`;
+      });
+
+      // Hàng tổng cộng
+      const totalRow = `<tr style="border-top:2px solid var(--border)">
+        <td style="padding:4px 8px;font-weight:700">TỔNG</td>
+        ${pas.map(pa => `<td style="text-align:right;padding:4px 8px;font-weight:700;color:var(--text)">${fmt(colTotals[pa] || 0)}</td>`).join('')}
+        <td style="text-align:right;padding:4px 8px;font-weight:700;color:var(--cyan)">${fmt(grandTotal)}</td>
+      </tr>`;
+
+      tb.innerHTML = bodyRows.join('') + totalRow;
     }
 
     // Parse "YYYY-MM-DD" hoặc "DD/MM/YYYY" (legacy) → { yy, mm, dd }
@@ -4145,6 +4248,47 @@
       });
     }
 
+    // Inline plugin: vẽ giá trị tại mỗi data point khi slxdShowLabels = true
+    let slxdShowLabels = false;
+    const slxdPointLabelsPlugin = {
+      id: 'slxdPointLabels',
+      afterDatasetsDraw(chart) {
+        if (!chart.options.slxdShowLabels) return;
+        const ctx = chart.ctx;
+        chart.data.datasets.forEach((ds, i) => {
+          const meta = chart.getDatasetMeta(i);
+          if (meta.hidden) return;
+          meta.data.forEach((pt, j) => {
+            const val = ds.data[j];
+            if (!val) return;
+            ctx.save();
+            ctx.font = 'bold 9px sans-serif';
+            ctx.fillStyle = ds.borderColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(val.toLocaleString(), pt.x, pt.y - 5);
+            ctx.restore();
+          });
+        });
+      }
+    };
+
+    const CHART_PAS = [
+      { pa: 'CRKH', color: '#10b981' },
+      { pa: 'CRCK', color: '#f59e0b' },
+      { pa: 'HBCX', color: '#3b82f6' }
+    ];
+
+    function toggleSlxdLabels() {
+      slxdShowLabels = !slxdShowLabels;
+      const btn = document.getElementById('btn-slxd-labels');
+      if (btn) { btn.textContent = slxdShowLabels ? 'Ẩn số' : 'Hiện số'; btn.style.color = slxdShowLabels ? 'var(--cyan)' : ''; }
+      ['weeks', 'months'].forEach(mode => {
+        const c = window['chart_' + mode];
+        if (c) { c.options.slxdShowLabels = slxdShowLabels; c.update(); }
+      });
+    }
+
     function renderSlxdTrend(mode) {
       const daily = S.slxdDaily || [];
       if (!daily.length) return;
@@ -4153,61 +4297,44 @@
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
 
-      // Aggregation logic
-      const periods = {}; // key: Wxx/YYYY or MM/YYYY
-      const allPAs = new Set();
-
+      const periods = {};
       daily.forEach(r => {
         const p = parsNgay(r.ngay);
         if (!p) return;
         const d = new Date(p.yy, p.mm - 1, p.dd);
-        let key;
-        if (mode === 'weeks') key = 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + d.getFullYear();
-        else key = String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
-
+        const key = mode === 'weeks'
+          ? 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + d.getFullYear()
+          : String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
         if (!periods[key]) periods[key] = {};
         const pa = r.phuong_an || 'OTHER';
-        allPAs.add(pa);
         periods[key][pa] = (periods[key][pa] || 0) + (+r.so_luong || 0);
       });
 
-      // Get last 12 periods, sorted chronologically
-      const allPeriodKeys = Object.keys(periods);
-      allPeriodKeys.sort((a, b) => {
+      const allPeriodKeys = Object.keys(periods).sort((a, b) => {
         const ap = a.split('/'), bp = b.split('/');
-        // Year first
         if (ap[1] !== bp[1]) return ap[1] - bp[1];
-        // Then week or month
-        const av = parseInt(ap[0].replace('W', '')), bv = parseInt(bp[0].replace('W', ''));
-        return av - bv;
+        return parseInt(ap[0].replace('W', '')) - parseInt(bp[0].replace('W', ''));
       });
       const sortedPeriods = allPeriodKeys.slice(-12);
-      const datasets = [];
-      const pas = [...allPAs].sort();
 
-      const colors = [
-        '#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6',
-        '#06b6d4', '#f97316', '#ec4899', '#64748b', '#22c55e'
-      ];
-
-      pas.forEach((pa, i) => {
-        datasets.push({
-          label: pa,
-          data: sortedPeriods.map(p => periods[p][pa] || 0),
-          borderColor: colors[i % colors.length],
-          backgroundColor: colors[i % colors.length] + '20',
-          borderWidth: 2,
-          pointRadius: 3,
-          tension: 0.3,
-          fill: false
-        });
-      });
+      const datasets = CHART_PAS.map(({ pa, color }) => ({
+        label: pa,
+        data: sortedPeriods.map(p => periods[p]?.[pa] || 0),
+        borderColor: color,
+        backgroundColor: color + '20',
+        borderWidth: 2,
+        pointRadius: 4,
+        tension: 0.3,
+        fill: false
+      }));
 
       if (window['chart_' + mode]) window['chart_' + mode].destroy();
       window['chart_' + mode] = new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: { labels: sortedPeriods, datasets },
+        plugins: [slxdPointLabelsPlugin],
         options: {
+          slxdShowLabels,
           responsive: true, maintainAspectRatio: false,
           plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
           scales: {
