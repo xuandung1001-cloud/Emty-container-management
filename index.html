@@ -4299,6 +4299,45 @@
       const tuNgay = tuParts[2] + '/' + tuParts[1] + '/' + tuParts[0];
       const denNgay = denParts[2] + '/' + denParts[1] + '/' + denParts[0];
 
+      // ── Pre-process: tính ngày sản lượng ở client ──
+      const nhapGroup = ['NRCK', 'NRKH', 'HRKH', 'HBCX', 'TRAR', 'HBAI'];
+      const colKeys = Object.keys(slxdParsedRows[0] || {});
+      const findC = (kws) => { for (const kw of kws) { const f = colKeys.find(k => k.toLowerCase().includes(kw.toLowerCase())); if (f) return f; } return kws[0]; };
+      const C_PA   = findC(['tác nghiệp', 'tac nghiep']);
+      const C_PA2  = findC(['Phương Án', 'Phuong An']);
+      const C_VAO  = findC(['vào bãi', 'vao bai']);
+      const C_RA   = findC(['ra bãi', 'ra bai']);
+
+      function parseD(v) {
+        if (!v) return null;
+        if (v instanceof Date && !isNaN(v)) return v;
+        const s = String(v).trim();
+        const n = parseFloat(s);
+        if (!isNaN(n) && n > 40000 && n < 60000) return new Date(Math.round((n - 25568) * 86400) * 1000);
+        if (s.match(/^\d{4}-/)) return new Date(s);
+        if (s.includes('/')) {
+          const p = s.split('/'); let yr = parseInt(p[2]); if (yr < 100) yr += 2000;
+          if (p.length === 3) return new Date(yr, parseInt(p[0]) - 1, parseInt(p[1]));
+        }
+        const d = new Date(s); return isNaN(d) ? null : d;
+      }
+      function fmtD(d) { if (!d) return ''; return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear(); }
+
+      const processedRows = slxdParsedRows.map(r => {
+        const paFull = String(r[C_PA] || '').trim();
+        let pa = paFull.split(':')[0].trim();
+        if (!pa) pa = String(r[C_PA2] || '').trim();
+        const isNhap = nhapGroup.indexOf(pa) >= 0;
+        const dateSrc = isNhap ? r[C_VAO] : r[C_RA];
+        const d = parseD(dateSrc);
+        const copy = Object.assign({}, r);
+        copy._ngay_sl = fmtD(d); // dd/MM/yyyy
+        return copy;
+      });
+
+      const validCount = processedRows.filter(r => r._ngay_sl).length;
+      console.log('[SLXD] Pre-processed:', processedRows.length, 'rows, valid dates:', validCount, 'C_PA:', C_PA, 'C_VAO:', C_VAO, 'C_RA:', C_RA);
+
       const btn = document.getElementById('btn-slxd-import');
       btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang import...';
       try {
@@ -4307,7 +4346,7 @@
           loai: loai,
           tu_ngay: tuNgay,
           den_ngay: denNgay,
-          rows: slxdParsedRows,
+          rows: processedRows,
           file_name: document.getElementById('slxd-file').files[0] ? document.getElementById('slxd-file').files[0].name : '',
           imported_by: S.user ? S.user.fullname : ''
         });
