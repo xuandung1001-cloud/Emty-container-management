@@ -4249,7 +4249,11 @@
           const data = new Uint8Array(ev.target.result);
           const wb = XLSX.read(data, { type: 'array', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+          const json = XLSX.utils.sheet_to_json(worksheet, { 
+    raw: false,             // Ép SheetJS xuất ra chuỗi text thay vì số Serial
+    dateNF: 'dd/mm/yyyy',   // Bắt buộc nó phải đeo "mặt nạ" định dạng Việt Nam
+    defval: ''              // Các ô trống trả về rỗng để code backend không bị lỗi undefined
+});
           slxdParsedRows = json;
 
           // Auto detect khoảng ngày — tìm cột "Cont ra bãi" bằng fuzzy match
