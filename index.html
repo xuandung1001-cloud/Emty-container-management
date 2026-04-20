@@ -2095,7 +2095,7 @@
             <div>
               <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">📋 Sản lượng theo phương án</div>
               <div class="tbl"><table>
-                <thead><tr><th>PHƯƠNG ÁN</th><th>SỐ LƯỢNG</th><th>TEUs</th><th>%</th></tr></thead>
+                <thead><tr><th>PHƯƠNG ÁN</th><th>20ft</th><th>40ft</th><th>TỔNG</th><th>TEUs</th><th>%</th></tr></thead>
                 <tbody id="slxd-pa-tbody"></tbody>
               </table></div>
             </div>
@@ -2104,7 +2104,7 @@
           <!-- Lịch sử import -->
           <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">📜 Lịch sử import</div>
           <div class="tbl"><table>
-            <thead><tr><th>STT</th><th>LOẠI</th><th>TỪ NGÀY</th><th>ĐẾN NGÀY</th><th>FILE</th><th>RAW</th><th>DAILY</th><th>KH</th><th>THỜI GIAN</th></tr></thead>
+            <thead><tr><th>STT</th><th>LOẠI</th><th>TỪ NGÀY</th><th>ĐẾN NGÀY</th><th>FILE</th><th>RAW</th><th>DAILY</th><th>NGƯỜI IMPORT</th><th>THỜI GIAN</th></tr></thead>
             <tbody id="slxd-log-tbody"></tbody>
           </table></div>
         </div>
@@ -4054,22 +4054,29 @@
     function renderSlxdPaTable(filtered) {
       const tb = document.getElementById('slxd-pa-tbody');
       if (!tb) return;
-      if (!filtered.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:12px">Không có dữ liệu</td></tr>'; return; }
+      if (!filtered.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:12px">Không có dữ liệu</td></tr>'; return; }
       const map = {};
       filtered.forEach(r => {
         const pa = r.phuong_an || 'OTHER';
-        if (!map[pa]) map[pa] = { sl: 0, teus: 0 };
-        map[pa].sl += (+r.so_luong || 0);
+        const sl = +r.so_luong || 0;
+        const is20 = String(r.kich_co || '').includes('20');
+        if (!map[pa]) map[pa] = { ft20: 0, ft40: 0, teus: 0 };
+        if (is20) map[pa].ft20 += sl; else map[pa].ft40 += sl;
         map[pa].teus += (+r.teus || 0);
       });
-      const total = Object.values(map).reduce((s, v) => s + v.sl, 0) || 1;
-      const rows = Object.entries(map).sort((a, b) => b[1].sl - a[1].sl);
-      tb.innerHTML = rows.map(([pa, v]) => `<tr>
+      const total = Object.values(map).reduce((s, v) => s + v.ft20 + v.ft40, 0) || 1;
+      const rows = Object.entries(map).sort((a, b) => (b[1].ft20+b[1].ft40) - (a[1].ft20+a[1].ft40));
+      tb.innerHTML = rows.map(([pa, v]) => {
+        const sl = v.ft20 + v.ft40;
+        return `<tr>
         <td>${esc(pa)}</td>
-        <td style="text-align:right">${fmt(v.sl)}</td>
+        <td style="text-align:right;color:var(--cyan)">${v.ft20 || ''}</td>
+        <td style="text-align:right;color:var(--green)">${v.ft40 || ''}</td>
+        <td style="text-align:right;font-weight:600">${fmt(sl)}</td>
         <td style="text-align:right">${fmt(v.teus)}</td>
-        <td style="text-align:right">${(v.sl / total * 100).toFixed(1)}%</td>
-      </tr>`).join('');
+        <td style="text-align:right">${(sl / total * 100).toFixed(1)}%</td>
+      </tr>`;
+      }).join('');
     }
 
     // Parse "YYYY-MM-DD" hoặc "DD/MM/YYYY" (legacy) → { yy, mm, dd }
@@ -4210,7 +4217,7 @@
         <td style="font-size:11px;color:var(--text2)">${esc(l.file_name)}</td>
         <td style="text-align:right">${fmt(l.so_dong_raw)}</td>
         <td style="text-align:right">${fmt(l.so_dong_daily)}</td>
-        <td style="text-align:right">${fmt(l.so_dong_customer)}</td>
+        <td style="font-size:11px;color:var(--text2)">${esc(l.imported_by)}</td>
         <td style="font-size:11px;color:var(--text2)">${esc(l.imported_at)}</td>
       </tr>`).join('');
     }
