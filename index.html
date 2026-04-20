@@ -4044,8 +4044,32 @@
       renderSlxdTrend('weeks');
       renderSlxdTrend('months');
 
+      // PA table
+      renderSlxdPaTable(filtered);
+
       // Import log
       renderSlxdLog();
+    }
+
+    function renderSlxdPaTable(filtered) {
+      const tb = document.getElementById('slxd-pa-tbody');
+      if (!tb) return;
+      if (!filtered.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:12px">Không có dữ liệu</td></tr>'; return; }
+      const map = {};
+      filtered.forEach(r => {
+        const pa = r.phuong_an || 'OTHER';
+        if (!map[pa]) map[pa] = { sl: 0, teus: 0 };
+        map[pa].sl += (+r.so_luong || 0);
+        map[pa].teus += (+r.teus || 0);
+      });
+      const total = Object.values(map).reduce((s, v) => s + v.sl, 0) || 1;
+      const rows = Object.entries(map).sort((a, b) => b[1].sl - a[1].sl);
+      tb.innerHTML = rows.map(([pa, v]) => `<tr>
+        <td>${esc(pa)}</td>
+        <td style="text-align:right">${fmt(v.sl)}</td>
+        <td style="text-align:right">${fmt(v.teus)}</td>
+        <td style="text-align:right">${(v.sl / total * 100).toFixed(1)}%</td>
+      </tr>`).join('');
     }
 
     function fillSlxdPeriods(view) {
