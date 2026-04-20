@@ -4265,7 +4265,7 @@
             else if (s.match(/^\d{4}-/)) d = new Date(s);
             else if (s.includes('/')) {
               const p = s.split('/'); let yr = parseInt(p[2]); if (yr < 100) yr += 2000;
-              if (p.length === 3) d = new Date(yr, parseInt(p[0]) - 1, parseInt(p[1]));
+              if (p.length === 3) d = new Date(yr, parseInt(p[1]) - 1, parseInt(p[0]));
             } else d = new Date(s);
             if (d && !isNaN(d)) {
               if (!minDate || d < minDate) minDate = d;
@@ -4317,7 +4317,7 @@
         if (s.match(/^\d{4}-/)) return new Date(s);
         if (s.includes('/')) {
           const p = s.split('/'); let yr = parseInt(p[2]); if (yr < 100) yr += 2000;
-          if (p.length === 3) return new Date(yr, parseInt(p[0]) - 1, parseInt(p[1]));
+          if (p.length === 3) return new Date(yr, parseInt(p[1]) - 1, parseInt(p[0]));
         }
         const d = new Date(s); return isNaN(d) ? null : d;
       }
