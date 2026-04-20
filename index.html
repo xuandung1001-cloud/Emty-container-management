@@ -2079,24 +2079,24 @@
           </div>
 
           <!-- Biểu đồ -->
-          <div id="slxd-chart" style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;height:280px;position:relative">
-            <canvas id="slxd-canvas"></canvas>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:320px;position:relative;background:var(--bg2)">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📅 Xu hướng 12 tuần gần nhất (theo phương án)</div>
+              <canvas id="slxd-canvas-weeks"></canvas>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:320px;position:relative;background:var(--bg2)">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase">📆 Xu hướng 12 tháng gần nhất (theo phương án)</div>
+              <canvas id="slxd-canvas-months"></canvas>
+            </div>
           </div>
 
           <!-- Bảng pivot phương án -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px">
             <div>
               <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">📋 Sản lượng theo phương án</div>
               <div class="tbl"><table>
                 <thead><tr><th>PHƯƠNG ÁN</th><th>SỐ LƯỢNG</th><th>TEUs</th><th>%</th></tr></thead>
                 <tbody id="slxd-pa-tbody"></tbody>
-              </table></div>
-            </div>
-            <div>
-              <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">🏢 Top khách hàng</div>
-              <div class="tbl"><table>
-                <thead><tr><th>KHÁCH HÀNG</th><th>SỐ LƯỢNG</th><th>TEUs</th></tr></thead>
-                <tbody id="slxd-kh-tbody"></tbody>
               </table></div>
             </div>
           </div>
@@ -2747,7 +2747,7 @@
       users: { title: 'Quản lý Users', badge: '' }
     };
 
-    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdCustomer: null, slxdImportLog: null };
+    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null };
 
     // ══════════════════════════════════════════
     // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -4011,11 +4011,10 @@
       // Load data
       if (!S.slxdDaily) {
         try {
-          const [d, c, l] = await Promise.all([api('getSlxdDaily'), api('getSlxdCustomer'), api('getSlxdImportLog')]);
+          const [d, l] = await Promise.all([api('getSlxdDaily'), api('getSlxdImportLog')]);
           S.slxdDaily = d.data || [];
-          S.slxdCustomer = c.data || [];
           S.slxdImportLog = l.data || [];
-        } catch (e) { S.slxdDaily = []; S.slxdCustomer = []; S.slxdImportLog = []; }
+        } catch (e) { S.slxdDaily = []; S.slxdImportLog = []; }
       }
 
       const view = _g('slxd-view'); // tuan, thang, quy, nam
@@ -4041,14 +4040,9 @@
         sc('RỖNG (E)', fmt(empty), 'c-yellow') +
         sc('HÀNG (F)', fmt(full), 'c-orange');
 
-      // Chart
-      renderSlxdChart(filtered);
-
-      // Pivot phương án
-      renderSlxdPaPivot(filtered);
-
-      // Top khách hàng
-      renderSlxdCustomerTable(view, period);
+      // Trends
+      renderSlxdTrend('weeks');
+      renderSlxdTrend('months');
 
       // Import log
       renderSlxdLog();
@@ -4111,104 +4105,78 @@
       });
     }
 
-    function renderSlxdChart(filtered) {
-      // Aggregate theo ngày: nhập vs xuất
-      const byDay = {};
-      filtered.forEach(r => {
-        const d = r.ngay;
-        if (!byDay[d]) byDay[d] = { nhap: 0, xuat: 0 };
-        if (['NRCK', 'NRKH', 'HRKH', 'HBCX', 'TRAR', 'HBAI'].indexOf(r.phuong_an) >= 0) byDay[d].nhap += (+r.so_luong || 0);
-        else byDay[d].xuat += (+r.so_luong || 0);
-      });
-      const labels = Object.keys(byDay).sort();
-      const nhapData = labels.map(d => byDay[d].nhap);
-      const xuatData = labels.map(d => byDay[d].xuat);
-      // Short labels: chỉ dd/mm
-      const shortLabels = labels.map(d => { const p = d.split('/'); return p[0] + '/' + p[1]; });
+    function renderSlxdTrend(mode) {
+      const daily = S.slxdDaily || [];
+      if (!daily.length) return;
 
-      const canvas = document.getElementById('slxd-canvas');
+      const canvasId = mode === 'weeks' ? 'slxd-canvas-weeks' : 'slxd-canvas-months';
+      const canvas = document.getElementById(canvasId);
       if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (slxdChart) slxdChart.destroy();
 
-      if (typeof Chart === 'undefined') {
-        document.getElementById('slxd-chart').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">Đang tải thư viện biểu đồ...</div>';
-        return;
-      }
+      // Aggregation logic
+      const periods = {}; // key: Wxx/YYYY or MM/YYYY
+      const allPAs = new Set();
 
-      slxdChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: shortLabels,
-          datasets: [
-            { label: 'Nhập', data: nhapData, backgroundColor: 'rgba(16,185,129,0.6)', borderColor: '#10b981', borderWidth: 1, borderRadius: 3 },
-            { label: 'Xuất', data: xuatData, backgroundColor: 'rgba(239,68,68,0.6)', borderColor: '#ef4444', borderWidth: 1, borderRadius: 3 }
-          ]
-        },
+      daily.forEach(r => {
+        const dStr = r.ngay;
+        const parts = dStr.split('/');
+        if (parts.length < 3) return;
+        const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+        let key;
+        if (mode === 'weeks') key = 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + d.getFullYear();
+        else key = String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+
+        if (!periods[key]) periods[key] = {};
+        const pa = r.phuong_an || 'OTHER';
+        allPAs.add(pa);
+        periods[key][pa] = (periods[key][pa] || 0) + (+r.so_luong || 0);
+      });
+
+      // Get last 12 periods, sorted chronologically
+      const allPeriodKeys = Object.keys(periods);
+      allPeriodKeys.sort((a, b) => {
+        const ap = a.split('/'), bp = b.split('/');
+        // Year first
+        if (ap[1] !== bp[1]) return ap[1] - bp[1];
+        // Then week or month
+        const av = parseInt(ap[0].replace('W', '')), bv = parseInt(bp[0].replace('W', ''));
+        return av - bv;
+      });
+      const sortedPeriods = allPeriodKeys.slice(-12);
+      const datasets = [];
+      const pas = [...allPAs].sort();
+
+      const colors = [
+        '#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6',
+        '#06b6d4', '#f97316', '#ec4899', '#64748b', '#22c55e'
+      ];
+
+      pas.forEach((pa, i) => {
+        datasets.push({
+          label: pa,
+          data: sortedPeriods.map(p => periods[p][pa] || 0),
+          borderColor: colors[i % colors.length],
+          backgroundColor: colors[i % colors.length] + '20',
+          borderWidth: 2,
+          pointRadius: 3,
+          tension: 0.3,
+          fill: false
+        });
+      });
+
+      if (window['chart_' + mode]) window['chart_' + mode].destroy();
+      window['chart_' + mode] = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: { labels: sortedPeriods, datasets },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true, pointStyle: 'rect' } } },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
-            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { font: { size: 10 } } }
+            x: { grid: { display: false }, ticks: { font: { size: 9 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { size: 9 } } }
           }
         }
       });
-    }
-
-    function renderSlxdPaPivot(filtered) {
-      // Pivot theo phương án
-      const paMap = {};
-      let total = 0;
-      filtered.forEach(r => {
-        const pa = r.phuong_an || '?';
-        const paFull = r.phuong_an_full || pa;
-        if (!paMap[pa]) paMap[pa] = { full: paFull, sl: 0, teus: 0 };
-        paMap[pa].sl += (+r.so_luong || 0);
-        paMap[pa].teus += (+r.teus || 0);
-        total += (+r.so_luong || 0);
-      });
-      const tb = document.getElementById('slxd-pa-tbody');
-      const sorted = Object.entries(paMap).sort((a, b) => b[1].sl - a[1].sl);
-      if (!sorted.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Chưa có data</td></tr>'; return; }
-      tb.innerHTML = sorted.map(([pa, d]) => {
-        const pct = total > 0 ? (d.sl / total * 100).toFixed(1) : 0;
-        return `<tr><td title="${esc(d.full)}" style="font-weight:600">${esc(pa)}</td><td style="text-align:right">${fmt(d.sl)}</td><td style="text-align:right">${fmt(d.teus)}</td><td style="text-align:right;color:var(--text2)">${pct}%</td></tr>`;
-      }).join('') +
-        `<tr style="font-weight:700;background:var(--bg3)"><td>TỔNG</td><td style="text-align:right">${fmt(total)}</td><td style="text-align:right">${fmt(sorted.reduce((s, e) => s + e[1].teus, 0))}</td><td style="text-align:right">100%</td></tr>`;
-    }
-
-    function renderSlxdCustomerTable(view, period) {
-      // Filter customer data theo period (tháng)
-      let custData = S.slxdCustomer || [];
-      if (view === 'thang' && period) {
-        custData = custData.filter(r => r.thang === period);
-      } else if (view === 'quy' && period) {
-        // Q1/2026 → 01,02,03/2026
-        const qp = period.split('/');
-        const q = parseInt(qp[0].replace('Q', ''));
-        const y = qp[1];
-        const months = [(q - 1) * 3 + 1, (q - 1) * 3 + 2, (q - 1) * 3 + 3].map(m => String(m).padStart(2, '0') + '/' + y);
-        custData = custData.filter(r => months.indexOf(r.thang) >= 0);
-      } else if (view === 'nam' && period) {
-        custData = custData.filter(r => String(r.thang).endsWith('/' + period));
-      }
-
-      // Aggregate
-      const khMap = {};
-      custData.forEach(r => {
-        const kh = r.khach_hang || '?';
-        if (!khMap[kh]) khMap[kh] = { sl: 0, teus: 0 };
-        khMap[kh].sl += (+r.so_luong || 0);
-        khMap[kh].teus += (+r.teus || 0);
-      });
-
-      const tb = document.getElementById('slxd-kh-tbody');
-      const sorted = Object.entries(khMap).sort((a, b) => b[1].sl - a[1].sl).slice(0, 15);
-      if (!sorted.length) { tb.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:20px">Chưa có data</td></tr>'; return; }
-      tb.innerHTML = sorted.map(([kh, d]) =>
-        `<tr><td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${esc(kh)}">${esc(kh)}</td><td style="text-align:right">${fmt(d.sl)}</td><td style="text-align:right">${fmt(d.teus)}</td></tr>`
-      ).join('');
     }
 
     function renderSlxdLog() {
