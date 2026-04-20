@@ -4072,6 +4072,15 @@
       </tr>`).join('');
     }
 
+    // Parse "YYYY-MM-DD" hoặc "DD/MM/YYYY" (legacy) → { yy, mm, dd }
+    function parsNgay(s) {
+      const str = String(s || '').trim();
+      if (str.match(/^\d{4}-\d{2}-\d{2}/)) { const p = str.split('-'); return { yy: +p[0], mm: +p[1], dd: +p[2] }; }
+      const p = str.split('/');
+      if (p.length === 3) return { yy: +p[2], mm: +p[1], dd: +p[0] }; // DD/MM/YYYY legacy
+      return null;
+    }
+
     function fillSlxdPeriods(view) {
       const sel = document.getElementById('slxd-period');
       const cur = sel.value;
@@ -4079,21 +4088,14 @@
       if (!dates.length) { sel.innerHTML = '<option value="">-- Chưa có data --</option>'; return; }
 
       const opts = new Set();
-      dates.forEach(d => {
-        const parts = String(d).split('/');
-        if (parts.length < 3) return;
-        const dd = +parts[0], mm = +parts[1], yy = +parts[2];
+      dates.forEach(s => {
+        const p = parsNgay(s);
+        if (!p) return;
+        const { yy, mm, dd } = p;
         if (view === 'nam') opts.add(String(yy));
-        else if (view === 'quy') {
-          const q = Math.ceil(mm / 3);
-          opts.add('Q' + q + '/' + yy);
-        } else if (view === 'thang') opts.add(String(mm).padStart(2, '0') + '/' + yy);
-        else {
-          // tuần: lấy ISO week
-          const dt = new Date(yy, mm - 1, dd);
-          const wk = getISOWeek(dt);
-          opts.add('W' + String(wk).padStart(2, '0') + '/' + yy);
-        }
+        else if (view === 'quy') opts.add('Q' + Math.ceil(mm / 3) + '/' + yy);
+        else if (view === 'thang') opts.add(String(mm).padStart(2,'0') + '/' + yy);
+        else { const wk = getISOWeek(new Date(yy, mm-1, dd)); opts.add('W' + String(wk).padStart(2,'0') + '/' + yy); }
       });
 
       const sorted = [...opts].sort().reverse();
@@ -4112,20 +4114,14 @@
     function filterSlxdByPeriod(data, view, period) {
       if (!period) return data;
       return data.filter(r => {
-        const d = String(r.ngay || '');
-        const parts = d.split('/');
-        if (parts.length < 3) return false;
-        const dd = +parts[0], mm = +parts[1], yy = +parts[2];
+        const p = parsNgay(r.ngay);
+        if (!p) return false;
+        const { yy, mm, dd } = p;
         if (view === 'nam') return String(yy) === period;
-        if (view === 'quy') {
-          const q = Math.ceil(mm / 3);
-          return ('Q' + q + '/' + yy) === period;
-        }
-        if (view === 'thang') return (String(mm).padStart(2, '0') + '/' + yy) === period;
-        // tuần
-        const dt = new Date(yy, mm - 1, dd);
-        const wk = getISOWeek(dt);
-        return ('W' + String(wk).padStart(2, '0') + '/' + yy) === period;
+        if (view === 'quy') return ('Q' + Math.ceil(mm/3) + '/' + yy) === period;
+        if (view === 'thang') return (String(mm).padStart(2,'0') + '/' + yy) === period;
+        const wk = getISOWeek(new Date(yy, mm-1, dd));
+        return ('W' + String(wk).padStart(2,'0') + '/' + yy) === period;
       });
     }
 
@@ -4142,10 +4138,9 @@
       const allPAs = new Set();
 
       daily.forEach(r => {
-        const dStr = r.ngay;
-        const parts = dStr.split('/');
-        if (parts.length < 3) return;
-        const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+        const p = parsNgay(r.ngay);
+        if (!p) return;
+        const d = new Date(p.yy, p.mm - 1, p.dd);
         let key;
         if (mode === 'weeks') key = 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + d.getFullYear();
         else key = String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
@@ -4245,28 +4240,34 @@
           const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
           slxdParsedRows = json;
 
-          // Auto detect khoảng ngày — tìm cột "Cont ra bãi" bằng fuzzy match
+          // Auto detect khoảng ngày từ cột "Cont ra bãi"
+          // raw:true + cellDates:true → date cells là Date object trực tiếp
           let minDate = null, maxDate = null;
-          const raCol = Object.keys(json[0] || {}).find(k => k.toLowerCase().includes('ra') && k.toLowerCase().includes('i')) || 'Cont ra bãi';
+          const allKeys = Object.keys(json[0] || {});
+          const raCol = allKeys.find(k => {
+            const kl = k.toLowerCase();
+            return (kl.includes('ra b') || kl.includes('ra ba')) && !kl.includes('vao');
+          }) || 'Cont ra bãi';
+          const cutoff = new Date(); // hôm nay — loại bỏ ngày tương lai (placeholder TOS)
           json.forEach(r => {
             const v = r[raCol];
             if (!v) return;
-            let d;
-            const s = String(v).trim();
-            const n = parseFloat(s);
-            if (!isNaN(n) && n > 40000 && n < 60000) d = new Date(Math.round((n - 25568) * 86400) * 1000);
-            else if (s.match(/^\d{4}-/)) d = new Date(s);
-            else if (s.includes('/')) {
-              const p = s.split('/'); let yr = parseInt(p[2]); if (yr < 100) yr += 2000;
-              if (p.length === 3) d = new Date(yr, parseInt(p[1]) - 1, parseInt(p[0]));
-            } else d = new Date(s);
-            if (d && !isNaN(d)) {
-              if (!minDate || d < minDate) minDate = d;
-              if (!maxDate || d > maxDate) maxDate = d;
+            let d = (v instanceof Date && !isNaN(v)) ? v : null;
+            if (!d) {
+              const s = String(v).trim();
+              const n = parseFloat(s);
+              if (!isNaN(n) && n > 40000 && n < 60000) d = new Date(Math.round((n - 25568) * 86400) * 1000);
+              else if (s.match(/^\d{4}-\d{2}-\d{2}/)) { const p = s.split('-'); d = new Date(+p[0], +p[1]-1, +p[2]); }
+              else if (s.includes('/')) { const p = s.split('/'); let y = parseInt(p[2]); if (y < 100) y += 2000; if (p.length === 3 && +p[0] <= 31 && +p[1] <= 12) d = new Date(y, +p[1]-1, +p[0]); }
             }
+            if (!d || isNaN(d) || d > cutoff) return; // bỏ qua placeholder future date
+            if (!minDate || d < minDate) minDate = d;
+            if (!maxDate || d > maxDate) maxDate = d;
           });
-          if (minDate) _v('slxd-imp-tu', minDate.toISOString().split('T')[0]);
-          if (maxDate) _v('slxd-imp-den', maxDate.toISOString().split('T')[0]);
+          // toISOString() → UTC, dùng local date để tránh lệch ngày ở timezone +7
+          const toLocalISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+          if (minDate) _v('slxd-imp-tu', toLocalISO(minDate));
+          if (maxDate) _v('slxd-imp-den', toLocalISO(maxDate));
 
           const preview = document.getElementById('slxd-imp-preview');
           preview.style.display = 'block';
@@ -4287,10 +4288,9 @@
       const tu = _g('slxd-imp-tu'), den = _g('slxd-imp-den');
       if (!tu || !den) { toast('Vui lòng chọn khoảng ngày', 'err'); return; }
 
-      // Convert date input (yyyy-mm-dd) → dd/MM/yyyy
-      const tuParts = tu.split('-'), denParts = den.split('-');
-      const tuNgay = tuParts[2] + '/' + tuParts[1] + '/' + tuParts[0];
-      const denNgay = denParts[2] + '/' + denParts[1] + '/' + denParts[0];
+      // Giữ YYYY-MM-DD — backend cũng dùng YYYY-MM-DD để tránh lỗi locale Google Sheets
+      const tuNgay = tu;
+      const denNgay = den;
 
       // ── Pre-process: tính ngày sản lượng ở client ──
       const nhapGroup = ['NRCK', 'NRKH', 'HRKH', 'HBCX', 'TRAR', 'HBAI'];
@@ -4303,18 +4303,23 @@
 
       function parseD(v) {
         if (!v) return null;
+        // cellDates:true + raw:true → Date object trực tiếp từ SheetJS
         if (v instanceof Date && !isNaN(v)) return v;
         const s = String(v).trim();
+        // Excel serial number (khi raw:true mà cell không phải date type)
         const n = parseFloat(s);
         if (!isNaN(n) && n > 40000 && n < 60000) return new Date(Math.round((n - 25568) * 86400) * 1000);
-        if (s.match(/^\d{4}-/)) return new Date(s);
-        if (s.includes('/')) {
-          const p = s.split('/'); let yr = parseInt(p[2]); if (yr < 100) yr += 2000;
-          if (p.length === 3) return new Date(yr, parseInt(p[1]) - 1, parseInt(p[0]));
-        }
+        // ISO YYYY-MM-DD
+        if (s.match(/^\d{4}-\d{2}-\d{2}/)) { const p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+        // DD/MM/YYYY (legacy TOS text export)
+        if (s.includes('/')) { const p = s.split('/'); let y = parseInt(p[2]); if (y < 100) y += 2000; if (p.length === 3 && +p[0] <= 31 && +p[1] <= 12) return new Date(y, +p[1]-1, +p[0]); }
         const d = new Date(s); return isNaN(d) ? null : d;
       }
-      function fmtD(d) { if (!d) return ''; return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear(); }
+      // Lưu trữ dạng YYYY-MM-DD → Google Sheets không tự đổi ngày/tháng do locale
+      function fmtD(d) {
+        if (!d) return '';
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      }
 
       const processedRows = slxdParsedRows.map(r => {
         const paFull = String(r[C_PA] || '').trim();
