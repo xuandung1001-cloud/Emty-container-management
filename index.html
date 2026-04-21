@@ -5222,7 +5222,7 @@
         const contStatus = eq(String(cont.cont_status || '').trim()); // AV/DM/WA/OF/SL
         // Use actual vi_tri for position display in tooltip
         const pos = eq(cont.vi_tri || '');
-        const infoData = eq(`${cont.container||''}|${cont.hang||''}|${cont.kich_co||''}|${days}|${pos}|${cont.tinh_trang||''}|${cont.cont_status||''}`);
+        const infoData = eq(`${cont.container||''}|${cont.hang||''}|${cont.kich_co||''}|${days}|${pos}|${cont.tinh_trang||''}|${cont.cont_status||''}|${cont.ghi_chu||''}`);
         const contKey = eq(String(cont.container || ''));
         const hlClass = isHL ? ' ym-hl' : '';
         const capFace   = `<polygon points="${x},${y} ${x+YM_CW},${y} ${x+YM_CW+YM_D},${y-YM_D*0.5} ${x+YM_D},${y-YM_D*0.5}" fill="${c.cap}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
@@ -5257,7 +5257,7 @@
     function ymShowTip(e, el) {
       const info = el.dataset.info;
       if (!info) return;
-      const [contNo, hang, size, days, pos, tinh_trang, cont_status] = info.split('|');
+      const [contNo, hang, size, days, pos, tinh_trang, cont_status, ghi_chu] = info.split('|');
       const d = parseInt(days) || 0;
       const dColor = d > 30 ? '#dc2626' : d > 14 ? '#d97706' : d > 7 ? '#0891b2' : '#059669';
       const tip = document.getElementById('ym-tooltip');
@@ -5267,7 +5267,8 @@
         <div style="color:#475569;margin-bottom:3px;font-size:11px">📐 Kích cỡ: <b style="color:#1e293b">${size || '—'}</b></div>
         <div style="color:#475569;margin-bottom:3px;font-size:11px">🔖 Status: <b style="color:#0369a1">${cont_status || '—'}</b></div>
         <div style="color:#475569;margin-bottom:3px;font-size:11px">✅ Tình trạng: <b style="color:#1e293b">${tinh_trang || '—'}</b></div>
-        <div style="color:#475569;margin-bottom:6px;font-size:11px">📅 Lưu bãi: <b style="color:${dColor}">${d} ngày</b></div>
+        <div style="color:#475569;margin-bottom:3px;font-size:11px">📅 Lưu bãi: <b style="color:${dColor}">${d} ngày</b></div>
+        ${ghi_chu ? `<div style="color:#475569;margin-bottom:3px;font-size:11px">📝 Ghi chú: <b style="color:#1e293b">${ghi_chu}</b></div>` : ''}
         <div style="color:#94a3b8;font-size:9.5px;border-top:1px solid #e2e8f0;padding-top:5px">📍 ${pos}</div>
       `;
       tip.style.cssText = [
@@ -5423,7 +5424,8 @@
           <div>✅ Grade: <b>${esc(tb.tinh_trang)}</b></div>
           <div>📅 Lưu bãi: <b style="color:${dColor}">${days} ngày</b></div>
           <div>🔖 Status: <b>${esc(tb.cont_status)}</b></div>
-        </div>`;
+        </div>
+        ${tb.ghi_chu ? `<div style="font-size:10px;margin-top:5px;padding-top:5px;border-top:1px solid var(--border)">📝 Ghi chú: <b style="color:var(--text)">${esc(tb.ghi_chu)}</b></div>` : ''}`;
       el.style.display = 'block';
       clearEl.style.display = 'block';
     }
