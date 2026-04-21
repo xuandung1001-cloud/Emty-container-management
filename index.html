@@ -3288,10 +3288,10 @@
         }).length;
 
         const colMeta = [
-          { label: 'Cần Làm', color: 'var(--yellow)' },
-          { label: 'Đang Xử Lý', color: 'var(--cyan)' },
-          { label: 'Chờ Duyệt', color: 'var(--orange)' },
-          { label: 'Hoàn Tất', color: 'var(--green)' }
+          { label: 'Đăng ký công việc', color: 'var(--yellow)' },
+          { label: 'Tiếp nhận xử lý', color: 'var(--cyan)' },
+          { label: 'Đã xử lý - Chờ duyệt', color: 'var(--orange)' },
+          { label: 'Hoàn tất công việc', color: 'var(--green)' }
         ];
         board.innerHTML = colMeta.map((m, i) => {
           return `<div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, ${i})" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
@@ -4336,10 +4336,26 @@
         options: {
           slxdShowLabels,
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+          layout: { padding: { left: 8, right: 8, top: 8, bottom: 0 } },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, padding: 16, font: { size: 10 } }
+            }
+          },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 9 } } },
-            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { size: 9 } } }
+            x: {
+              offset: true,
+              grid: { display: false },
+              ticks: { font: { size: 9 }, maxRotation: 0, autoSkipPadding: 12 },
+              border: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(128,128,128,0.08)', drawBorder: false },
+              ticks: { font: { size: 9 }, padding: 6 },
+              border: { display: false }
+            }
           }
         }
       });
@@ -4452,10 +4468,8 @@
           preview.style.display = 'block';
           const monthNames = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
           const domLabel = domMonth ? monthNames[parseInt(domMonth.split('-')[1])-1] + '/' + domMonth.split('-')[0] : '?';
-          const spilloverNote = spilloverDays > 0 ? `<br>⚠️ Phát hiện <b>${spilloverDays} ngày tràn</b> sang tháng sau (ca đêm cuối tháng) — đã bao gồm tự động` : '';
           preview.innerHTML = `✅ Đọc được <b>${json.length}</b> dòng từ sheet "${wb.SheetNames[0]}"<br>
-            📅 Tháng import: <b>${domLabel}</b> (${minDate ? minDate.toLocaleDateString('vi-VN') : '?'} → ${maxDate ? maxDate.toLocaleDateString('vi-VN') : '?'})${spilloverNote}<br>
-            📋 Cột: ${Object.keys(json[0] || {}).slice(0, 8).join(', ')}...`;
+            📅 Tháng import: <b>${domLabel}</b> (${minDate ? minDate.toLocaleDateString('vi-VN') : '?'} → ${maxDate ? maxDate.toLocaleDateString('vi-VN') : '?'})`;
           document.getElementById('btn-slxd-import').disabled = false;
         } catch (err) {
           toast('Lỗi đọc file: ' + err.message, 'err');
