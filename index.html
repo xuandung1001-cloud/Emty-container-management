@@ -4503,6 +4503,10 @@
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       }
 
+      // Ngày cuối tháng import (để clamp spillover về đúng tháng)
+      const tuDate = new Date(tuNgay);
+      const lastDayOfImportMonth = new Date(tuDate.getFullYear(), tuDate.getMonth() + 1, 0);
+
       const processedRows = slxdParsedRows.map(r => {
         const paFull = String(r[C_PA] || '').trim();
         let pa = paFull.split(':')[0].trim();
@@ -4510,8 +4514,11 @@
         const isNhap = nhapGroup.indexOf(pa) >= 0;
         const dateSrc = isNhap ? r[C_VAO] : r[C_RA];
         const d = parseD(dateSrc);
+        // Clamp ngày tràn sang tháng sau về ngày cuối tháng import
+        // để toàn bộ ca đêm cuối tháng vẫn tính vào đúng kỳ
+        const effectiveD = (d && d > lastDayOfImportMonth) ? lastDayOfImportMonth : d;
         const copy = Object.assign({}, r);
-        copy._ngay_sl = fmtD(d); // dd/MM/yyyy
+        copy._ngay_sl = fmtD(effectiveD);
         return copy;
       });
 
