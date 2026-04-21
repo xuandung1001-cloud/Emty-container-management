@@ -3638,6 +3638,7 @@
         const t = S.tasks.find(x => String(x.seq) === String(draggedItem.seq));
         if (!t) return;
         const oldStatus = parseInt(t.trang_thai) || 0;
+        if (oldStatus === targetStatus) return; // kéo vào cùng cột → không làm gì
         t.trang_thai = targetStatus;
         // Ghi timestamp theo trạng thái
         let extraFields = {};
