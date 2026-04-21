@@ -1960,8 +1960,9 @@
             </select>
             <select class="fi" id="tbf-status" onchange="renderTonBai()" style="width:130px">
               <option value="">Tất cả tình trạng</option>
-              <option value="A">A — Tốt</option>
-              <option value="B">B — Bình thường</option>
+            </select>
+            <select class="fi" id="tbf-cont-status" onchange="renderTonBai()" style="width:130px">
+              <option value="">Tất cả status</option>
             </select>
             <div class="ml" style="display:flex;gap:7px">
               <button class="btn btn-ghost" onclick="fetchTonBai()">⟳ Làm mới</button>
@@ -3954,35 +3955,59 @@
     function renderTonBai() {
       const data = S.tonbai || [];
       const q = (_g('tbsrch') || '').toLowerCase();
-      const fHang = _g('tbf-hang'), fSize = _g('tbf-size'), fStatus = _g('tbf-status');
+      const fHang = _g('tbf-hang'), fSize = _g('tbf-size'), fStatus = _g('tbf-status'), fContStatus = _g('tbf-cont-status');
 
       const rows = data.filter(r => {
         if (q && !r.container.toLowerCase().includes(q) && !r.vi_tri.toLowerCase().includes(q) && !r.hang.toLowerCase().includes(q) && !(r.ghi_chu || '').toLowerCase().includes(q)) return false;
         if (fHang && r.hang !== fHang) return false;
         if (fSize && r.kich_co !== fSize) return false;
         if (fStatus && r.tinh_trang !== fStatus) return false;
+        if (fContStatus && (r.cont_status || '') !== fContStatus) return false;
         return true;
       });
 
-      // Stats
-      const total = data.length, filtered = rows.length;
-      const gradeA = data.filter(r => r.tinh_trang === 'A').length;
-      const gradeB = data.filter(r => r.tinh_trang === 'B').length;
-      const hangSet = [...new Set(data.map(r => r.hang))];
+      // Stats — breakdown by cont_status × tinh_trang
+      const total = data.length;
+      function grpStat(statusKey) {
+        const sub = data.filter(r => (r.cont_status || '').toUpperCase() === statusKey);
+        return {
+          total: sub.length,
+          A: sub.filter(r => r.tinh_trang === 'A').length,
+          B: sub.filter(r => r.tinh_trang === 'B').length,
+          C: sub.filter(r => r.tinh_trang === 'C').length,
+        };
+      }
+      function scSt(label, grp, color) {
+        const sub = `<span style="opacity:.75">A: <b>${fmt(grp.A)}</b> &nbsp;B: <b>${fmt(grp.B)}</b>${grp.C ? ` &nbsp;C: <b>${fmt(grp.C)}</b>` : ''}</span>`;
+        return sc2(label, fmt(grp.total), color, sub);
+      }
+      const stAV = grpStat('AV'), stDM = grpStat('DM'), stWA = grpStat('WA');
+      const stOF = grpStat('OF'), stSL = grpStat('SL');
+      const stOfSl = { total: stOF.total + stSL.total, OF: stOF.total, SL: stSL.total };
+      const ofSlSub = `<span style="opacity:.75">OF: <b>${fmt(stOfSl.OF)}</b> &nbsp;SL: <b>${fmt(stOfSl.SL)}</b></span>`;
       document.getElementById('tbstats').innerHTML =
         sc('TỔNG TỒN BÃI', fmt(total), 'c-cyan') +
-        sc('GRADE A', fmt(gradeA), 'c-green') +
-        sc('GRADE B', fmt(gradeB), 'c-yellow') +
-        sc('ĐANG HIỆN', fmt(filtered), 'c-purple');
+        scSt('AV', stAV, 'c-green') +
+        scSt('DM', stDM, 'c-yellow') +
+        scSt('WA', stWA, 'c-orange') +
+        sc2('OF / SL', fmt(stOfSl.total), 'c-red', ofSlSub);
 
-      // Fill filter dropdowns (chỉ lần đầu)
+      // Fill filter dropdowns (dynamic từ data, reset mỗi lần để cập nhật)
       const selHang = document.getElementById('tbf-hang');
       if (selHang.options.length <= 1) {
-        hangSet.sort().forEach(h => { const o = document.createElement('option'); o.value = h; o.textContent = h; selHang.appendChild(o); });
+        [...new Set(data.map(r => r.hang))].filter(Boolean).sort().forEach(h => { const o = document.createElement('option'); o.value = h; o.textContent = h; selHang.appendChild(o); });
       }
       const selSize = document.getElementById('tbf-size');
       if (selSize.options.length <= 1) {
-        [...new Set(data.map(r => r.kich_co))].sort().forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; selSize.appendChild(o); });
+        [...new Set(data.map(r => r.kich_co))].filter(Boolean).sort().forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; selSize.appendChild(o); });
+      }
+      const selTT = document.getElementById('tbf-status');
+      if (selTT.options.length <= 1) {
+        [...new Set(data.map(r => r.tinh_trang))].filter(Boolean).sort().forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; selTT.appendChild(o); });
+      }
+      const selCS = document.getElementById('tbf-cont-status');
+      if (selCS.options.length <= 1) {
+        [...new Set(data.map(r => r.cont_status))].filter(Boolean).sort().forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; selCS.appendChild(o); });
       }
 
       // Update info
@@ -4070,7 +4095,7 @@
 
       // PA table + Pivot
       renderSlxdPaTable(filtered);
-      renderSlxdPivot(S.slxdDaily);
+      renderSlxdPivot(dedupeSlxdByLoai(S.slxdDaily));
     }
 
     const PA_DESC = {
@@ -4118,7 +4143,7 @@
       const btnW = document.getElementById('btn-pivot-tuan');
       if (btnT) { btnT.className = 'btn ' + (mode === 'thang' ? 'btn-p' : 'btn-ghost'); btnT.style.cssText = 'font-size:10px;padding:2px 10px;height:auto'; }
       if (btnW) { btnW.className = 'btn ' + (mode === 'tuan'  ? 'btn-p' : 'btn-ghost'); btnW.style.cssText = 'font-size:10px;padding:2px 10px;height:auto'; }
-      renderSlxdPivot(S.slxdDaily);
+      renderSlxdPivot(dedupeSlxdByLoai(S.slxdDaily));
     }
 
     function renderSlxdPivot(daily) {
@@ -4234,9 +4259,28 @@
       return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
     }
 
-    function filterSlxdByPeriod(data, view, period) {
-      if (!period) return data;
+    // Với tháng nào đã có loai=thang thì loại bỏ loai=tuan cùng tháng (tránh cộng đôi)
+    function dedupeSlxdByLoai(data) {
+      const thangMonths = new Set();
+      data.forEach(r => {
+        if (r.loai === 'thang') {
+          const p = parsNgay(r.ngay);
+          if (p) thangMonths.add(p.yy + '-' + String(p.mm).padStart(2, '0'));
+        }
+      });
+      if (!thangMonths.size) return data;
       return data.filter(r => {
+        const p = parsNgay(r.ngay);
+        if (!p) return true;
+        const mk = p.yy + '-' + String(p.mm).padStart(2, '0');
+        return thangMonths.has(mk) ? r.loai === 'thang' : true;
+      });
+    }
+
+    function filterSlxdByPeriod(data, view, period) {
+      const deduped = dedupeSlxdByLoai(data);
+      if (!period) return deduped;
+      return deduped.filter(r => {
         const p = parsNgay(r.ngay);
         if (!p) return false;
         const { yy, mm, dd } = p;
