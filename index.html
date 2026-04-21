@@ -1104,31 +1104,36 @@
     }
 
     .kb-head {
-      padding: 12px 16px;
+      padding: 10px 14px;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11.5px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg2)
+      gap: 7px;
+      border-bottom: 2px solid transparent;
+      background: var(--bg2);
+      letter-spacing: .01em;
     }
 
     .kb-dot {
-      width: 8px;
-      height: 8px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
     }
 
     .kb-count {
       margin-left: auto;
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 800;
       background: var(--bg3);
-      border: 1px solid var(--border);
-      padding: 1px 7px;
-      border-radius: 10px;
+      border: 1px solid var(--border2);
+      padding: 2px 8px;
+      border-radius: 99px;
       color: var(--text2);
+      min-width: 22px;
+      text-align: center;
     }
 
     .kb-teus {
@@ -1323,10 +1328,10 @@
 
     .kc-acts {
       display: flex;
-      gap: 6px;
-      margin-top: 8px;
-      border-top: 1px dashed var(--border);
-      padding-top: 8px;
+      gap: 5px;
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 9px;
     }
 
     .kc-btn {
@@ -1337,24 +1342,28 @@
       gap: 4px;
       font-size: 10px;
       font-weight: 600;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      padding: 5px 0;
-      color: var(--text2);
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 7px;
+      padding: 6px 4px;
+      color: var(--text3);
       cursor: pointer;
       transition: all .15s;
+      letter-spacing: .01em;
+      white-space: nowrap;
     }
 
     .kc-btn:hover {
-      background: rgba(255, 255, 255, .06);
+      background: var(--bg3);
       color: var(--text);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
     }
 
     .kc-btn.flag.active {
-      background: rgba(255, 69, 96, .1);
-      border-color: rgba(255, 69, 96, .3);
-      color: var(--danger);
+      background: rgba(239, 68, 68, .08);
+      border-color: rgba(239, 68, 68, .35);
+      color: var(--red);
     }
 
     .kb-toolbar-row {
@@ -3269,18 +3278,20 @@
         cols[3].sort((a, b) => parseDt(b.data.ket_thuc || 0) - parseDt(a.data.ket_thuc || 0));
 
         const colMeta = [
-          { label: 'Sắp Cập Cảng / Neo đậu', color: 'var(--yellow)' },
-          { label: 'Đang Làm Hàng', color: 'var(--cyan)' },
-          { label: 'Chờ Khảo Sát / Survey', color: 'var(--orange)' },
-          { label: 'Hoàn Tất (48h qua)', color: 'var(--green)' }
+          { label: 'Sắp Cập Cảng', icon: '⚓', color: '#f59e0b', bg: 'rgba(245,158,11,.06)', border: 'rgba(245,158,11,.35)', emptyIcon: '⚓', emptyText: 'Không có sà lan nào sắp đến' },
+          { label: 'Đang Làm Hàng', icon: '⚡', color: '#3b82f6', bg: 'rgba(59,130,246,.06)', border: 'rgba(59,130,246,.35)', emptyIcon: '🚢', emptyText: 'Chưa có sà lan đang làm hàng' },
+          { label: 'Chờ Survey', icon: '📋', color: '#f97316', bg: 'rgba(249,115,22,.06)', border: 'rgba(249,115,22,.35)', emptyIcon: '📋', emptyText: 'Không có chờ survey' },
+          { label: 'Hoàn Tất (48h)', icon: '✅', color: '#10b981', bg: 'rgba(16,185,129,.06)', border: 'rgba(16,185,129,.35)', emptyIcon: '✅', emptyText: 'Chưa có sà lan hoàn tất' }
         ];
         board.innerHTML = colMeta.map((m, i) => {
           const teus = cols[i].reduce((s, x) => s + (parseInt(x.data.so_luong) || 0), 0);
           return `<div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, ${i})" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
-            <div class="kb-head">
-              <div class="kb-dot" style="background:${m.color}"></div>${m.label}
-              <span class="kb-count">${cols[i].length}</span>
-              ${teus ? `<span class="kb-teus">📦 ${teus} TEUs</span>` : ''}
+            <div class="kb-head" style="background:${m.bg};border-bottom-color:${m.border}">
+              <div class="kb-dot" style="background:${m.color};color:${m.color}"></div>
+              <span style="font-size:12px">${m.icon}</span>
+              <span style="color:${m.color}">${m.label}</span>
+              <span class="kb-count" style="background:rgba(0,0,0,.06);border-color:${m.border};color:${m.color}">${cols[i].length}</span>
+              ${teus ? `<span class="kb-teus" style="background:${m.bg};color:${m.color};border-color:${m.border}">📦 ${teus} TEUs</span>` : ''}
             </div>
             <div class="kb-list" id="kcol-${i}"></div>
           </div>`;
@@ -3307,16 +3318,20 @@
         }).length;
 
         const colMeta = [
-          { label: 'Đăng ký công việc', color: 'var(--yellow)' },
-          { label: 'Tiếp nhận xử lý', color: 'var(--cyan)' },
-          { label: 'Đã xử lý - Chờ duyệt', color: 'var(--orange)' },
-          { label: 'Hoàn tất công việc', color: 'var(--green)' }
+          { label: 'Đăng ký', icon: '📝', color: '#f59e0b', bg: 'rgba(245,158,11,.06)', border: 'rgba(245,158,11,.35)', emptyIcon: '📝', emptyText: 'Chưa có việc mới' },
+          { label: 'Đang xử lý', icon: '🔧', color: '#3b82f6', bg: 'rgba(59,130,246,.06)', border: 'rgba(59,130,246,.35)', emptyIcon: '🔧', emptyText: 'Không có việc đang xử lý' },
+          { label: 'Chờ duyệt', icon: '👁', color: '#f97316', bg: 'rgba(249,115,22,.06)', border: 'rgba(249,115,22,.35)', emptyIcon: '👁', emptyText: 'Không có việc chờ duyệt' },
+          { label: 'Hoàn tất', icon: '✅', color: '#10b981', bg: 'rgba(16,185,129,.06)', border: 'rgba(16,185,129,.35)', emptyIcon: '✅', emptyText: 'Chưa có việc hoàn tất' }
         ];
         board.innerHTML = colMeta.map((m, i) => {
+          const overdue = cols[i].filter(x => { if (!x.data.deadline) return false; const dl = parseDt(x.data.deadline); return dl && dl < now && parseInt(x.data.trang_thai) !== 3; }).length;
           return `<div class="kb-col" ondragover="kbDragOver(event)" ondrop="kbDrop(event, ${i})" ondragenter="kbDragEnter(event)" ondragleave="kbDragLeave(event)">
-            <div class="kb-head">
-              <div class="kb-dot" style="background:${m.color}"></div>${m.label}
-              <span class="kb-count">${cols[i].length}</span>
+            <div class="kb-head" style="background:${m.bg};border-bottom-color:${m.border}">
+              <div class="kb-dot" style="background:${m.color};color:${m.color}"></div>
+              <span style="font-size:12px">${m.icon}</span>
+              <span style="color:${m.color}">${m.label}</span>
+              <span class="kb-count" style="background:rgba(0,0,0,.06);border-color:${m.border};color:${m.color}">${cols[i].length}</span>
+              ${overdue ? `<span style="font-size:9px;font-weight:700;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;padding:1px 6px;border-radius:99px">⚠ ${overdue} quá hạn</span>` : ''}
             </div>
             <div class="kb-list" id="kcol-${i}"></div>
           </div>`;
@@ -3325,7 +3340,14 @@
 
       for (let c = 0; c < 4; c++) {
         const list = document.getElementById('kcol-' + c);
-        list.innerHTML = cols[c].map(item => item.type === 'voyage' ? generateKCard(item.data, c) : generateTaskCard(item.data, c, viTriMap)).join('');
+        const meta = S.kanbanTab === 'voyages'
+          ? [{ emptyIcon:'⚓',emptyText:'Không có sà lan nào'},{emptyIcon:'🚢',emptyText:'Chưa có sà lan đang làm hàng'},{emptyIcon:'📋',emptyText:'Không có chờ survey'},{emptyIcon:'✅',emptyText:'Chưa có sà lan hoàn tất'}]
+          : [{ emptyIcon:'📝',emptyText:'Chưa có việc mới'},{emptyIcon:'🔧',emptyText:'Không có việc đang xử lý'},{emptyIcon:'👁',emptyText:'Không có việc chờ duyệt'},{emptyIcon:'✅',emptyText:'Chưa có việc hoàn tất'}];
+        const cards = cols[c].map(item => item.type === 'voyage' ? generateKCard(item.data, c) : generateTaskCard(item.data, c, viTriMap)).join('');
+        list.innerHTML = cards || `<div style="padding:28px 16px;text-align:center;color:var(--text3)">
+          <div style="font-size:28px;margin-bottom:8px;opacity:.25">${meta[c].emptyIcon}</div>
+          <div style="font-size:10px;opacity:.4;line-height:1.5">${meta[c].emptyText}</div>
+        </div>`;
       }
     }
 
@@ -3382,29 +3404,31 @@
       // Ngày tạo (luôn hiện) — xanh lá rõ
       const createdHtml = t.created_at ? `<div class="kc-time" style="color:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tạo: ${fmtDt(t.created_at)}</div>` : '';
 
+      const taskColor = t.phan_loai === 'Cấp rỗng' ? '#3b82f6' : t.phan_loai === 'Dọn bãi' ? '#10b981' : t.phan_loai === 'Sửa chữa' ? '#f97316' : '#8b5cf6';
+      const taskBg    = t.phan_loai === 'Cấp rỗng' ? 'rgba(59,130,246,.06)' : t.phan_loai === 'Dọn bãi' ? 'rgba(16,185,129,.06)' : t.phan_loai === 'Sửa chữa' ? 'rgba(249,115,22,.06)' : 'rgba(139,92,246,.06)';
       return `
-    <div class="kcard ${hasFlag ? 'has-flag' : ''}" style="border-left:3px solid var(--purple)" draggable="true" data-type="task" data-seq="${t.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
+    <div class="kcard ${hasFlag ? 'has-flag' : ''}" style="border-left:3px solid ${taskColor}" draggable="true" data-type="task" data-seq="${t.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
       <div class="kc-top">
-        <div class="kc-title" style="color:var(--text);font-size:12px">${icon} ${esc(t.tieu_de)}</div>
-        <div class="kc-vno" style="background:var(--purple);color:#fff;font-size:8px">${esc(t.phan_loai)}</div>
+        <div class="kc-title" style="color:var(--text);font-size:12px;font-weight:700">${icon} ${esc(t.tieu_de)}</div>
+        <div class="kc-vno" style="background:${taskBg};border:1px solid ${taskColor}40;color:${taskColor};font-size:8px;font-weight:700">${esc(t.phan_loai)}</div>
       </div>
-      ${t.mo_ta ? `<div style="font-size:10px;color:var(--text2);margin-top:4px">${esc(t.mo_ta)}</div>` : ``}
+      ${t.mo_ta ? `<div style="font-size:10px;color:var(--text2);margin-top:5px;line-height:1.5;padding:5px 7px;background:var(--bg3);border-radius:5px">${esc(t.mo_ta)}</div>` : ``}
       ${contHtml}
       ${statusTimeHtml}
       ${dlHtml}
       ${createdHtml}
-      ${hasFlag ? `<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Lưu ý:</b> ${esc(t.ghi_chu)}</div>` : ``}
-      <div style="font-size:10px;color:var(--cyan);margin-top:4px;font-weight:600;display:flex;align-items:center;gap:4px">
+      ${hasFlag ? `<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.08);padding:6px 8px;border-radius:6px;border:1px solid rgba(255,69,96,.25)">🚩 <b>Lưu ý:</b> ${esc(t.ghi_chu)}</div>` : ``}
+      <div style="font-size:10px;color:${taskColor};margin-top:6px;font-weight:600;display:flex;align-items:center;gap:5px;padding:4px 6px;background:${taskBg};border-radius:5px">
         <div class="kc-avatar" style="background:${avatarColor(t.assignee)};width:16px;height:16px;font-size:7px">${avatarInitials(t.assignee)}</div>
         ${esc(t.assignee) || '<span style="color:var(--text3);font-weight:400">Chưa phân công</span>'}
       </div>
       ${creatorHtml}
       <div class="kc-acts">
-        <div class="kc-btn flag ${hasFlag ? 'active' : ''}" onclick="openKnoteTask('${t.seq}')">
-          ${hasFlag ? '🚩 Đã gắn cờ' : '⚑ Ghi chú'}
+        <div class="kc-btn flag ${hasFlag ? 'active' : ''}" onclick="openKnoteTask('${t.seq}')" style="flex:2;gap:5px">
+          ${hasFlag ? '🚩 Ghi chú' : '⚑ Ghi chú'}
         </div>
-        <div class="kc-btn" style="color:var(--cyan);border-color:var(--cyan-dim);flex:0.4" title="Sửa" onclick="openTaskModal('${t.seq}')">✎</div>
-        <div class="kc-btn" style="color:var(--red);border-color:rgba(255,69,96,.3);flex:0.4" title="Xóa" onclick="delTask('${t.seq}')">🗑</div>
+        <div class="kc-btn" style="color:${taskColor};border-color:${taskColor}30;background:${taskBg};flex:0.8;gap:4px" title="Sửa" onclick="openTaskModal('${t.seq}')">✎ Sửa</div>
+        <div class="kc-btn" style="color:#ef4444;border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.04);flex:0.8;gap:4px" title="Xóa" onclick="delTask('${t.seq}')">🗑 Xóa</div>
       </div>
     </div>
   `;
@@ -3570,23 +3594,27 @@
       // POL → POD
       const routeHtml = (v.pol || v.pod) ? `<div class="kc-route">🚢 <b>${esc(v.pol) || '?'}</b> → <b>${esc(v.pod) || '?'}</b></div>` : '';
 
+      const stColor = st === 0 ? '#f59e0b' : st === 1 ? '#3b82f6' : st === 2 ? '#f97316' : '#10b981';
+      const stBg    = st === 0 ? 'rgba(245,158,11,.06)' : st === 1 ? 'rgba(59,130,246,.06)' : st === 2 ? 'rgba(249,115,22,.06)' : 'rgba(16,185,129,.06)';
+
       return `
-    <div class="kcard ${hasFlag ? 'has-flag' : ''}" draggable="true" data-type="voyage" data-seq="${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
+    <div class="kcard ${hasFlag ? 'has-flag' : ''}" draggable="true" data-type="voyage" data-seq="${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)" style="border-left:3px solid ${stColor}">
       <div class="kc-top">
-        <div class="kc-title">${esc(v.ten_salan)}</div>
-        ${v.voyage_no ? `<div class="kc-vno">${esc(v.voyage_no)}</div>` : ``}
-      </div>
-      <div class="kc-b">
-        <div class="kc-teu">📦 ${esc(v.so_luong) || '0'} TEUs</div>
+        <div class="kc-title" style="color:var(--text);font-size:12px;font-weight:700">⛵ ${esc(v.ten_salan)}</div>
+        ${v.voyage_no ? `<div class="kc-vno" style="background:${stBg};border:1px solid ${stColor}40;color:${stColor};font-size:8px;font-weight:700">${esc(v.voyage_no)}</div>` : ``}
       </div>
       ${routeHtml}
+      <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+        <div style="font-size:10px;font-weight:700;color:${stColor};background:${stBg};border:1px solid ${stColor}30;padding:3px 8px;border-radius:5px">📦 ${esc(v.so_luong) || '0'} TEUs</div>
+        ${v.loai_hang ? `<div style="font-size:9px;color:var(--text3);background:var(--bg3);border:1px solid var(--border2);padding:3px 7px;border-radius:5px">${esc(v.loai_hang)}</div>` : ''}
+      </div>
       ${timeHtml}
-      ${hasFlag ? `<div style="font-size:10.5px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.1);padding:6px;border-radius:5px">🚩 <b>Cảnh báo:</b> ${esc(v.ghi_chu)}</div>` : ``}
+      ${hasFlag ? `<div style="font-size:10px;color:var(--red);margin-top:6px;line-height:1.4;background:rgba(255,69,96,.08);padding:5px 7px;border-radius:5px;border:1px solid rgba(255,69,96,.2)">🚩 <b>Cảnh báo:</b> ${esc(v.ghi_chu)}</div>` : ``}
       <div class="kc-acts">
-        <div class="kc-btn flag ${hasFlag ? 'active' : ''}" onclick="openKnote('${v.seq}')">
-          ${hasFlag ? '🚩 Đã gắn cờ' : '⚑ Cắm cờ / Ghi chú'}
+        <div class="kc-btn flag ${hasFlag ? 'active' : ''}" style="flex:2" onclick="openKnote('${v.seq}')">
+          ${hasFlag ? '🚩 Ghi chú' : '⚑ Ghi chú'}
         </div>
-        ${st === 2 ? `<div class="kc-btn" style="color:var(--cyan);border-color:rgba(0,212,255,.3)" onclick="quickSurvey(S.voyages.find(x=>String(x.seq)===String('${v.seq}')))">📋 Survey</div>` : ``}
+        ${st === 2 ? `<div class="kc-btn" style="color:${stColor};border-color:${stColor}40;background:${stBg};flex:1.2" onclick="quickSurvey(S.voyages.find(x=>String(x.seq)===String('${v.seq}')))">📋 Survey</div>` : ``}
       </div>
     </div>
   `;
