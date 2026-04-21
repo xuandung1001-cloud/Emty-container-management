@@ -2080,14 +2080,14 @@
           </div>
 
           <!-- Biểu đồ -->
-          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:400px;position:relative;background:var(--bg2);margin-bottom:14px">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:360px;position:relative;background:var(--bg2);margin-bottom:14px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
               <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">📅 Xu hướng 12 tuần gần nhất &nbsp;<span style="font-weight:400;color:var(--text3)">CRKH · CRCK · HBCX</span></div>
               <button id="btn-slxd-labels" onclick="toggleSlxdLabels()" class="btn btn-ghost" style="font-size:10px;padding:2px 8px;height:auto">Hiện số</button>
             </div>
             <canvas id="slxd-canvas-weeks"></canvas>
           </div>
-          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:400px;position:relative;background:var(--bg2);margin-bottom:14px">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;height:360px;position:relative;background:var(--bg2);margin-bottom:14px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
               <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">📆 Xu hướng 12 tháng gần nhất &nbsp;<span style="font-weight:400;color:var(--text3)">CRKH · CRCK · HBCX</span></div>
             </div>
@@ -4423,7 +4423,8 @@
         options: {
           slxdShowLabels,
           responsive: true, maintainAspectRatio: false,
-          layout: { padding: { left: 8, right: 8, top: 4, bottom: 0 } },
+          layout: { padding: { left: 8, right: 8, top: 4, bottom: 16 } },
+          clip: false,
           plugins: {
             legend: {
               position: 'top',
@@ -4435,7 +4436,7 @@
             x: {
               offset: true,
               grid: { display: false },
-              ticks: { font: { size: 9 }, maxRotation: 0, autoSkipPadding: 12 },
+              ticks: { font: { size: 9 }, maxRotation: 0, autoSkipPadding: 12, padding: 4 },
               border: { display: false }
             },
             y: {
