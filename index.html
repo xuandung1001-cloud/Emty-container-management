@@ -4395,8 +4395,9 @@
           slxdParsedRows = json;
 
           // Auto detect khoảng ngày: quét CẢ HAI cột vào bãi + ra bãi,
-          // đếm theo tháng → snap về first/last day của tháng chiếm đa số.
-          // Tránh bug: file T11 có ra bãi tháng 1/2026 → den_ngay lấn sang T12.
+          // đếm theo tháng → lấy tháng chiếm đa số làm gốc.
+          // maxDate = ngày thực tế lớn nhất trong file, cho phép tràn tối đa 5 ngày sang tháng sau
+          // (bắt ca đêm cuối tháng). Tránh bug: file T11 có ra bãi tháng 1/2026 lấn sang T12.
           const allKeys = Object.keys(json[0] || {});
           const findColH = kws => { for (const kw of kws) { const f = allKeys.find(k => k.toLowerCase().includes(kw.toLowerCase())); if (f) return f; } return null; };
           const raCol  = findColH(['ra b', 'ra ba']) || 'Cont ra bãi';
@@ -4421,15 +4422,28 @@
               monthCount[k] = (monthCount[k] || 0) + 1;
             });
           });
-          // Tháng chiếm đa số → snap về first/last day
+          // Tháng chiếm đa số
           let domMonth = null, domCount = 0;
           Object.entries(monthCount).forEach(([k, c]) => { if (c > domCount) { domCount = c; domMonth = k; } });
           const toLocalISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
           let minDate = null, maxDate = null;
+          let spilloverDays = 0;
           if (domMonth) {
             const [y, m] = domMonth.split('-').map(Number);
             minDate = new Date(y, m - 1, 1);
-            maxDate = new Date(y, m, 0); // last day of that month
+            const lastDayOfMonth = new Date(y, m, 0);
+            // Cho phép tràn tối đa 5 ngày sang tháng sau để bắt ca đêm cuối tháng
+            const spilloverCap = new Date(y, m - 1, lastDayOfMonth.getDate() + 5);
+            // Tìm ngày thực tế lớn nhất trong file trong giới hạn cho phép
+            maxDate = lastDayOfMonth;
+            json.forEach(r => {
+              [r[vaoCol], r[raCol]].forEach(v => {
+                const d = parseDateVal(v);
+                if (!d || isNaN(d) || d < minDate || d > spilloverCap) return;
+                if (d > maxDate) maxDate = d;
+              });
+            });
+            spilloverDays = Math.round((maxDate - lastDayOfMonth) / 86400000);
           }
           if (minDate) _v('slxd-imp-tu', toLocalISO(minDate));
           if (maxDate) _v('slxd-imp-den', toLocalISO(maxDate));
@@ -4438,8 +4452,9 @@
           preview.style.display = 'block';
           const monthNames = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
           const domLabel = domMonth ? monthNames[parseInt(domMonth.split('-')[1])-1] + '/' + domMonth.split('-')[0] : '?';
+          const spilloverNote = spilloverDays > 0 ? `<br>⚠️ Phát hiện <b>${spilloverDays} ngày tràn</b> sang tháng sau (ca đêm cuối tháng) — đã bao gồm tự động` : '';
           preview.innerHTML = `✅ Đọc được <b>${json.length}</b> dòng từ sheet "${wb.SheetNames[0]}"<br>
-            📅 Tháng import: <b>${domLabel}</b> (${minDate ? minDate.toLocaleDateString('vi-VN') : '?'} → ${maxDate ? maxDate.toLocaleDateString('vi-VN') : '?'})<br>
+            📅 Tháng import: <b>${domLabel}</b> (${minDate ? minDate.toLocaleDateString('vi-VN') : '?'} → ${maxDate ? maxDate.toLocaleDateString('vi-VN') : '?'})${spilloverNote}<br>
             📋 Cột: ${Object.keys(json[0] || {}).slice(0, 8).join(', ')}...`;
           document.getElementById('btn-slxd-import').disabled = false;
         } catch (err) {
