@@ -4423,11 +4423,12 @@
         options: {
           slxdShowLabels,
           responsive: true, maintainAspectRatio: false,
-          layout: { padding: { left: 8, right: 8, top: 8, bottom: 0 } },
+          layout: { padding: { left: 8, right: 8, top: 4, bottom: 0 } },
           plugins: {
             legend: {
-              position: 'bottom',
-              labels: { boxWidth: 12, padding: 16, font: { size: 10 } }
+              position: 'top',
+              align: 'end',
+              labels: { boxWidth: 12, padding: 14, font: { size: 10 } }
             }
           },
           scales: {
