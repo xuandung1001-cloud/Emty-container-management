@@ -1951,7 +1951,7 @@
           <div class="stats-row" id="tbstats"></div>
           <div class="toolbar">
             <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm container, vị trí, hãng..."
-                id="tbsrch" oninput="renderTonBai()"></div>
+                id="tbsrch" oninput="dTbSearch()"></div>
             <select class="fi" id="tbf-hang" onchange="renderTonBai()" style="width:140px">
               <option value="">Tất cả hãng</option>
             </select>
@@ -2425,6 +2425,20 @@
     </div>
   </div>
 
+  <!-- ══ PROMPT DLG ══ -->
+  <div class="ov" id="mPrompt">
+    <div class="modal modal-sm">
+      <div class="m-title" id="mpt-title">Nhập thông tin</div>
+      <div class="fg mt">
+        <input class="fi" id="mpt-inp" placeholder="">
+      </div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mPrompt')">Huỷ</button>
+        <button class="btn btn-p" id="mpt-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ MODAL KNOTE ══ -->
   <div class="ov" id="mknote">
     <div class="modal modal-sm">
@@ -2579,6 +2593,9 @@
           </label>
           <label class="perm-item" id="pi-report">
             <input type="checkbox" id="perm-report" onchange="updatePermItem('report')"> 📊 Báo cáo ca
+          </label>
+          <label class="perm-item" id="pi-slxd">
+            <input type="checkbox" id="perm-slxd" onchange="updatePermItem('slxd')"> 📈 Sản lượng XD
           </label>
           <label class="perm-item" id="pi-tonbai">
             <input type="checkbox" id="perm-tonbai" onchange="updatePermItem('tonbai')"> 📦 Tồn bãi
@@ -3694,13 +3711,14 @@
       } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
       finally { btn.disabled = false; btn.textContent = 'Lưu công việc'; }
     }
-    async function delTask(seq) {
-      if (!confirm('Chắc chắn xoá việc này?')) return;
-      try {
-        const res = await post({ action: 'deleteTask', seq: seq });
-        if (res.success) { toast('Đã xoá việc', 'ok'); await loadAll(); }
-        else throw new Error(res.error);
-      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+    function delTask(seq) {
+      confirmDlg('Chắc chắn xoá việc này?', async () => {
+        try {
+          const res = await post({ action: 'deleteTask', seq: seq });
+          if (res.success) { toast('Đã xoá việc', 'ok'); await loadAll(); }
+          else throw new Error(res.error);
+        } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      });
     }
     function openKnoteTask(seq) {
       const t = S.tasks.find(x => String(x.seq) === String(seq));
@@ -3952,6 +3970,9 @@
       }
     }
 
+    let _tbSearchTimer;
+    function dTbSearch() { clearTimeout(_tbSearchTimer); _tbSearchTimer = setTimeout(renderTonBai, 250); }
+
     function renderTonBai() {
       const data = S.tonbai || [];
       const q = (_g('tbsrch') || '').toLowerCase();
@@ -4041,7 +4062,7 @@
         </tr>`;
       }).join('');
       if (rows.length > 500) {
-        tb.innerHTML += '<tr><td colspan="12" style="text-align:center;padding:12px;color:var(--text3)">... và ' + (rows.length - 500) + ' dòng nữa (export để xem hết)</td></tr>';
+        tb.insertAdjacentHTML('beforeend', '<tr><td colspan="12" style="text-align:center;padding:12px;color:var(--text3)">... và ' + (rows.length - 500) + ' dòng nữa (export để xem hết)</td></tr>');
       }
     }
 
@@ -4704,11 +4725,12 @@
       else toast(res.error || 'Lỗi', 'err');
     }
 
-    async function delReportEmail(email) {
-      if (!confirm('Xoá ' + email + '?')) return;
-      const res = await post({ action: 'deleteReportEmail', email });
-      if (res.success) { toast('Đã xoá', 'ok'); await openEmailListModal(); }
-      else toast(res.error || 'Lỗi', 'err');
+    function delReportEmail(email) {
+      confirmDlg('Xoá email ' + email + '?', async () => {
+        const res = await post({ action: 'deleteReportEmail', email });
+        if (res.success) { toast('Đã xoá', 'ok'); await openEmailListModal(); }
+        else toast(res.error || 'Lỗi', 'err');
+      });
     }
 
     // ── ĐỔI MẬT KHẨU ──
@@ -4948,7 +4970,16 @@
     }
 
     // ── DELETE ──
-    function confDel(type, seq, msg) { document.getElementById('conf-msg').textContent = msg; document.getElementById('conf-ok').onclick = () => doDel(type, seq); openOv('mconf'); }
+    function confDel(type, seq, msg) { document.getElementById('conf-msg').textContent = msg; document.getElementById('conf-ok').onclick = () => { closeOv('mconf'); doDel(type, seq); }; openOv('mconf'); }
+    function confirmDlg(msg, onOk) { document.getElementById('conf-msg').textContent = msg; document.getElementById('conf-ok').onclick = () => { closeOv('mconf'); onOk(); }; openOv('mconf'); }
+    function promptDlg(title, placeholder, onOk) {
+      document.getElementById('mpt-title').textContent = title;
+      const inp = document.getElementById('mpt-inp');
+      inp.placeholder = placeholder || ''; inp.value = '';
+      document.getElementById('mpt-ok').onclick = () => { const v = inp.value.trim(); if (!v) return; closeOv('mPrompt'); onOk(v); };
+      openOv('mPrompt');
+      setTimeout(() => inp.focus(), 80);
+    }
     async function doDel(type, seq) {
       const am = { barge: 'deleteBarge', voyage: 'deleteVoyage', survey: 'deleteSurvey' };
       const res = await post({ action: am[type], seq });
@@ -5766,18 +5797,19 @@
     }
 
     function ysAddBlock() {
-      const name = prompt('Tên Block (VD: A1, B1, D4):');
-      if (!name || !name.trim()) return;
-      const nm = name.trim().toUpperCase();
-      if (ysData.blocks.find(b => b.name === nm)) { toast('Block ' + nm + ' đã tồn tại', 'err'); return; }
-      ysData.blocks.push({ name: nm, slots: [] });
-      ysRender();
+      promptDlg('Tên Block mới', 'VD: A1, B1, D4', nm => {
+        nm = nm.toUpperCase();
+        if (ysData.blocks.find(b => b.name === nm)) { toast('Block ' + nm + ' đã tồn tại', 'err'); return; }
+        ysData.blocks.push({ name: nm, slots: [] });
+        ysRender();
+      });
     }
 
     function ysRemoveBlock(bi) {
-      if (!confirm('Xóa Block ' + ysData.blocks[bi].name + '?')) return;
-      ysData.blocks.splice(bi, 1);
-      ysRender();
+      confirmDlg('Xóa Block ' + ysData.blocks[bi].name + '?', () => {
+        ysData.blocks.splice(bi, 1);
+        ysRender();
+      });
     }
 
     // Thêm cặp bay vào block
