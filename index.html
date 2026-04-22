@@ -5891,14 +5891,37 @@
 
           const ws = wb.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
-
-          // Check có cột "Phương án tác nghiệp" và "Số Niêm Chì"
           if (!json.length) { toast('Sheet rỗng', 'err'); return; }
+
+          // Normalize keys: trim whitespace (Excel hay có khoảng trắng thừa)
+          json.forEach(r => {
+            Object.keys(r).forEach(k => {
+              const trimmed = k.trim();
+              if (trimmed !== k) { r[trimmed] = r[k]; delete r[k]; }
+            });
+          });
+
+          // Tìm key thực tế trong data (case-insensitive, keyword-based)
           const keys = Object.keys(json[0]);
-          const hasPA = keys.some(k => k.toLowerCase().includes('phương án') || k.toLowerCase().includes('phuong an'));
-          const hasSeal = keys.some(k => k.toLowerCase().includes('số niêm chì') || k.toLowerCase().includes('niem chi'));
-          if (!hasPA || !hasSeal) {
-            toast(`Sheet "${sheetName}" thiếu cột Phương án tác nghiệp hoặc Số Niêm Chì`, 'err');
+          const findKey = (...kws) => keys.find(k => kws.some(kw => k.toLowerCase().includes(kw.toLowerCase()))) || null;
+          const kPA   = findKey('phương án tác nghiệp', 'tác nghiệp', 'phuong an tac');
+          const kVR   = findKey('vào/ra', 'vao/ra', 'in/out');
+          const kSeal = findKey('số niêm chì', 'so niem chi', 'niêm chì');
+
+          console.log('[RepImport] Detected keys:', { PA: kPA, VaoRa: kVR, Seal: kSeal });
+          console.log('[RepImport] All keys:', keys);
+          console.log('[RepImport] Sample row 0:', json[0]);
+
+          if (!kPA || !kVR || !kSeal) {
+            toast(`Không tìm thấy cột cần thiết. Kiểm tra console (F12)`, 'err');
+            const preview = document.getElementById('repimp-preview');
+            preview.style.display = 'block';
+            preview.style.background = 'rgba(239,68,68,.08)';
+            preview.innerHTML = `<b>❌ Thiếu cột:</b><br>
+              Phương án tác nghiệp: <b>${kPA || '—'}</b><br>
+              Vào/Ra: <b>${kVR || '—'}</b><br>
+              Số Niêm Chì: <b>${kSeal || '—'}</b><br>
+              <span style="font-size:10px;color:var(--text3)">Các cột có trong file: ${keys.map(esc).join(', ')}</span>`;
             return;
           }
 
@@ -5913,22 +5936,46 @@
             });
           });
 
-          // Đếm CRKH + Ra + có seal (preview cho user biết sẽ import bao nhiêu)
-          const crkhRa = json.filter(r => {
-            const pa = String(r['Phương án tác nghiệp'] || '').split(':')[0].trim();
-            const vr = String(r['Vào/Ra'] || '').trim();
-            const seal = String(r['Số Niêm Chì'] || '').trim();
-            return pa === 'CRKH' && vr === 'Ra' && seal && seal !== '0';
+          // Đồng bộ key về chuẩn mà backend syncSealFromReport_ mong đợi
+          json.forEach(r => {
+            if (kPA !== 'Phương án tác nghiệp') r['Phương án tác nghiệp'] = r[kPA];
+            if (kVR !== 'Vào/Ra') r['Vào/Ra'] = r[kVR];
+            if (kSeal !== 'Số Niêm Chì') r['Số Niêm Chì'] = r[kSeal];
+            // Seal 01/02 nếu có tên khác
+            const kSeal01 = findKey('số niêm chì 01', 'niem chi 01');
+            const kSeal02 = findKey('số niêm chì 02', 'niem chi 02');
+            if (kSeal01 && kSeal01 !== 'Số Niêm Chì 01') r['Số Niêm Chì 01'] = r[kSeal01];
+            if (kSeal02 && kSeal02 !== 'Số Niêm Chì 02') r['Số Niêm Chì 02'] = r[kSeal02];
           });
+
+          // Breakdown chẩn đoán
+          const totalCrkh = json.filter(r => String(r[kPA] || '').split(':')[0].trim() === 'CRKH').length;
+          const totalRa = json.filter(r => String(r[kVR] || '').trim() === 'Ra').length;
+          const crkhRa = json.filter(r => {
+            const pa = String(r[kPA] || '').split(':')[0].trim();
+            const vr = String(r[kVR] || '').trim();
+            return pa === 'CRKH' && vr === 'Ra';
+          });
+          const crkhRaWithSeal = crkhRa.filter(r => {
+            const seal = String(r[kSeal] || '').trim();
+            return seal && seal !== '0' && seal.length >= 4;
+          });
+
+          // List unique giá trị Phương án để user biết file có loại PA nào
+          const paValues = [...new Set(json.map(r => String(r[kPA] || '').split(':')[0].trim()).filter(Boolean))].slice(0, 15);
 
           repImportParsed = { rows: json, file_name: file.name };
           const preview = document.getElementById('repimp-preview');
           preview.style.display = 'block';
+          preview.style.background = crkhRaWithSeal.length ? 'rgba(0,212,255,.05)' : 'rgba(245,158,11,.08)';
           preview.innerHTML = `✅ File <b>${esc(file.name)}</b><br>
             📊 Sheet: <b>${esc(sheetName)}</b> — ${json.length} dòng<br>
-            🎯 Cấp rỗng CRKH có seal: <b style="color:var(--cyan);font-size:14px">${crkhRa.length}</b> dòng sẽ xử lý<br>
-            <span style="color:var(--text3);font-size:11px">Seal đã có trong hệ thống sẽ được tự động bỏ qua (dedupe)</span>`;
-          document.getElementById('btn-repimp-go').disabled = !crkhRa.length;
+            📋 CRKH: <b>${totalCrkh}</b> · "Ra": <b>${totalRa}</b> · CRKH+Ra: <b>${crkhRa.length}</b><br>
+            🎯 CRKH+Ra có seal hợp lệ: <b style="color:${crkhRaWithSeal.length ? 'var(--cyan)' : 'var(--orange)'};font-size:14px">${crkhRaWithSeal.length}</b> dòng sẽ xử lý<br>
+            <span style="color:var(--text3);font-size:10px">PA trong file: ${paValues.map(esc).join(', ')}</span><br>
+            <span style="color:var(--text3);font-size:11px">Seal đã có trong hệ thống sẽ tự động bỏ qua (dedupe)</span>`;
+          // Enable button nếu có ít nhất vài row — cho user quyết định thử
+          document.getElementById('btn-repimp-go').disabled = json.length === 0;
         } catch (err) {
           toast('Lỗi đọc file: ' + err.message, 'err');
         }
