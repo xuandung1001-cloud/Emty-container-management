@@ -2949,6 +2949,9 @@
           <label class="perm-item" id="pi-yardmap">
             <input type="checkbox" id="perm-yardmap" onchange="updatePermItem('yardmap')"> 🏗 Sơ đồ bãi 3D
           </label>
+          <label class="perm-item" id="pi-seal">
+            <input type="checkbox" id="perm-seal" onchange="updatePermItem('seal')"> 🔐 Quản lý Seal
+          </label>
           <label class="perm-item" id="pi-users">
             <input type="checkbox" id="perm-users" onchange="updatePermItem('users')"> 👥 Quản lý Users
           </label>
@@ -4180,7 +4183,7 @@
         if (u.permissions === 'all' || u.role === 'admin') {
           permHtml = '<span class="perm-all-badge">✦ All</span>';
         } else if (u.permissions) {
-          const screenLabels = { barges: '🚢', voyages: '📅', kanban: '📋', gantt: '📊', survey: '📄', users: '👥' };
+          const screenLabels = { barges: '🚢', voyages: '📅', kanban: '📋', gantt: '📊', survey: '📄', report: '📊', tonbai: '📦', slxd: '📈', yardmap: '🏗', seal: '🔐', users: '👥' };
           permHtml = u.permissions.split(',').map(p => p.trim()).filter(Boolean)
             .map(p => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);margin:1px">${screenLabels[p] || ''}${p}</span>`).join(' ');
         } else {
@@ -4222,12 +4225,12 @@
     // Tất cả màn hình của cả 2 app
     const ALL_SCREENS = [
       // App Quản lý Rồng (không có gantt — đã bỏ)
-      'barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'slxd', 'yardmap', 'users',
+      'barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'slxd', 'yardmap', 'seal', 'users',
       // App MNR Estimate
       'estimate', 'revise', 'ovm', 'tracking', 'summary', 'bulk', 'stock',
       'warehouse', 'phieu-kho', 'ccdc', 'tariff', 'report', 'pictures', 'inventory', 'photos'
     ];
-    const THIS_APP_SCREENS = ['barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'slxd', 'yardmap', 'users'];
+    const THIS_APP_SCREENS = ['barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'slxd', 'yardmap', 'seal', 'users'];
 
     function updatePermItem(screen) {
       const cb = document.getElementById('perm-' + screen);
