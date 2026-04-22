@@ -1752,6 +1752,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           Sơ đồ bãi 3D
         </div>
+        <div class="nav-item" id="nav-seal" onclick="nav('seal',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V5a4 4 0 018 0v3"/><circle cx="12" cy="14" r="2"/></svg>
+          Quản lý Seal
+        </div>
       </div>
 
       <!-- Nav: Hệ thống (admin only) -->
@@ -2069,6 +2073,68 @@
           <div id="ym-tooltip"></div>
         </div>
 
+        <!-- ══ QUẢN LÝ SEAL ══ -->
+        <div class="screen" id="screen-seal">
+          <!-- Tab switcher -->
+          <div class="toolbar" style="gap:0;border:1px solid var(--border);border-radius:10px;padding:4px;display:inline-flex;background:var(--bg2)">
+            <button id="seal-tab-overview" class="btn btn-p"    onclick="switchSealTab('overview')"    style="font-size:11px;padding:6px 14px;height:auto;border-radius:7px">📊 Tổng quan</button>
+            <button id="seal-tab-boxes"    class="btn btn-ghost" onclick="switchSealTab('boxes')"     style="font-size:11px;padding:6px 14px;height:auto;border-radius:7px">📦 Thùng Seal</button>
+          </div>
+
+          <!-- Tab: Tổng quan -->
+          <div id="seal-pane-overview">
+            <div class="stats-row" id="seal-stats" style="margin-top:14px"></div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+              <!-- FIFO — thùng cần khui tiếp -->
+              <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg2)">
+                <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px">🔓 Thùng cần khui tiếp theo (FIFO)</div>
+                <div id="seal-fifo-list" style="font-size:11px"></div>
+              </div>
+              <!-- Thùng đã khui + progress -->
+              <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg2)">
+                <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px">📦 Thùng đang dùng gần đây</div>
+                <div id="seal-recent-unbox" style="font-size:11px"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Thùng Seal -->
+          <div id="seal-pane-boxes" style="display:none">
+            <div class="toolbar" style="margin-top:14px">
+              <input class="fi" id="seal-search" placeholder="🔍 Tìm mã thùng / serial..." oninput="renderSeal()" style="flex:1;max-width:260px">
+              <select class="fi" id="seal-filter-status" onchange="renderSeal()" style="width:160px">
+                <option value="all">Tất cả trạng thái</option>
+                <option value="unopened">🟢 Chưa khui</option>
+                <option value="opened">🔓 Đã khui</option>
+                <option value="damaged">🔴 Hỏng</option>
+              </select>
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-g"    onclick="openSealImport()">⊕ Import Excel</button>
+                <button class="btn btn-p"    onclick="openSealBoxModal()">+ Nhập lô mới</button>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+              <table style="width:100%;font-size:11px;border-collapse:collapse">
+                <thead>
+                  <tr style="background:var(--bg2);color:var(--text3);text-transform:uppercase;font-size:10px">
+                    <th style="padding:9px 10px;text-align:left">Mã thùng</th>
+                    <th style="padding:9px 10px;text-align:left">Dải Serial</th>
+                    <th style="padding:9px 10px;text-align:right">SL</th>
+                    <th style="padding:9px 10px;text-align:left">Nhận ngày</th>
+                    <th style="padding:9px 10px;text-align:left">Nguồn</th>
+                    <th style="padding:9px 10px;text-align:left">Tình trạng</th>
+                    <th style="padding:9px 10px;text-align:left">Khui</th>
+                    <th style="padding:9px 10px;text-align:center;width:150px">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="seal-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- ══ SẢN LƯỢNG XẾP DỠ ══ -->
         <div class="screen" id="screen-slxd">
           <div class="stats-row" id="slxd-stats"></div>
@@ -2372,6 +2438,91 @@
       <div class="mf">
         <button class="btn btn-ghost" onclick="closeOv('mi')">Huỷ</button>
         <button class="btn btn-p" id="ibtn" onclick="confirmImport()" disabled>Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEAL: NHẬP LÔ / SỬA THÙNG ══ -->
+  <div class="ov" id="mseal">
+    <div class="modal modal-lg">
+      <div class="m-title" id="mseal-title">+ Nhập lô seal mới</div>
+      <div class="m-sub">Mỗi thùng seal có dải serial riêng (Từ số → Đến số)</div>
+      <input type="hidden" id="seal-seq">
+      <div class="g2">
+        <div class="fg"><label class="fl">Mã thùng (Box Number) *</label><input class="fi" id="seal-box" placeholder="VD: FX2511120369"></div>
+        <div class="fg"><label class="fl">Tình trạng</label>
+          <select class="fi" id="seal-status">
+            <option value="GOOD">🟢 GOOD — Nguyên vẹn</option>
+            <option value="DAMAGED">🔴 DAMAGED — Hỏng</option>
+          </select>
+        </div>
+      </div>
+      <div class="g2 mt">
+        <div class="fg"><label class="fl">Serial từ *</label><input class="fi" id="seal-from" placeholder="VD: FX45020251" oninput="updateSealCount()"></div>
+        <div class="fg"><label class="fl">Serial đến *</label><input class="fi" id="seal-to" placeholder="VD: FX45020500" oninput="updateSealCount()"></div>
+      </div>
+      <div class="g2 mt">
+        <div class="fg"><label class="fl">Số lượng seal (tự tính)</label><input class="fi" id="seal-count" readonly style="background:var(--bg3)"></div>
+        <div class="fg"><label class="fl">Lô nhập (batch)</label><input class="fi" id="seal-batch" placeholder="VD: Lô tháng 03/2026"></div>
+      </div>
+      <div class="g2 mt">
+        <div class="fg"><label class="fl">Ngày nhận</label><input class="fi" id="seal-recv-date" type="date"></div>
+        <div class="fg"><label class="fl">Nguồn giao</label><input class="fi" id="seal-from-src" placeholder="VD: Medlog Sóng Thần 3"></div>
+      </div>
+      <div class="g2 mt">
+        <div class="fg"><label class="fl">Người nhận</label><input class="fi" id="seal-receiver" placeholder="VD: Ngô Trường Hoàng Quân"></div>
+        <div class="fg"></div>
+      </div>
+      <div class="fg mt"><label class="fl">Ghi chú</label><input class="fi" id="seal-note" placeholder="Thông tin thêm (nếu có)"></div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mseal')">Huỷ</button>
+        <button class="btn btn-p" id="btn-seal-save" onclick="saveSealBox()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEAL: KHUI THÙNG ══ -->
+  <div class="ov" id="munbox">
+    <div class="modal modal-sm">
+      <div class="m-title">🔓 Khui thùng seal</div>
+      <div class="m-sub" id="unbox-info">—</div>
+      <input type="hidden" id="unbox-seq">
+      <div class="fg"><label class="fl">Ngày/giờ khui *</label><input class="fi" id="unbox-date" type="datetime-local"></div>
+      <div class="fg mt"><label class="fl">Nhân viên khui *</label><input class="fi" id="unbox-by" placeholder="Tên nhân viên"></div>
+      <div style="margin-top:10px;padding:8px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.5">
+        <b>📷 Ảnh khui thùng</b> sẽ được thêm ở Phase 5 (upload Drive).<br>
+        Hiện tại hãy gửi lên Zalo kèm mã thùng như quy trình.
+      </div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('munbox')">Huỷ</button>
+        <button class="btn btn-p" id="btn-unbox-save" onclick="doUnboxSealBox()">Xác nhận khui</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEAL: IMPORT EXCEL ══ -->
+  <div class="ov" id="msealimp">
+    <div class="modal modal-lg">
+      <div class="m-title">⊕ Import danh sách thùng seal</div>
+      <div class="m-sub">Upload file Excel "Bảng kê nhập kho & khui thùng" (LOT & UNBOXING LOG)</div>
+      <div class="g2">
+        <div class="fg"><label class="fl">Ngày nhận (áp dụng cho cả file)</label><input class="fi" id="simp-recv-date" type="date"></div>
+        <div class="fg"><label class="fl">Nguồn giao</label><input class="fi" id="simp-from" placeholder="VD: Medlog Sóng Thần 3"></div>
+      </div>
+      <div class="g2 mt">
+        <div class="fg"><label class="fl">Người nhận</label><input class="fi" id="simp-receiver" placeholder="Người đại diện nhận seal"></div>
+        <div class="fg"><label class="fl">Lô (batch)</label><input class="fi" id="simp-batch" placeholder="VD: 03/2026"></div>
+      </div>
+      <div class="upl mt" onclick="document.getElementById('simp-file').click()">
+        <div style="font-size:26px;margin-bottom:7px">📂</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Click để chọn file Excel (.xls / .xlsx)</div>
+        <div style="font-size:11px;color:var(--text3)">File có các cột: Box Number, Number From, Number To, Box Status, No. of Seals</div>
+      </div>
+      <input type="file" id="simp-file" accept=".xls,.xlsx" style="display:none" onchange="handleSealImportFile(event)">
+      <div id="simp-preview" style="display:none;margin-top:10px;padding:10px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:7px;font-size:12px"></div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('msealimp')">Huỷ</button>
+        <button class="btn btn-p" id="btn-simp-go" onclick="doSealImport()" disabled>Import</button>
       </div>
     </div>
   </div>
@@ -2797,10 +2948,11 @@
       tonbai: { title: 'Tồn bãi', badge: '' },
       slxd: { title: 'Sản lượng xếp dỡ', badge: '' },
       yardmap: { title: 'Sơ đồ Bãi 3D', badge: '' },
+      seal: { title: 'Quản lý Seal', badge: '' },
       users: { title: 'Quản lý Users', badge: '' }
     };
 
-    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null };
+    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealTab: 'overview', sealImportRows: [] };
 
     // ══════════════════════════════════════════
     // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -2871,6 +3023,7 @@
         S.reportLogs = d.reportLogs || [];
         S.yardConfig = d.yardConfig || [];
         S.yardSetup  = d.yardSetup  || [];
+        S.sealBoxes  = d.sealBoxes  || [];
         renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); renderTonBai(); renderYardMap(); fillDropdowns();
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
@@ -2885,6 +3038,7 @@
       tonbai: { navId: 'nav-tonbai', label: 'Tồn bãi' },
       slxd:   { navId: 'nav-slxd',   label: 'Sản lượng XD' },
       yardmap: { navId: 'nav-yardmap', label: 'Sơ đồ bãi 3D' },
+      seal: { navId: 'nav-seal', label: 'Quản lý Seal' },
       users: { navId: 'nav-users', label: 'Quản lý Users', adminOnly: true }
     };
 
@@ -2927,6 +3081,7 @@
       if (screen === 'gantt') renderGantt();
       if (screen === 'yardmap') renderYardMap();
       if (screen === 'slxd') renderSlxd();
+      if (screen === 'seal') renderSeal();
     }
 
     // ══════════════════════════════════════════
@@ -4692,6 +4847,372 @@
         ['Ngày', 'Loại', 'Phương án', 'Phương án chi tiết', 'Kích cỡ', 'F/E', 'Số lượng', 'TEUs', 'TL TB', 'Phương tiện', 'Grade A', 'Grade B'],
         filtered.map(r => [r.ngay, r.loai, r.phuong_an, r.phuong_an_full, r.kich_co, r.fe, r.so_luong, r.teus, r.trong_luong_tb, r.phuong_tien, r.grade_a, r.grade_b])
       );
+    }
+
+    // =====================================================================
+    // QUẢN LÝ SEAL — Phase 1
+    // =====================================================================
+    function renderSeal() {
+      renderSealStats();
+      renderSealOverview();
+      renderSealBoxesTable();
+    }
+
+    function switchSealTab(tab) {
+      S.sealTab = tab;
+      document.getElementById('seal-pane-overview').style.display = tab === 'overview' ? '' : 'none';
+      document.getElementById('seal-pane-boxes').style.display    = tab === 'boxes'    ? '' : 'none';
+      const ov = document.getElementById('seal-tab-overview');
+      const bx = document.getElementById('seal-tab-boxes');
+      ov.className = tab === 'overview' ? 'btn btn-p'    : 'btn btn-ghost';
+      bx.className = tab === 'boxes'    ? 'btn btn-p'    : 'btn btn-ghost';
+      if (tab === 'boxes') renderSealBoxesTable();
+    }
+
+    // Tính số seal đã dùng trong 1 box — Phase 1 chưa có seal_usage nên return 0
+    function sealUsedCount(box) { return 0; }
+
+    function sealBoxIsOpened(b) { return !!(b.unbox_date && String(b.unbox_date).trim()); }
+
+    function renderSealStats() {
+      const el = document.getElementById('seal-stats');
+      if (!el) return;
+      const boxes = S.sealBoxes || [];
+      const totalBoxes   = boxes.length;
+      const unopened     = boxes.filter(b => !sealBoxIsOpened(b) && b.box_status === 'GOOD').length;
+      const opened       = boxes.filter(b => sealBoxIsOpened(b) && b.box_status !== 'DAMAGED').length;
+      const totalSeals   = boxes.filter(b => b.box_status !== 'DAMAGED').reduce((s, b) => s + (Number(b.so_seal) || 0), 0);
+      const usedSeals    = boxes.reduce((s, b) => s + sealUsedCount(b), 0);
+      const remain       = totalSeals - usedSeals;
+      el.innerHTML =
+        sc('TỒN KHO SEAL',   fmt(remain) + ' seal', 'c-cyan') +
+        sc('THÙNG CHƯA KHUI', fmt(unopened),        'c-green') +
+        sc('THÙNG ĐÃ KHUI',   fmt(opened),          'c-yellow') +
+        sc('TỔNG THÙNG',      fmt(totalBoxes),      'c-purple');
+    }
+
+    function renderSealOverview() {
+      const boxes = S.sealBoxes || [];
+
+      // FIFO: thùng chưa khui, sort theo received_date cũ nhất → mới nhất
+      const fifo = boxes
+        .filter(b => !sealBoxIsOpened(b) && b.box_status === 'GOOD')
+        .sort((a, b) => {
+          const da = parseDmyDate(a.received_date), db = parseDmyDate(b.received_date);
+          return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+        })
+        .slice(0, 6);
+
+      const fifoEl = document.getElementById('seal-fifo-list');
+      if (fifoEl) {
+        fifoEl.innerHTML = fifo.length ? fifo.map((b, i) => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border);${i === 0 ? 'background:rgba(245,158,11,.08)' : ''}">
+            <div style="width:22px;height:22px;border-radius:50%;background:${i === 0 ? 'var(--yellow)' : 'var(--bg3)'};color:${i === 0 ? '#000' : 'var(--text3)'};font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center">${i + 1}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:var(--text);font-size:11px">${esc(b.box_number)}</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">${esc(b.serial_from)} → ${esc(b.serial_to)} · ${fmt(b.so_seal)} seal · nhận ${esc(b.received_date) || '—'}</div>
+            </div>
+            <button class="btn btn-g" onclick="openUnboxModal(${b.seq})" style="font-size:10px;padding:4px 10px;height:auto">🔓 Khui</button>
+          </div>
+        `).join('') : `<div style="padding:18px;text-align:center;color:var(--text3);font-size:11px">Không có thùng nào chưa khui</div>`;
+      }
+
+      // Recent: thùng đang dùng (đã khui) — sắp xếp unbox_date mới nhất
+      const recent = boxes
+        .filter(b => sealBoxIsOpened(b))
+        .sort((a, b) => (parseDmyDate(b.unbox_date) || 0) - (parseDmyDate(a.unbox_date) || 0))
+        .slice(0, 6);
+      const recentEl = document.getElementById('seal-recent-unbox');
+      if (recentEl) {
+        recentEl.innerHTML = recent.length ? recent.map(b => `
+          <div style="padding:8px 10px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-weight:700;color:var(--text);font-size:11px;flex:1">${esc(b.box_number)}</div>
+              <div style="font-size:10px;color:var(--text3)">${esc(b.unbox_date)}</div>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">${esc(b.serial_from)} → ${esc(b.serial_to)} · khui bởi <b style="color:var(--text2)">${esc(b.unbox_by) || '—'}</b></div>
+          </div>
+        `).join('') : `<div style="padding:18px;text-align:center;color:var(--text3);font-size:11px">Chưa có thùng nào được khui</div>`;
+      }
+    }
+
+    function renderSealBoxesTable() {
+      const tb = document.getElementById('seal-tbody');
+      if (!tb) return;
+      const q = (_g('seal-search') || '').trim().toLowerCase();
+      const filter = _g('seal-filter-status') || 'all';
+      let list = (S.sealBoxes || []).slice();
+      if (q) list = list.filter(b =>
+        String(b.box_number).toLowerCase().includes(q) ||
+        String(b.serial_from).toLowerCase().includes(q) ||
+        String(b.serial_to).toLowerCase().includes(q)
+      );
+      if (filter === 'unopened') list = list.filter(b => !sealBoxIsOpened(b) && b.box_status === 'GOOD');
+      if (filter === 'opened')   list = list.filter(b => sealBoxIsOpened(b) && b.box_status !== 'DAMAGED');
+      if (filter === 'damaged')  list = list.filter(b => b.box_status === 'DAMAGED');
+
+      // Sort: chưa khui trước (FIFO), rồi đã khui (mới nhất trước)
+      list.sort((a, b) => {
+        const oa = sealBoxIsOpened(a), ob = sealBoxIsOpened(b);
+        if (oa !== ob) return oa ? 1 : -1;
+        if (!oa) return (parseDmyDate(a.received_date) || 0) - (parseDmyDate(b.received_date) || 0);
+        return (parseDmyDate(b.unbox_date) || 0) - (parseDmyDate(a.unbox_date) || 0);
+      });
+
+      if (!list.length) {
+        tb.innerHTML = `<tr><td colspan="8" style="padding:28px;text-align:center;color:var(--text3)">Không có thùng nào</td></tr>`;
+        return;
+      }
+
+      tb.innerHTML = list.map(b => {
+        const opened = sealBoxIsOpened(b);
+        let statusBadge;
+        if (b.box_status === 'DAMAGED') statusBadge = `<span style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px">🔴 HỎNG</span>`;
+        else if (opened)                statusBadge = `<span style="background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3);font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px">🔓 ĐÃ KHUI</span>`;
+        else                            statusBadge = `<span style="background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3);font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px">🟢 NGUYÊN</span>`;
+
+        const unboxCell = opened
+          ? `<div style="font-size:10px">${esc(b.unbox_date)}</div><div style="font-size:10px;color:var(--text3)">bởi <b>${esc(b.unbox_by) || '—'}</b></div>`
+          : `<span style="color:var(--text3);font-size:10px">—</span>`;
+
+        return `<tr style="border-top:1px solid var(--border)">
+          <td style="padding:9px 10px;font-weight:700;color:var(--text)">${esc(b.box_number)}</td>
+          <td style="padding:9px 10px;font-family:monospace;font-size:10px;color:var(--text2)">${esc(b.serial_from)} → ${esc(b.serial_to)}</td>
+          <td style="padding:9px 10px;text-align:right;font-weight:700;color:var(--cyan)">${fmt(b.so_seal)}</td>
+          <td style="padding:9px 10px">${esc(b.received_date) || '—'}</td>
+          <td style="padding:9px 10px;font-size:10px">${esc(b.received_from) || '—'}</td>
+          <td style="padding:9px 10px">${statusBadge}</td>
+          <td style="padding:9px 10px">${unboxCell}</td>
+          <td style="padding:9px 10px;text-align:center">
+            ${opened ? '' : `<button class="btn btn-g" onclick="openUnboxModal(${b.seq})" title="Khui thùng" style="font-size:10px;padding:3px 8px;height:auto;margin-right:3px">🔓</button>`}
+            <button class="btn btn-ghost" onclick="openSealBoxModal(${b.seq})" title="Sửa" style="font-size:10px;padding:3px 8px;height:auto;margin-right:3px">✎</button>
+            <button class="btn btn-d" onclick="confirmDeleteSealBox(${b.seq})" title="Xoá" style="font-size:10px;padding:3px 8px;height:auto">🗑</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── Helper: parse "DD/MM/YYYY HH:mm" hoặc "DD/MM/YYYY" → Date
+    function parseDmyDate(s) {
+      if (!s) return null;
+      if (s instanceof Date) return isNaN(s) ? null : s;
+      const str = String(s).trim();
+      const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2}))?/);
+      if (!m) return null;
+      return new Date(+m[3], +m[2] - 1, +m[1], +(m[4]||0), +(m[5]||0));
+    }
+
+    // ── CRUD ──
+    function openSealBoxModal(seq) {
+      const isEdit = !!seq;
+      document.getElementById('mseal-title').textContent = isEdit ? '✎ Sửa thùng seal' : '+ Nhập lô seal mới';
+      _v('seal-seq', seq || '');
+      if (isEdit) {
+        const b = S.sealBoxes.find(x => String(x.seq) === String(seq));
+        if (!b) { toast('Không tìm thấy thùng', 'err'); return; }
+        _v('seal-box', b.box_number);
+        _v('seal-status', b.box_status || 'GOOD');
+        _v('seal-from', b.serial_from);
+        _v('seal-to', b.serial_to);
+        _v('seal-count', b.so_seal);
+        _v('seal-batch', b.batch_no || '');
+        _v('seal-recv-date', isoFromDmy(b.received_date));
+        _v('seal-from-src', b.received_from || '');
+        _v('seal-receiver', b.receiver || '');
+        _v('seal-note', b.note || '');
+      } else {
+        ['seal-box','seal-from','seal-to','seal-count','seal-batch','seal-recv-date','seal-from-src','seal-receiver','seal-note'].forEach(id => _v(id, ''));
+        _v('seal-status', 'GOOD');
+        // Auto fill người nhận = user đang login
+        if (S.user && S.user.fullname) _v('seal-receiver', S.user.fullname);
+      }
+      openOv('mseal');
+    }
+
+    function updateSealCount() {
+      const from = _g('seal-from').trim(), to = _g('seal-to').trim();
+      const mf = from.match(/(\d+)$/), mt = to.match(/(\d+)$/);
+      if (mf && mt) {
+        const n = (+mt[1]) - (+mf[1]) + 1;
+        _v('seal-count', n > 0 ? n : '');
+      } else _v('seal-count', '');
+    }
+
+    function isoFromDmy(s) {
+      if (!s) return '';
+      const m = String(s).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      return m ? `${m[3]}-${String(+m[2]).padStart(2,'0')}-${String(+m[1]).padStart(2,'0')}` : '';
+    }
+
+    async function saveSealBox() {
+      const seq = _g('seal-seq');
+      const payload = {
+        box_number:    _g('seal-box').trim(),
+        serial_from:   _g('seal-from').trim(),
+        serial_to:     _g('seal-to').trim(),
+        so_seal:       Number(_g('seal-count')) || 0,
+        box_status:    _g('seal-status'),
+        received_date: _g('seal-recv-date'),
+        received_from: _g('seal-from-src').trim(),
+        receiver:      _g('seal-receiver').trim(),
+        batch_no:      _g('seal-batch').trim(),
+        note:          _g('seal-note').trim()
+      };
+      if (!payload.box_number || !payload.serial_from || !payload.serial_to) {
+        toast('Vui lòng nhập Mã thùng và dải serial', 'err'); return;
+      }
+      const btn = document.getElementById('btn-seal-save');
+      btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
+      try {
+        const body = seq ? { action: 'updateSealBox', seq, ...payload } : { action: 'saveSealBox', ...payload };
+        const res = await post(body);
+        if (res.success) {
+          toast(seq ? 'Đã cập nhật' : 'Đã thêm thùng', 'ok');
+          closeOv('mseal');
+          await loadAll(); renderSeal();
+        } else toast(res.error || 'Lỗi', 'err');
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = oldText; }
+    }
+
+    function confirmDeleteSealBox(seq) {
+      const b = S.sealBoxes.find(x => String(x.seq) === String(seq));
+      if (!b) return;
+      document.getElementById('conf-msg').innerHTML = `Xoá thùng <b>${esc(b.box_number)}</b>?<br><span style="font-size:11px;color:var(--text3)">Dải ${esc(b.serial_from)} → ${esc(b.serial_to)}</span>`;
+      document.getElementById('conf-ok').onclick = async () => {
+        closeOv('mconf');
+        const res = await post({ action: 'deleteSealBox', seq });
+        if (res.success) { toast('Đã xoá', 'ok'); await loadAll(); renderSeal(); }
+        else toast(res.error || 'Lỗi', 'err');
+      };
+      openOv('mconf');
+    }
+
+    // ── Khui thùng ──
+    function openUnboxModal(seq) {
+      const b = S.sealBoxes.find(x => String(x.seq) === String(seq));
+      if (!b) return;
+      _v('unbox-seq', seq);
+      document.getElementById('unbox-info').innerHTML = `Thùng <b>${esc(b.box_number)}</b> · ${esc(b.serial_from)} → ${esc(b.serial_to)} · ${fmt(b.so_seal)} seal`;
+      // Auto fill now
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      _v('unbox-date', `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`);
+      _v('unbox-by', (S.user && S.user.fullname) || '');
+      openOv('munbox');
+    }
+
+    async function doUnboxSealBox() {
+      const seq = _g('unbox-seq');
+      const unbox_date = _g('unbox-date');
+      const unbox_by = _g('unbox-by').trim();
+      if (!unbox_date || !unbox_by) { toast('Vui lòng nhập ngày khui và người khui', 'err'); return; }
+      const btn = document.getElementById('btn-unbox-save');
+      btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
+      try {
+        const res = await post({ action: 'unboxSealBox', seq, unbox_date, unbox_by });
+        if (res.success) {
+          toast('Đã ghi nhận khui thùng', 'ok');
+          closeOv('munbox');
+          await loadAll(); renderSeal();
+        } else toast(res.error || 'Lỗi', 'err');
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = oldText; }
+    }
+
+    // ── Import Excel ──
+    let sealImportParsed = null;
+    function openSealImport() {
+      sealImportParsed = null;
+      document.getElementById('simp-file').value = '';
+      document.getElementById('simp-preview').style.display = 'none';
+      document.getElementById('btn-simp-go').disabled = true;
+      ['simp-recv-date','simp-from','simp-receiver','simp-batch'].forEach(id => _v(id, ''));
+      if (S.user && S.user.fullname) _v('simp-receiver', S.user.fullname);
+      openOv('msealimp');
+    }
+
+    function handleSealImportFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
+          if (typeof XLSX === 'undefined') { toast('Thư viện XLSX chưa tải xong', 'err'); return; }
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, { type: 'array', cellDates: true });
+          // Ưu tiên sheet có tên chứa "nhập kho" hoặc "unbox", không được thì lấy sheet đầu
+          const sheetName = wb.SheetNames.find(n => /nhập kho|nhap kho|unbox|lot/i.test(n)) || wb.SheetNames[0];
+          const ws = wb.Sheets[sheetName];
+          const rowsRaw = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true, header: 1 });
+
+          // Tìm dòng header: dòng đầu tiên có chứa "Box Number" hoặc "Number From"
+          let headerIdx = -1;
+          for (let i = 0; i < Math.min(rowsRaw.length, 30); i++) {
+            const joined = rowsRaw[i].map(c => String(c || '').toLowerCase()).join('|');
+            if (joined.includes('box number') || joined.includes('number from')) { headerIdx = i; break; }
+          }
+          if (headerIdx < 0) { toast('Không tìm thấy header "Box Number" trong file', 'err'); return; }
+          const headers = rowsRaw[headerIdx].map(h => String(h || '').trim());
+          const findIdx = kws => headers.findIndex(h => kws.some(kw => h.toLowerCase().includes(kw.toLowerCase())));
+          const cBox   = findIdx(['Box Number']);
+          const cFrom  = findIdx(['Number From']);
+          const cTo    = findIdx(['Number To']);
+          const cStat  = findIdx(['Box Status']);
+          const cSL    = findIdx(['No. of Seal', 'Number of Seal', 'Seals']);
+
+          if (cBox < 0 || cFrom < 0 || cTo < 0) { toast('File thiếu cột Box Number / Number From / Number To', 'err'); return; }
+
+          const parsed = [];
+          for (let i = headerIdx + 1; i < rowsRaw.length; i++) {
+            const r = rowsRaw[i];
+            const box = String(r[cBox] || '').trim();
+            if (!box) continue;
+            parsed.push({
+              box_number:  box,
+              serial_from: String(r[cFrom] || '').trim(),
+              serial_to:   String(r[cTo] || '').trim(),
+              box_status:  cStat >= 0 ? (String(r[cStat] || 'GOOD').trim().toUpperCase() || 'GOOD') : 'GOOD',
+              so_seal:     cSL >= 0 ? Number(r[cSL]) || 0 : 0
+            });
+          }
+          if (!parsed.length) { toast('Không đọc được dòng dữ liệu nào', 'err'); return; }
+
+          sealImportParsed = parsed;
+          const preview = document.getElementById('simp-preview');
+          preview.style.display = 'block';
+          const totalSeals = parsed.reduce((s, x) => s + (Number(x.so_seal) || 0), 0);
+          preview.innerHTML = `✅ Đọc được <b>${parsed.length}</b> thùng từ sheet "${esc(sheetName)}" — tổng <b>${fmt(totalSeals)}</b> seal.<br>
+            <span style="color:var(--text3);font-size:11px">Thùng trùng mã sẽ được bỏ qua.</span>`;
+          document.getElementById('btn-simp-go').disabled = false;
+        } catch (err) {
+          toast('Lỗi đọc file: ' + err.message, 'err');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    async function doSealImport() {
+      if (!sealImportParsed || !sealImportParsed.length) { toast('Chưa có data', 'err'); return; }
+      const btn = document.getElementById('btn-simp-go');
+      btn.disabled = true; btn.textContent = '⏳ Đang import...';
+      try {
+        const res = await post({
+          action: 'importSealBoxes',
+          rows: sealImportParsed,
+          received_date: _g('simp-recv-date'),
+          received_from: _g('simp-from').trim(),
+          receiver: _g('simp-receiver').trim(),
+          batch_no: _g('simp-batch').trim()
+        });
+        if (res.success) {
+          toast(`✅ Import ${res.imported} thùng${res.skipped ? ` (bỏ qua ${res.skipped} trùng)` : ''}`, 'ok');
+          closeOv('msealimp');
+          sealImportParsed = null;
+          await loadAll(); renderSeal();
+        } else toast(res.error || 'Lỗi import', 'err');
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = 'Import'; }
     }
 
     // ── BÁO CÁO CA ──
