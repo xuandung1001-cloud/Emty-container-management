@@ -2079,6 +2079,8 @@
           <div class="toolbar" style="gap:0;border:1px solid var(--border);border-radius:10px;padding:4px;display:inline-flex;background:var(--bg2)">
             <button id="seal-tab-overview" class="btn btn-p"    onclick="switchSealTab('overview')"    style="font-size:11px;padding:6px 14px;height:auto;border-radius:7px">📊 Tổng quan</button>
             <button id="seal-tab-boxes"    class="btn btn-ghost" onclick="switchSealTab('boxes')"     style="font-size:11px;padding:6px 14px;height:auto;border-radius:7px">📦 Thùng Seal</button>
+            <button id="seal-tab-usage"    class="btn btn-ghost" onclick="switchSealTab('usage')"     style="font-size:11px;padding:6px 14px;height:auto;border-radius:7px">📋 Lịch sử cấp</button>
+            <button id="seal-tab-disc"     class="btn btn-ghost" onclick="switchSealTab('disc')"      style="font-size:11px;padding:6px 14px;height:auto;border-radius:7px">🚨 Bất thường <span id="seal-disc-badge" style="display:none;margin-left:4px;background:#ef4444;color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:99px">0</span></button>
           </div>
 
           <!-- Tab: Tổng quan -->
@@ -2125,11 +2127,78 @@
                     <th style="padding:9px 10px;text-align:left">Nhận ngày</th>
                     <th style="padding:9px 10px;text-align:left">Nguồn</th>
                     <th style="padding:9px 10px;text-align:left">Tình trạng</th>
-                    <th style="padding:9px 10px;text-align:left">Khui</th>
+                    <th style="padding:9px 10px;text-align:left">Đã dùng</th>
                     <th style="padding:9px 10px;text-align:center;width:150px">Hành động</th>
                   </tr>
                 </thead>
                 <tbody id="seal-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab: Lịch sử cấp -->
+          <div id="seal-pane-usage" style="display:none">
+            <div class="toolbar" style="margin-top:14px">
+              <input class="fi" id="seal-usage-search" placeholder="🔍 Tìm seal / cont / booking..." oninput="renderSealUsage()" style="flex:1;max-width:260px">
+              <select class="fi" id="seal-usage-flag" onchange="renderSealUsage()" style="width:180px">
+                <option value="all">Tất cả</option>
+                <option value="OK">🟢 OK</option>
+                <option value="UNKNOWN_BOX">🚨 Thùng không xác định</option>
+              </select>
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-ghost" onclick="reloadSealUsage()">⟳ Làm mới</button>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:6px" id="seal-usage-info"></div>
+            <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+              <table style="width:100%;font-size:11px;border-collapse:collapse">
+                <thead>
+                  <tr style="background:var(--bg2);color:var(--text3);text-transform:uppercase;font-size:10px">
+                    <th style="padding:9px 10px;text-align:left">Thời gian ra</th>
+                    <th style="padding:9px 10px;text-align:left">Seal</th>
+                    <th style="padding:9px 10px;text-align:left">Loại</th>
+                    <th style="padding:9px 10px;text-align:left">Cont</th>
+                    <th style="padding:9px 10px;text-align:left">Booking</th>
+                    <th style="padding:9px 10px;text-align:left">Chủ hàng</th>
+                    <th style="padding:9px 10px;text-align:left">Thùng</th>
+                    <th style="padding:9px 10px;text-align:center">Flag</th>
+                  </tr>
+                </thead>
+                <tbody id="seal-usage-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab: Bất thường -->
+          <div id="seal-pane-disc" style="display:none">
+            <div class="toolbar" style="margin-top:14px">
+              <input class="fi" id="seal-disc-search" placeholder="🔍 Tìm seal / lý do..." oninput="renderSealDiscrepancy()" style="flex:1;max-width:260px">
+              <select class="fi" id="seal-disc-loai" onchange="renderSealDiscrepancy()" style="width:180px">
+                <option value="all">Tất cả loại</option>
+                <option value="UNKNOWN_BOX">🚨 Thùng không xác định</option>
+                <option value="CUSTOMER_DAMAGED">🔴 Khách làm hư</option>
+                <option value="HQ_CUT">✂ Hải quan cắt</option>
+                <option value="LOST">❌ Mất</option>
+                <option value="DAMAGED">💥 Hỏng</option>
+              </select>
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-p" onclick="openDiscModal()">+ Ghi nhận mới</button>
+              </div>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+              <table style="width:100%;font-size:11px;border-collapse:collapse">
+                <thead>
+                  <tr style="background:var(--bg2);color:var(--text3);text-transform:uppercase;font-size:10px">
+                    <th style="padding:9px 10px;text-align:left">Ngày</th>
+                    <th style="padding:9px 10px;text-align:left">Seal</th>
+                    <th style="padding:9px 10px;text-align:left">Loại</th>
+                    <th style="padding:9px 10px;text-align:left">Lý do</th>
+                    <th style="padding:9px 10px;text-align:left">Tham chiếu</th>
+                    <th style="padding:9px 10px;text-align:left">Xử lý</th>
+                    <th style="padding:9px 10px;text-align:center;width:100px">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="seal-disc-tbody"></tbody>
               </table>
             </div>
           </div>
@@ -2496,6 +2565,39 @@
       <div class="mf">
         <button class="btn btn-ghost" onclick="closeOv('munbox')">Huỷ</button>
         <button class="btn btn-p" id="btn-unbox-save" onclick="doUnboxSealBox()">Xác nhận khui</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEAL: DISCREPANCY (ghi nhận / xử lý) ══ -->
+  <div class="ov" id="mdisc">
+    <div class="modal">
+      <div class="m-title" id="mdisc-title">🚨 Ghi nhận seal bất thường</div>
+      <div class="m-sub">Dùng cho seal hỏng / HQ cắt / mất / lỗi khác</div>
+      <input type="hidden" id="disc-seq">
+      <input type="hidden" id="disc-mode">
+      <div class="g2">
+        <div class="fg"><label class="fl">Số seal *</label><input class="fi" id="disc-seal" placeholder="VD: FX45020251"></div>
+        <div class="fg"><label class="fl">Loại</label>
+          <select class="fi" id="disc-loai">
+            <option value="CUSTOMER_DAMAGED">🔴 Khách làm hư</option>
+            <option value="HQ_CUT">✂ Hải quan cắt</option>
+            <option value="LOST">❌ Mất</option>
+            <option value="DAMAGED">💥 Hỏng</option>
+            <option value="OTHER">Khác</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg mt"><label class="fl">Lý do *</label><input class="fi" id="disc-lydo" placeholder="Mô tả chi tiết"></div>
+      <div class="g2 mt">
+        <div class="fg"><label class="fl">Tham chiếu (số lệnh/booking)</label><input class="fi" id="disc-ref" placeholder="VD: 2604210313 / EBKG16368324"></div>
+        <div class="fg"><label class="fl">Ngày</label><input class="fi" id="disc-date" type="date"></div>
+      </div>
+      <div class="fg mt"><label class="fl">Cách xử lý (nếu có)</label><input class="fi" id="disc-xuly" placeholder="VD: Đã gửi ảnh cho MSC, yêu cầu cập nhật stock"></div>
+      <div class="fg mt"><label class="fl">URL ảnh đính kèm (Drive)</label><input class="fi" id="disc-url" placeholder="https://drive.google.com/..."></div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mdisc')">Huỷ</button>
+        <button class="btn btn-p" id="btn-disc-save" onclick="saveDisc()">Lưu</button>
       </div>
     </div>
   </div>
@@ -2952,7 +3054,7 @@
       users: { title: 'Quản lý Users', badge: '' }
     };
 
-    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealTab: 'overview', sealImportRows: [] };
+    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealUsageByBox: {}, sealDiscrepancies: [], sealUsage: null, sealTab: 'overview', sealImportRows: [] };
 
     // ══════════════════════════════════════════
     // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -3023,7 +3125,11 @@
         S.reportLogs = d.reportLogs || [];
         S.yardConfig = d.yardConfig || [];
         S.yardSetup  = d.yardSetup  || [];
-        S.sealBoxes  = d.sealBoxes  || [];
+        S.sealBoxes        = d.sealBoxes || [];
+        S.sealUsageByBox   = d.sealUsageByBox || {};
+        S.sealDiscrepancies = d.sealDiscrepancies || [];
+        updateSealDiscBadge();
+        updateSealSidebarBadge();
         renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); renderTonBai(); renderYardMap(); fillDropdowns();
       } catch (e) { toast('Lỗi load data: ' + e.message, 'err'); }
     }
@@ -4856,21 +4962,57 @@
       renderSealStats();
       renderSealOverview();
       renderSealBoxesTable();
+      renderSealDiscrepancy();
+      updateSealDiscBadge();
+      if (S.sealTab === 'usage' && S.sealUsage) renderSealUsage();
+    }
+
+    function updateSealDiscBadge() {
+      // Chỉ đếm các discrepancy chưa xử lý (xu_ly rỗng)
+      const unresolved = (S.sealDiscrepancies || []).filter(d => !String(d.xu_ly || '').trim()).length;
+      const badge = document.getElementById('seal-disc-badge');
+      if (badge) {
+        badge.textContent = unresolved;
+        badge.style.display = unresolved > 0 ? '' : 'none';
+      }
+    }
+
+    // Gắn badge đỏ vào sidebar nav "Quản lý Seal" khi có discrepancy chưa xử lý
+    function updateSealSidebarBadge() {
+      const nav = document.getElementById('nav-seal');
+      if (!nav) return;
+      const unresolved = (S.sealDiscrepancies || []).filter(d => !String(d.xu_ly || '').trim()).length;
+      let badge = nav.querySelector('.seal-sb-badge');
+      if (unresolved > 0) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'seal-sb-badge';
+          badge.style.cssText = 'margin-left:auto;background:#ef4444;color:#fff;font-size:9px;font-weight:800;padding:1px 7px;border-radius:99px;box-shadow:0 0 6px rgba(239,68,68,.5)';
+          nav.appendChild(badge);
+        }
+        badge.textContent = unresolved;
+      } else if (badge) badge.remove();
     }
 
     function switchSealTab(tab) {
       S.sealTab = tab;
-      document.getElementById('seal-pane-overview').style.display = tab === 'overview' ? '' : 'none';
-      document.getElementById('seal-pane-boxes').style.display    = tab === 'boxes'    ? '' : 'none';
-      const ov = document.getElementById('seal-tab-overview');
-      const bx = document.getElementById('seal-tab-boxes');
-      ov.className = tab === 'overview' ? 'btn btn-p'    : 'btn btn-ghost';
-      bx.className = tab === 'boxes'    ? 'btn btn-p'    : 'btn btn-ghost';
+      const panes = ['overview', 'boxes', 'usage', 'disc'];
+      panes.forEach(p => {
+        const pane = document.getElementById('seal-pane-' + p);
+        const btn  = document.getElementById('seal-tab-' + p);
+        if (pane) pane.style.display = p === tab ? '' : 'none';
+        if (btn)  btn.className = p === tab ? 'btn btn-p' : 'btn btn-ghost';
+      });
       if (tab === 'boxes') renderSealBoxesTable();
+      if (tab === 'usage') { if (!S.sealUsage) loadSealUsage(); else renderSealUsage(); }
+      if (tab === 'disc')  renderSealDiscrepancy();
     }
 
-    // Tính số seal đã dùng trong 1 box — Phase 1 chưa có seal_usage nên return 0
-    function sealUsedCount(box) { return 0; }
+    // Tính số seal đã dùng trong 1 box — lấy từ sealUsageByBox map
+    function sealUsedCount(box) {
+      const key = box && box.box_number ? box.box_number : '';
+      return (S.sealUsageByBox && S.sealUsageByBox[key]) || 0;
+    }
 
     function sealBoxIsOpened(b) { return !!(b.unbox_date && String(b.unbox_date).trim()); }
 
@@ -4971,8 +5113,13 @@
         else if (opened)                statusBadge = `<span style="background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3);font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px">🔓 ĐÃ KHUI</span>`;
         else                            statusBadge = `<span style="background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3);font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px">🟢 NGUYÊN</span>`;
 
-        const unboxCell = opened
-          ? `<div style="font-size:10px">${esc(b.unbox_date)}</div><div style="font-size:10px;color:var(--text3)">bởi <b>${esc(b.unbox_by) || '—'}</b></div>`
+        const used = sealUsedCount(b);
+        const total = Number(b.so_seal) || 0;
+        const pct = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+        const pctColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#10b981';
+        const usedCell = total > 0
+          ? `<div style="font-size:10px;font-weight:700;color:${pctColor}">${used}/${total} · ${pct}%</div>
+             <div style="width:90px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:3px"><div style="width:${pct}%;height:100%;background:${pctColor}"></div></div>`
           : `<span style="color:var(--text3);font-size:10px">—</span>`;
 
         return `<tr style="border-top:1px solid var(--border)">
@@ -4982,7 +5129,7 @@
           <td style="padding:9px 10px">${esc(b.received_date) || '—'}</td>
           <td style="padding:9px 10px;font-size:10px">${esc(b.received_from) || '—'}</td>
           <td style="padding:9px 10px">${statusBadge}</td>
-          <td style="padding:9px 10px">${unboxCell}</td>
+          <td style="padding:9px 10px">${usedCell}</td>
           <td style="padding:9px 10px;text-align:center">
             ${opened ? '' : `<button class="btn btn-g" onclick="openUnboxModal(${b.seq})" title="Khui thùng" style="font-size:10px;padding:3px 8px;height:auto;margin-right:3px">🔓</button>`}
             <button class="btn btn-ghost" onclick="openSealBoxModal(${b.seq})" title="Sửa" style="font-size:10px;padding:3px 8px;height:auto;margin-right:3px">✎</button>
@@ -5213,6 +5360,167 @@
         } else toast(res.error || 'Lỗi import', 'err');
       } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
       finally { btn.disabled = false; btn.textContent = 'Import'; }
+    }
+
+    // ── SEAL: LỊCH SỬ CẤP (Tab 3) ──
+    async function loadSealUsage() {
+      const tb = document.getElementById('seal-usage-tbody');
+      if (tb) tb.innerHTML = `<tr><td colspan="8" style="padding:28px;text-align:center;color:var(--text3)"><span class="spinner"></span> Đang tải...</td></tr>`;
+      try {
+        const res = await api('getSealUsage', { limit: 2000 });
+        S.sealUsage = res.data || [];
+        renderSealUsage();
+      } catch (e) {
+        S.sealUsage = [];
+        if (tb) tb.innerHTML = `<tr><td colspan="8" style="padding:28px;text-align:center;color:var(--red)">Lỗi tải: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    async function reloadSealUsage() {
+      S.sealUsage = null;
+      await loadSealUsage();
+      toast('Đã làm mới', 'ok');
+    }
+
+    function renderSealUsage() {
+      const tb = document.getElementById('seal-usage-tbody');
+      const info = document.getElementById('seal-usage-info');
+      if (!tb) return;
+      const list = S.sealUsage || [];
+      const q = (_g('seal-usage-search') || '').trim().toLowerCase();
+      const flagF = _g('seal-usage-flag') || 'all';
+      const filtered = list.filter(u => {
+        if (flagF !== 'all' && u.flag !== flagF) return false;
+        if (q) {
+          const blob = [u.seal_number, u.container_no, u.booking_no, u.so_lenh, u.customer, u.box_number].join('|').toLowerCase();
+          if (!blob.includes(q)) return false;
+        }
+        return true;
+      });
+      if (info) info.textContent = `Tổng: ${list.length} · Hiển thị: ${filtered.length}`;
+      if (!filtered.length) {
+        tb.innerHTML = `<tr><td colspan="8" style="padding:28px;text-align:center;color:var(--text3)">${list.length ? 'Không có kết quả phù hợp' : 'Chưa có dữ liệu sử dụng seal'}</td></tr>`;
+        return;
+      }
+      tb.innerHTML = filtered.slice(0, 500).map(u => {
+        const typeBadge = u.seal_type === 'PRIMARY'
+          ? `<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3)">CHÍNH</span>`
+          : `<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(249,115,22,.12);color:#f97316;border:1px solid rgba(249,115,22,.3)">${esc(u.seal_type).replace('REPLACEMENT_', 'THAY ')}</span>`;
+        const flagBadge = u.flag === 'UNKNOWN_BOX'
+          ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3)">🚨 Thùng lạ</span>`
+          : `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.3)">🟢 OK</span>`;
+        const customer = String(u.customer || '').split(':').slice(-1)[0].trim() || esc(u.customer);
+        return `<tr style="border-top:1px solid var(--border)">
+          <td style="padding:7px 10px;font-size:10px;color:var(--text2);white-space:nowrap">${esc(u.time_out) || '—'}</td>
+          <td style="padding:7px 10px;font-family:monospace;font-weight:700;color:var(--text)">${esc(u.seal_number)}</td>
+          <td style="padding:7px 10px">${typeBadge}</td>
+          <td style="padding:7px 10px;font-family:monospace;font-size:10px">${esc(u.container_no) || '—'}</td>
+          <td style="padding:7px 10px;font-size:10px;color:var(--text2)">${esc(u.booking_no) || '—'}</td>
+          <td style="padding:7px 10px;font-size:10px;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis" title="${esc(u.customer)}">${esc(customer)}</td>
+          <td style="padding:7px 10px;font-size:10px;color:var(--text2)">${esc(u.box_number) || '<span style="color:var(--red)">—</span>'}</td>
+          <td style="padding:7px 10px;text-align:center">${flagBadge}</td>
+        </tr>`;
+      }).join('') + (filtered.length > 500 ? `<tr><td colspan="8" style="padding:12px;text-align:center;color:var(--text3)">... và ${filtered.length - 500} dòng nữa (lọc để xem hết)</td></tr>` : '');
+    }
+
+    // ── SEAL: BẤT THƯỜNG (Tab 4) ──
+    function renderSealDiscrepancy() {
+      const tb = document.getElementById('seal-disc-tbody');
+      if (!tb) return;
+      const q = (_g('seal-disc-search') || '').trim().toLowerCase();
+      const loaiF = _g('seal-disc-loai') || 'all';
+      let list = (S.sealDiscrepancies || []).slice();
+      if (loaiF !== 'all') list = list.filter(d => d.loai === loaiF);
+      if (q) list = list.filter(d => {
+        const blob = [d.seal_number, d.ly_do, d.eir_ref, d.box_number].join('|').toLowerCase();
+        return blob.includes(q);
+      });
+      if (!list.length) {
+        tb.innerHTML = `<tr><td colspan="7" style="padding:28px;text-align:center;color:var(--text3)">Không có bản ghi bất thường</td></tr>`;
+        return;
+      }
+      const loaiLabel = {
+        UNKNOWN_BOX: { label: '🚨 Thùng lạ', color: '#ef4444' },
+        CUSTOMER_DAMAGED: { label: '🔴 Khách hư', color: '#f97316' },
+        HQ_CUT: { label: '✂ HQ cắt', color: '#8b5cf6' },
+        LOST: { label: '❌ Mất', color: '#ef4444' },
+        DAMAGED: { label: '💥 Hỏng', color: '#f59e0b' },
+        OTHER: { label: 'Khác', color: '#64748b' }
+      };
+      tb.innerHTML = list.map(d => {
+        const meta = loaiLabel[d.loai] || loaiLabel.OTHER;
+        const resolved = !!String(d.xu_ly || '').trim();
+        const xulyCell = resolved
+          ? `<div style="font-size:10px;color:#10b981;font-weight:600">✓ ${esc(d.xu_ly)}</div>${d.attached_url ? `<a href="${esc(d.attached_url)}" target="_blank" style="font-size:9px;color:var(--cyan)">📎 Xem ảnh</a>` : ''}`
+          : `<span style="color:var(--red);font-size:10px;font-weight:600">⏳ Chưa xử lý</span>`;
+        return `<tr style="border-top:1px solid var(--border);${!resolved ? 'background:rgba(239,68,68,.03)' : ''}">
+          <td style="padding:7px 10px;font-size:10px;color:var(--text2);white-space:nowrap">${esc(d.date) || '—'}</td>
+          <td style="padding:7px 10px;font-family:monospace;font-weight:700">${esc(d.seal_number)}</td>
+          <td style="padding:7px 10px"><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:${meta.color}18;color:${meta.color};border:1px solid ${meta.color}40">${meta.label}</span></td>
+          <td style="padding:7px 10px;font-size:10px;color:var(--text2);max-width:280px;white-space:normal">${esc(d.ly_do)}</td>
+          <td style="padding:7px 10px;font-size:10px;color:var(--text2)">${esc(d.eir_ref) || '—'}</td>
+          <td style="padding:7px 10px">${xulyCell}</td>
+          <td style="padding:7px 10px;text-align:center">
+            <button class="btn btn-ghost" onclick="openDiscModal('${d.seq}')" style="font-size:10px;padding:3px 8px;height:auto">${resolved ? '✎' : '✓ Xử lý'}</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function openDiscModal(seq) {
+      const isEdit = !!seq;
+      _v('disc-seq', seq || '');
+      _v('disc-mode', isEdit ? 'edit' : 'new');
+      document.getElementById('mdisc-title').textContent = isEdit ? '✓ Xử lý bất thường' : '🚨 Ghi nhận seal bất thường';
+      if (isEdit) {
+        const d = S.sealDiscrepancies.find(x => String(x.seq) === String(seq));
+        if (!d) { toast('Không tìm thấy', 'err'); return; }
+        _v('disc-seal', d.seal_number);
+        _v('disc-loai', d.loai);
+        _v('disc-lydo', d.ly_do);
+        _v('disc-ref', d.eir_ref);
+        _v('disc-xuly', d.xu_ly);
+        _v('disc-url', d.attached_url);
+        _v('disc-date', isoFromDmy(d.date) || todayStr());
+      } else {
+        ['disc-seal','disc-lydo','disc-ref','disc-xuly','disc-url'].forEach(id => _v(id, ''));
+        _v('disc-loai', 'CUSTOMER_DAMAGED');
+        _v('disc-date', todayStr());
+      }
+      openOv('mdisc');
+    }
+
+    async function saveDisc() {
+      const mode = _g('disc-mode');
+      const payload = {
+        seal_number: _g('disc-seal').trim(),
+        loai:        _g('disc-loai'),
+        ly_do:       _g('disc-lydo').trim(),
+        eir_ref:     _g('disc-ref').trim(),
+        xu_ly:       _g('disc-xuly').trim(),
+        attached_url: _g('disc-url').trim(),
+        date:        _g('disc-date')
+      };
+      if (mode !== 'edit' && !payload.seal_number) { toast('Nhập số seal', 'err'); return; }
+      if (!payload.ly_do) { toast('Nhập lý do', 'err'); return; }
+
+      const btn = document.getElementById('btn-disc-save');
+      btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
+      try {
+        let res;
+        if (mode === 'edit') {
+          res = await post({ action: 'resolveSealDiscrepancy', seq: _g('disc-seq'), xu_ly: payload.xu_ly, attached_url: payload.attached_url });
+        } else {
+          payload.nguoi_ghi_nhan = (S.user && S.user.fullname) || '';
+          res = await post({ action: 'logSealDiscrepancy', ...payload });
+        }
+        if (res.success) {
+          toast('Đã lưu', 'ok');
+          closeOv('mdisc');
+          await loadAll(); renderSeal();
+        } else toast(res.error || 'Lỗi', 'err');
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = oldText; }
     }
 
     // ── BÁO CÁO CA ──
