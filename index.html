@@ -2581,7 +2581,7 @@
       <div id="unbox-warn" style="display:none;margin-bottom:12px;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:7px;font-size:11px;color:var(--red);line-height:1.5">
         <div id="unbox-warn-text" style="font-weight:600;margin-bottom:6px"></div>
         <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text2);cursor:pointer">
-          <input type="checkbox" id="unbox-override" onchange="toggleUnboxOverride()"> Tôi vẫn muốn khui thùng này (Override — cần nhập lý do)
+          <input type="checkbox" id="unbox-override" onchange="toggleUnboxOverride()"> Tôi vẫn muốn khui thùng này
         </label>
         <div id="unbox-override-wrap" style="display:none;margin-top:6px">
           <textarea class="fi" id="unbox-override-reason" rows="2" placeholder="VD: Khách lấy 100 cont cùng lúc, thùng đang dùng không đủ seal" style="resize:vertical;width:100%;font-size:11px"></textarea>
@@ -2594,16 +2594,16 @@
       </div>
 
       <div style="margin-top:14px;padding:10px;border:1px dashed var(--border2);border-radius:7px;background:var(--bg3)">
-        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">📷 Upload ảnh khui thùng (chọn file từ máy/điện thoại — khuyến nghị nhưng không bắt buộc)</div>
-        <div class="fg"><label class="fl" style="font-size:9px">1. Ảnh niêm phong trước mở</label>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">📷 Upload ảnh khui thùng — bắt buộc đủ 3 ảnh</div>
+        <div class="fg"><label class="fl" style="font-size:9px">1. Ảnh niêm phong trước mở *</label>
           <input type="file" accept="image/*" id="unbox-file1" onchange="previewUnboxPhoto(1)" style="font-size:11px;width:100%">
           <div id="unbox-prev1" style="margin-top:4px;font-size:10px;color:var(--text3)"></div>
         </div>
-        <div class="fg mt"><label class="fl" style="font-size:9px">2. Ảnh nhãn series seal</label>
+        <div class="fg mt"><label class="fl" style="font-size:9px">2. Ảnh nhãn series seal *</label>
           <input type="file" accept="image/*" id="unbox-file2" onchange="previewUnboxPhoto(2)" style="font-size:11px;width:100%">
           <div id="unbox-prev2" style="margin-top:4px;font-size:10px;color:var(--text3)"></div>
         </div>
-        <div class="fg mt"><label class="fl" style="font-size:9px">3. Ảnh sau khi mở</label>
+        <div class="fg mt"><label class="fl" style="font-size:9px">3. Ảnh sau khi mở *</label>
           <input type="file" accept="image/*" id="unbox-file3" onchange="previewUnboxPhoto(3)" style="font-size:11px;width:100%">
           <div id="unbox-prev3" style="margin-top:4px;font-size:10px;color:var(--text3)"></div>
         </div>
@@ -5538,7 +5538,7 @@
       if (active && String(active.seq) !== String(seq)) {
         warnEl.style.display = '';
         document.getElementById('unbox-warn-text').innerHTML =
-          `⚠ Đang có thùng <b>${esc(active.box_number)}</b> chưa dùng hết (còn <b>${active._remain}/${active.so_seal}</b> seal).<br>Theo nguyên tắc, phải dùng hết thùng này trước khi khui mới.`;
+          `⚠ Đang có thùng <b>${esc(active.box_number)}</b> chưa dùng hết · còn <b>${active._remain}/${active.so_seal}</b> seal.<br>Theo nguyên tắc, phải dùng hết thùng này trước khi khui mới.`;
       } else {
         warnEl.style.display = 'none';
       }
@@ -5605,17 +5605,17 @@
       if (warnVisible && !overrideOn) { toast('Còn thùng đang dùng — phải tick Override + nhập lý do nếu muốn khui tiếp', 'err'); return; }
       if (warnVisible && overrideOn && !overrideReason) { toast('Vui lòng nhập lý do override', 'err'); return; }
 
-      // Gom 3 file ảnh đã chọn
+      // Gom 3 file ảnh đã chọn — bắt buộc đủ 3
       const files = [1,2,3].map(i => {
         const inp = document.getElementById('unbox-file'+i);
         return inp && inp.files && inp.files[0] ? inp.files[0] : null;
       });
-      const fileCount = files.filter(Boolean).length;
-      if (fileCount && fileCount < 3) {
-        if (!confirm('Chỉ có ' + fileCount + '/3 ảnh. Tiếp tục lưu?')) return;
-      }
+      const labels = ['Ảnh niêm phong trước mở', 'Ảnh nhãn series seal', 'Ảnh sau khi mở'];
+      const missing = files.map((f, i) => f ? null : labels[i]).filter(Boolean);
+      if (missing.length) { toast('Thiếu ảnh bắt buộc: ' + missing.join(', '), 'err'); return; }
       // Chặn file > 8MB sớm
       for (const f of files) if (f && f.size > 8*1024*1024) { toast('File "' + f.name + '" lớn hơn 8MB, không upload được', 'err'); return; }
+      const fileCount = 3;
 
       const btn = document.getElementById('btn-unbox-save');
       btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
