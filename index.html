@@ -2594,10 +2594,19 @@
       </div>
 
       <div style="margin-top:14px;padding:10px;border:1px dashed var(--border2);border-radius:7px;background:var(--bg3)">
-        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">📷 URL Ảnh khui thùng (paste link từ Drive/Zalo — khuyến nghị nhưng không bắt buộc)</div>
-        <div class="fg"><label class="fl" style="font-size:9px">1. Ảnh niêm phong trước mở</label><input class="fi" id="unbox-photo1" placeholder="https://..." style="font-size:11px"></div>
-        <div class="fg mt"><label class="fl" style="font-size:9px">2. Ảnh nhãn series seal</label><input class="fi" id="unbox-photo2" placeholder="https://..." style="font-size:11px"></div>
-        <div class="fg mt"><label class="fl" style="font-size:9px">3. Ảnh sau khi mở</label><input class="fi" id="unbox-photo3" placeholder="https://..." style="font-size:11px"></div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">📷 Upload ảnh khui thùng (chọn file từ máy/điện thoại — khuyến nghị nhưng không bắt buộc)</div>
+        <div class="fg"><label class="fl" style="font-size:9px">1. Ảnh niêm phong trước mở</label>
+          <input type="file" accept="image/*" id="unbox-file1" onchange="previewUnboxPhoto(1)" style="font-size:11px;width:100%">
+          <div id="unbox-prev1" style="margin-top:4px;font-size:10px;color:var(--text3)"></div>
+        </div>
+        <div class="fg mt"><label class="fl" style="font-size:9px">2. Ảnh nhãn series seal</label>
+          <input type="file" accept="image/*" id="unbox-file2" onchange="previewUnboxPhoto(2)" style="font-size:11px;width:100%">
+          <div id="unbox-prev2" style="margin-top:4px;font-size:10px;color:var(--text3)"></div>
+        </div>
+        <div class="fg mt"><label class="fl" style="font-size:9px">3. Ảnh sau khi mở</label>
+          <input type="file" accept="image/*" id="unbox-file3" onchange="previewUnboxPhoto(3)" style="font-size:11px;width:100%">
+          <div id="unbox-prev3" style="margin-top:4px;font-size:10px;color:var(--text3)"></div>
+        </div>
       </div>
 
       <div class="mf">
@@ -5514,8 +5523,11 @@
       const pad = n => String(n).padStart(2, '0');
       _v('unbox-date', `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`);
       _v('unbox-by', (S.user && S.user.fullname) || '');
-      // Reset 3 ô ảnh + override
-      _v('unbox-photo1', ''); _v('unbox-photo2', ''); _v('unbox-photo3', '');
+      // Reset 3 file input + preview + override
+      [1,2,3].forEach(i => {
+        const f = document.getElementById('unbox-file'+i); if (f) f.value = '';
+        const p = document.getElementById('unbox-prev'+i); if (p) p.innerHTML = '';
+      });
       _v('unbox-override-reason', '');
       document.getElementById('unbox-override').checked = false;
       document.getElementById('unbox-override-wrap').style.display = 'none';
@@ -5540,6 +5552,46 @@
       if (!on) _v('unbox-override-reason', '');
     }
 
+    // Preview tên + size file ảnh khui
+    function previewUnboxPhoto(idx) {
+      const f = document.getElementById('unbox-file'+idx);
+      const p = document.getElementById('unbox-prev'+idx);
+      if (!f || !p) return;
+      const file = f.files && f.files[0];
+      if (!file) { p.innerHTML = ''; return; }
+      const sizeKb = (file.size/1024).toFixed(0);
+      const tooBig = file.size > 8*1024*1024;
+      p.innerHTML = `<span style="color:${tooBig?'var(--red)':'var(--green)'}">${tooBig?'⚠':'✓'} ${esc(file.name)} (${sizeKb} KB)${tooBig?' — quá 8MB, có thể lỗi':''}</span>`;
+    }
+
+    // Đọc file thành base64 (không có prefix data:)
+    function _fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const s = String(r.result || '');
+          const i = s.indexOf('base64,');
+          resolve(i >= 0 ? s.substring(i + 7) : s);
+        };
+        r.onerror = () => reject(new Error('Không đọc được file ' + file.name));
+        r.readAsDataURL(file);
+      });
+    }
+
+    // Upload 1 file lên Drive qua backend → trả URL
+    async function _uploadOneSealPhoto(file, boxNumber) {
+      const base64 = await _fileToBase64(file);
+      const res = await post({
+        action: 'uploadSealPhoto',
+        filename: file.name,
+        mimeType: file.type || 'image/jpeg',
+        base64,
+        box_number: boxNumber || ''
+      });
+      if (!res.success) throw new Error(res.error || 'Upload lỗi');
+      return res.url;
+    }
+
     async function doUnboxSealBox() {
       const seq = _g('unbox-seq');
       const unbox_date = _g('unbox-date');
@@ -5553,15 +5605,32 @@
       if (warnVisible && !overrideOn) { toast('Còn thùng đang dùng — phải tick Override + nhập lý do nếu muốn khui tiếp', 'err'); return; }
       if (warnVisible && overrideOn && !overrideReason) { toast('Vui lòng nhập lý do override', 'err'); return; }
 
-      // Gom 3 URL ảnh
-      const photos = [_g('unbox-photo1').trim(), _g('unbox-photo2').trim(), _g('unbox-photo3').trim()].filter(Boolean);
-      if (photos.length && photos.length < 3) {
-        if (!confirm('Chỉ có ' + photos.length + '/3 ảnh. Tiếp tục lưu?')) return;
+      // Gom 3 file ảnh đã chọn
+      const files = [1,2,3].map(i => {
+        const inp = document.getElementById('unbox-file'+i);
+        return inp && inp.files && inp.files[0] ? inp.files[0] : null;
+      });
+      const fileCount = files.filter(Boolean).length;
+      if (fileCount && fileCount < 3) {
+        if (!confirm('Chỉ có ' + fileCount + '/3 ảnh. Tiếp tục lưu?')) return;
       }
+      // Chặn file > 8MB sớm
+      for (const f of files) if (f && f.size > 8*1024*1024) { toast('File "' + f.name + '" lớn hơn 8MB, không upload được', 'err'); return; }
 
       const btn = document.getElementById('btn-unbox-save');
       btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
       try {
+        // Upload từng file → URL (giữ thứ tự, bỏ slot trống)
+        const box = S.sealBoxes.find(x => String(x.seq) === String(seq));
+        const boxNumber = box ? box.box_number : '';
+        const photos = [];
+        for (let i = 0; i < files.length; i++) {
+          if (!files[i]) continue;
+          btn.textContent = `⏳ Upload ảnh ${i+1}/${fileCount}...`;
+          const url = await _uploadOneSealPhoto(files[i], boxNumber);
+          photos.push(url);
+        }
+        btn.textContent = '⏳ Đang lưu...';
         const payload = { action: 'unboxSealBox', seq, unbox_date, unbox_by, photo_urls: photos };
         if (overrideOn && overrideReason) payload.override_reason = overrideReason;
         const res = await post(payload);
