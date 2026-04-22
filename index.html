@@ -2610,40 +2610,38 @@
   <div class="ov" id="mhandover">
     <div class="modal modal-lg">
       <div class="m-title">🔄 Bàn giao seal cuối ca</div>
-      <div class="m-sub">Ghi nhận bàn giao thùng seal đang dùng cho nhân viên ca kế tiếp</div>
+      <div class="m-sub">Ghi nhận các thùng seal có hoạt động trong ca — thùng đã dùng hết giữa ca cũng được ghi vào để truy vết</div>
 
       <div id="ho-no-active" style="display:none;padding:14px;text-align:center;color:var(--text3);background:var(--bg3);border-radius:7px;font-size:11px">
-        Hiện tại không có thùng nào đang dùng — không cần bàn giao.
+        Không có thùng nào có hoạt động trong ca này — không cần bàn giao.
       </div>
 
       <div id="ho-form" style="display:none">
-        <div style="padding:10px 12px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.25);border-radius:7px;margin-bottom:12px">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">THÙNG ĐANG DÙNG</div>
-          <div id="ho-box-info" style="font-size:12px;font-weight:700;color:var(--cyan)">—</div>
-        </div>
-
-        <div class="g2">
-          <div class="fg"><label class="fl">Ca hiện tại</label>
+        <!-- Thông tin ca + NV -->
+        <div class="g3">
+          <div class="fg"><label class="fl">Ca</label>
             <select class="fi" id="ho-ca">
               <option value="Sáng">☀ Sáng (8h-20h)</option>
               <option value="Đêm">🌙 Đêm (20h-8h)</option>
             </select>
           </div>
           <div class="fg"><label class="fl">Ngày</label><input class="fi" id="ho-ngay" type="date"></div>
-        </div>
-
-        <div class="g2 mt">
-          <div class="fg"><label class="fl">Nhân viên GIAO (ca vừa xong)</label><input class="fi" id="ho-nv-giao" readonly style="background:var(--bg3)"></div>
-          <div class="fg"><label class="fl">Nhân viên NHẬN (ca kế tiếp) *</label>
+          <div class="fg"><label class="fl">NV Nhận (ca kế tiếp) *</label>
             <select class="fi" id="ho-nv-nhan">
-              <option value="">-- Chọn nhân viên --</option>
+              <option value="">-- Chọn NV --</option>
             </select>
           </div>
         </div>
+        <div class="fg mt"><label class="fl">Nhân viên GIAO</label><input class="fi" id="ho-nv-giao" readonly style="background:var(--bg3)"></div>
 
-        <div class="fg mt">
-          <label class="fl">Ghi chú bàn giao</label>
-          <textarea class="fi" id="ho-ghi-chu" rows="2" style="resize:vertical" placeholder="VD: Còn 82 seal, đã dùng 168. Thùng vẫn tốt, không có bất thường."></textarea>
+        <!-- Danh sách thùng có activity -->
+        <div style="margin-top:14px;padding:10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3)">
+          <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px">📦 Thùng có hoạt động trong ca</div>
+          <div id="ho-boxes-list" style="font-size:11px"></div>
+        </div>
+
+        <div class="fg mt"><label class="fl">Ghi chú bàn giao chung</label>
+          <textarea class="fi" id="ho-ghi-chu" rows="2" style="resize:vertical" placeholder="Ghi chú chung cho cả ca..."></textarea>
         </div>
       </div>
 
@@ -5129,21 +5127,68 @@
         <div style="font-size:11px;color:var(--text2);margin-top:8px">Phụ trách: <b style="color:var(--text)">${esc((S.user && S.user.fullname) || '—')}</b></div>
       `;
 
-      // ── Lịch sử bàn giao 7 ngày ──
-      const recent = (S.sealHandovers || []).slice(0, 10);
+      // ── Lịch sử bàn giao ──
+      // S.sealHandovers sort desc theo seq sẵn. Tính tồn ca trước + cấp trong ca dựa trên bàn giao kế trước CÙNG BOX.
+      // Xây 1 map: với mỗi handover (desc), tìm kế trước cùng box → seal_con_lai của nó = tồn ca trước.
+      const allHO = (S.sealHandovers || []).slice(); // desc by seq
+      // Pre-index bàn giao theo box_number + seq → để tìm prev nhanh
+      const byBox = {};
+      allHO.forEach(h => {
+        const k = String(h.box_number || '').trim();
+        if (!byBox[k]) byBox[k] = [];
+        byBox[k].push(h);
+      });
+      // Mỗi list byBox[k] đã desc. Với handover ở idx i trong list → prev = list[i+1]
+      allHO.forEach(h => {
+        const k = String(h.box_number || '').trim();
+        const list = byBox[k] || [];
+        const idx = list.indexOf(h);
+        const prev = (idx >= 0 && idx + 1 < list.length) ? list[idx + 1] : null;
+        if (prev) {
+          h._ton_ca_truoc = Number(prev.seal_con_lai) || 0;
+        } else {
+          // Bàn giao đầu tiên của box này → tồn ca trước = tổng seal của box
+          const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === k);
+          h._ton_ca_truoc = box ? (Number(box.so_seal) || 0) : null;
+        }
+        const conLai = Number(h.seal_con_lai) || 0;
+        h._cap_trong_ca = (h._ton_ca_truoc !== null) ? (h._ton_ca_truoc - conLai) : null;
+      });
+
+      const recent = allHO.slice(0, 10);
       if (!recent.length) {
         listEl.innerHTML = `<div style="padding:8px;text-align:center;color:var(--text3);font-size:11px">Chưa có bàn giao nào</div>`;
       } else {
-        listEl.innerHTML = recent.map(h => {
-          const caIcon = h.ca === 'Sáng' ? '☀' : '🌙';
-          return `<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,.04);display:flex;align-items:center;gap:8px;font-size:10.5px">
-            <div style="color:var(--text3);white-space:nowrap;width:100px">${esc(h.thoi_gian)}</div>
-            <div style="width:55px;color:var(--text2)">${caIcon} ${esc(h.ca)}</div>
-            <div style="flex:1"><b style="color:var(--text)">${esc(h.nv_giao)}</b> → <b style="color:var(--cyan)">${esc(h.nv_nhan)}</b></div>
-            <div style="color:var(--text2);font-family:monospace">${esc(h.box_number)}</div>
-            <div style="color:var(--text3);text-align:right;min-width:70px">${fmt(h.seal_con_lai)} seal</div>
-          </div>`;
-        }).join('');
+        listEl.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;font-size:10.5px;border-collapse:collapse">
+          <thead>
+            <tr style="color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.04em">
+              <th style="text-align:left;padding:4px 6px">Thời gian</th>
+              <th style="text-align:left;padding:4px 6px">Ca</th>
+              <th style="text-align:left;padding:4px 6px">Giao → Nhận</th>
+              <th style="text-align:left;padding:4px 6px">Thùng</th>
+              <th style="text-align:right;padding:4px 6px" title="Seal còn lại từ ca trước">Tồn ca trước</th>
+              <th style="text-align:right;padding:4px 6px" title="Số seal đã cấp trong ca vừa xong">Cấp trong ca</th>
+              <th style="text-align:right;padding:4px 6px" title="Số seal người nhận sẽ cầm">Nhận bàn giao</th>
+            </tr>
+          </thead>
+          <tbody>
+          ${recent.map(h => {
+            const caIcon = h.ca === 'Sáng' ? '☀' : '🌙';
+            const tonStr = h._ton_ca_truoc !== null ? fmt(h._ton_ca_truoc) : '—';
+            const capStr = h._cap_trong_ca !== null ? fmt(h._cap_trong_ca) : '—';
+            const capColor = (h._cap_trong_ca > 50) ? 'var(--red)' : (h._cap_trong_ca > 20) ? 'var(--orange)' : 'var(--text2)';
+            return `<tr style="border-top:1px solid rgba(0,0,0,.04)">
+              <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${esc(h.thoi_gian)}</td>
+              <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${caIcon} ${esc(h.ca)}</td>
+              <td style="padding:4px 6px"><b style="color:var(--text)">${esc(h.nv_giao)}</b> → <b style="color:var(--cyan)">${esc(h.nv_nhan)}</b></td>
+              <td style="padding:4px 6px;color:var(--text2);font-family:monospace">${esc(h.box_number)}</td>
+              <td style="padding:4px 6px;text-align:right;color:var(--text3)">${tonStr}</td>
+              <td style="padding:4px 6px;text-align:right;color:${capColor};font-weight:600">${capStr}</td>
+              <td style="padding:4px 6px;text-align:right;color:var(--green);font-weight:700">${fmt(h.seal_con_lai)}</td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table></div>`;
       }
     }
 
@@ -5513,68 +5558,191 @@
     }
 
     // ── Bàn giao ca ──
-    function openHandoverModal() {
-      const active = getActiveBox();
-      const formEl = document.getElementById('ho-form');
-      const noActiveEl = document.getElementById('ho-no-active');
-      const btnSave = document.getElementById('btn-ho-save');
-      if (!active) {
-        formEl.style.display = 'none';
-        noActiveEl.style.display = '';
-        btnSave.style.display = 'none';
-        openOv('mhandover');
-        return;
+    // Tính khoảng thời gian của ca hiện tại
+    function getShiftRange(ca) {
+      const now = new Date();
+      const h = now.getHours();
+      let start, end = now;
+      if (ca === 'Sáng') {
+        // Ca sáng: 8h hôm nay → 20h hôm nay (hoặc now nếu chưa 20h)
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+      } else {
+        // Ca đêm: phụ thuộc giờ hiện tại
+        if (h >= 20) {
+          // Đang trong buổi tối sau 20h → ca đêm bắt đầu hôm nay
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 0, 0);
+        } else {
+          // 0h-20h → ca đêm là từ 20h hôm qua
+          const y = new Date(now); y.setDate(y.getDate() - 1);
+          start = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 20, 0, 0);
+        }
       }
-      formEl.style.display = '';
-      noActiveEl.style.display = 'none';
-      btnSave.style.display = '';
+      return { start, end };
+    }
 
-      document.getElementById('ho-box-info').innerHTML =
-        `📦 ${esc(active.box_number)} · ${esc(active.serial_from)} → ${esc(active.serial_to)} · còn <b>${active._remain}/${active.so_seal}</b> seal (<b>${active._pct}%</b> đã dùng)`;
+    // Parse "DD/MM/YYYY HH:MM:SS" hoặc "DD/MM/YYYY HH:MM" → Date
+    function parseTimeOut(s) {
+      if (!s) return null;
+      if (s instanceof Date) return isNaN(s) ? null : s;
+      const str = String(s).trim();
+      const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (!m) return null;
+      return new Date(+m[3], +m[2] - 1, +m[1], +(m[4]||0), +(m[5]||0), +(m[6]||0));
+    }
 
-      _v('ho-ca', getCurrentCa());
+    // Scan S.sealUsage (đã load) → trả map { box_number: count } usage trong ca
+    function getShiftBoxActivity(ca) {
+      const { start, end } = getShiftRange(ca);
+      const usage = S.sealUsage || [];
+      const map = {};
+      usage.forEach(u => {
+        const t = parseTimeOut(u.time_out);
+        if (!t || t < start || t > end) return;
+        const box = String(u.box_number || '').trim();
+        if (!box) return;
+        map[box] = (map[box] || 0) + 1;
+      });
+      return map;
+    }
+
+    async function openHandoverModal() {
+      // Bảo đảm sealUsage đã load để tính activity trong ca
+      if (!S.sealUsage) {
+        toast('⏳ Đang tải dữ liệu seal...', 'ok');
+        await loadSealUsage();
+      }
+      const ca = getCurrentCa();
+      _v('ho-ca', ca);
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       _v('ho-ngay', `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`);
       _v('ho-nv-giao', (S.user && S.user.fullname) || '');
+      _v('ho-ghi-chu', '');
 
-      // Fill NV nhận dropdown — loại bỏ chính user đang login
+      // Fill NV nhận dropdown
       const sel = document.getElementById('ho-nv-nhan');
       const currentUser = (S.user && S.user.fullname) || '';
       const users = (S.users || []).filter(u => u.fullname && u.fullname !== currentUser);
       sel.innerHTML = '<option value="">-- Chọn nhân viên --</option>' +
         users.map(u => `<option value="${esc(u.fullname)}">${esc(u.fullname)}${u.title ? ' — ' + esc(u.title) : ''}</option>`).join('');
 
-      _v('ho-ghi-chu', `Thùng ${active.box_number} còn ${active._remain}/${active.so_seal} seal, đã dùng ${active._used}.`);
+      renderHandoverBoxes(ca);
+      document.getElementById('ho-ca').onchange = () => renderHandoverBoxes(_g('ho-ca'));
 
       openOv('mhandover');
     }
 
-    async function saveHandover() {
+    // Render danh sách thùng có activity trong ca + active box
+    function renderHandoverBoxes(ca) {
+      const listEl = document.getElementById('ho-boxes-list');
+      const formEl = document.getElementById('ho-form');
+      const noActiveEl = document.getElementById('ho-no-active');
+      const btnSave = document.getElementById('btn-ho-save');
+
+      const activityMap = getShiftBoxActivity(ca);   // { box_number: used_in_shift }
       const active = getActiveBox();
-      if (!active) { toast('Không có thùng nào đang dùng', 'err'); return; }
+      const boxNumbers = new Set(Object.keys(activityMap));
+      if (active) boxNumbers.add(active.box_number);
+
+      if (!boxNumbers.size) {
+        formEl.style.display = 'none';
+        noActiveEl.style.display = '';
+        btnSave.style.display = 'none';
+        return;
+      }
+      formEl.style.display = '';
+      noActiveEl.style.display = 'none';
+      btnSave.style.display = '';
+
+      const rows = [];
+      boxNumbers.forEach(bn => {
+        const box = (S.sealBoxes || []).find(b => b.box_number === bn);
+        if (!box) return;
+        const total = Number(box.so_seal) || 0;
+        const usedTotal = sealUsedCount(box);
+        const usedInShift = activityMap[bn] || 0;
+        const conLai = total - usedTotal;
+        const tonDauCa = conLai + usedInShift; // seal còn lại đầu ca = còn lại hiện tại + đã dùng trong ca
+        const exhausted = conLai <= 0;
+        rows.push({
+          seq: box.seq,
+          box_number: bn,
+          serial_from: box.serial_from,
+          serial_to: box.serial_to,
+          so_seal: total,
+          used_total: usedTotal,
+          used_in_shift: usedInShift,
+          ton_dau_ca: tonDauCa,
+          con_lai: conLai,
+          exhausted: exhausted,
+          is_active: active && active.box_number === bn
+        });
+      });
+      // Sort: thùng đã hết trước (để user thấy cần ghi nhận), active cuối
+      rows.sort((a, b) => {
+        if (a.exhausted !== b.exhausted) return a.exhausted ? -1 : 1;
+        return a.box_number.localeCompare(b.box_number);
+      });
+
+      listEl.innerHTML = rows.map(r => {
+        const statusBadge = r.exhausted
+          ? `<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3)">🔴 ĐÃ HẾT</span>`
+          : r.is_active
+            ? `<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3)">🔓 ĐANG DÙNG</span>`
+            : `<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(100,116,139,.12);color:var(--text3)">—</span>`;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" class="ho-box-check" data-seq="${r.seq}" data-box="${esc(r.box_number)}" data-con="${r.con_lai}" checked>
+          </label>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:6px">
+              <b style="color:var(--text);font-family:monospace">${esc(r.box_number)}</b>
+              ${statusBadge}
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:monospace">${esc(r.serial_from)} → ${esc(r.serial_to)}</div>
+          </div>
+          <div style="display:flex;gap:12px;font-size:10px;text-align:right;white-space:nowrap">
+            <div><div style="color:var(--text3);font-size:9px">Tồn đầu ca</div><b style="color:var(--text2)">${fmt(r.ton_dau_ca)}</b></div>
+            <div><div style="color:var(--text3);font-size:9px">Cấp trong ca</div><b style="color:${r.used_in_shift > 50 ? 'var(--red)' : r.used_in_shift > 20 ? 'var(--orange)' : 'var(--text2)'}">${fmt(r.used_in_shift)}</b></div>
+            <div><div style="color:var(--text3);font-size:9px">Còn lại</div><b style="color:${r.exhausted ? 'var(--red)' : 'var(--green)'}">${fmt(r.con_lai)}</b></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function saveHandover() {
+      const checks = Array.from(document.querySelectorAll('.ho-box-check:checked'));
+      if (!checks.length) { toast('Vui lòng tick ít nhất 1 thùng', 'err'); return; }
       const nvNhan = _g('ho-nv-nhan').trim();
       if (!nvNhan) { toast('Vui lòng chọn nhân viên nhận', 'err'); return; }
+
       const btn = document.getElementById('btn-ho-save');
       btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
+      const ca = _g('ho-ca');
+      const ngay = _g('ho-ngay');
+      const nvGiao = _g('ho-nv-giao').trim();
+      const ghiChu = _g('ho-ghi-chu').trim();
+
+      let ok = 0, fail = 0;
       try {
-        const res = await post({
-          action: 'saveSealHandover',
-          box_number: active.box_number,
-          seal_con_lai: active._remain,
-          ca: _g('ho-ca'),
-          ngay: _g('ho-ngay'),
-          nv_giao: _g('ho-nv-giao').trim(),
-          nv_nhan: nvNhan,
-          ghi_chu: _g('ho-ghi-chu').trim()
-        });
-        if (res.success) {
-          toast('✅ Đã lưu bàn giao ca', 'ok');
-          closeOv('mhandover');
-          await loadAll(); renderSeal();
-        } else toast(res.error || 'Lỗi', 'err');
-      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
-      finally { btn.disabled = false; btn.textContent = oldText; }
+        for (const el of checks) {
+          const box_number = el.dataset.box;
+          const seal_con_lai = Number(el.dataset.con) || 0;
+          try {
+            const res = await post({
+              action: 'saveSealHandover',
+              box_number, seal_con_lai, ca, ngay,
+              nv_giao: nvGiao, nv_nhan: nvNhan,
+              ghi_chu: ghiChu
+            });
+            if (res.success) ok++; else fail++;
+          } catch(e) { fail++; }
+        }
+        if (ok > 0) toast(`✅ Đã lưu ${ok} bàn giao${fail ? ` (${fail} lỗi)` : ''}`, ok > 0 && !fail ? 'ok' : 'err');
+        else toast('Lỗi — không lưu được bàn giao', 'err');
+        closeOv('mhandover');
+        await loadAll(); renderSeal();
+      } finally { btn.disabled = false; btn.textContent = oldText; }
     }
 
     // ── Import Excel ──
