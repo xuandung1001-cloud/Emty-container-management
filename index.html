@@ -2087,6 +2087,25 @@
           <div id="seal-pane-overview">
             <div class="stats-row" id="seal-stats" style="margin-top:14px"></div>
 
+            <!-- Section: Bàn giao ca -->
+            <div style="border:1px solid var(--border);border-radius:10px;background:var(--bg2);margin-top:14px;overflow:hidden">
+              <div style="padding:10px 14px;background:linear-gradient(90deg,rgba(59,130,246,.06),transparent);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                <div style="font-size:12px;font-weight:800;color:var(--text)">🔄 Bàn giao seal giữa ca</div>
+                <button class="btn btn-p" onclick="openHandoverModal()" style="font-size:10px;padding:5px 12px;height:auto">💾 Bàn giao cuối ca</button>
+              </div>
+              <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:0">
+                <!-- Thùng đang dùng -->
+                <div id="seal-active-box-card" style="padding:14px;border-right:1px solid var(--border)"></div>
+                <!-- Ca hiện tại -->
+                <div id="seal-current-shift-card" style="padding:14px"></div>
+              </div>
+              <!-- Lịch sử bàn giao -->
+              <div style="border-top:1px solid var(--border);padding:10px 14px;background:var(--bg3)">
+                <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📜 Lịch sử bàn giao 7 ngày gần nhất</div>
+                <div id="seal-handover-list" style="font-size:11px"></div>
+              </div>
+            </div>
+
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
               <!-- FIFO — thùng cần khui tiếp -->
               <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg2)">
@@ -2552,19 +2571,85 @@
 
   <!-- ══ SEAL: KHUI THÙNG ══ -->
   <div class="ov" id="munbox">
-    <div class="modal modal-sm">
+    <div class="modal modal-lg">
       <div class="m-title">🔓 Khui thùng seal</div>
       <div class="m-sub" id="unbox-info">—</div>
       <input type="hidden" id="unbox-seq">
-      <div class="fg"><label class="fl">Ngày/giờ khui *</label><input class="fi" id="unbox-date" type="datetime-local"></div>
-      <div class="fg mt"><label class="fl">Nhân viên khui *</label><input class="fi" id="unbox-by" placeholder="Tên nhân viên"></div>
-      <div style="margin-top:10px;padding:8px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.5">
-        <b>📷 Ảnh khui thùng</b> sẽ được thêm ở Phase 5 (upload Drive).<br>
-        Hiện tại hãy gửi lên Zalo kèm mã thùng như quy trình.
+
+      <!-- Warning banner (hiển thị nếu có active box) -->
+      <div id="unbox-warn" style="display:none;margin-bottom:12px;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:7px;font-size:11px;color:var(--red);line-height:1.5">
+        <div id="unbox-warn-text" style="font-weight:600;margin-bottom:6px"></div>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text2);cursor:pointer">
+          <input type="checkbox" id="unbox-override" onchange="toggleUnboxOverride()"> Tôi vẫn muốn khui thùng này (Override — cần nhập lý do)
+        </label>
+        <div id="unbox-override-wrap" style="display:none;margin-top:6px">
+          <textarea class="fi" id="unbox-override-reason" rows="2" placeholder="VD: Khách lấy 100 cont cùng lúc, thùng đang dùng không đủ seal" style="resize:vertical;width:100%;font-size:11px"></textarea>
+        </div>
       </div>
+
+      <div class="g2">
+        <div class="fg"><label class="fl">Ngày/giờ khui *</label><input class="fi" id="unbox-date" type="datetime-local"></div>
+        <div class="fg"><label class="fl">Nhân viên khui *</label><input class="fi" id="unbox-by" placeholder="Tên nhân viên"></div>
+      </div>
+
+      <div style="margin-top:14px;padding:10px;border:1px dashed var(--border2);border-radius:7px;background:var(--bg3)">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">📷 URL Ảnh khui thùng (paste link từ Drive/Zalo — khuyến nghị nhưng không bắt buộc)</div>
+        <div class="fg"><label class="fl" style="font-size:9px">1. Ảnh niêm phong trước mở</label><input class="fi" id="unbox-photo1" placeholder="https://..." style="font-size:11px"></div>
+        <div class="fg mt"><label class="fl" style="font-size:9px">2. Ảnh nhãn series seal</label><input class="fi" id="unbox-photo2" placeholder="https://..." style="font-size:11px"></div>
+        <div class="fg mt"><label class="fl" style="font-size:9px">3. Ảnh sau khi mở</label><input class="fi" id="unbox-photo3" placeholder="https://..." style="font-size:11px"></div>
+      </div>
+
       <div class="mf">
         <button class="btn btn-ghost" onclick="closeOv('munbox')">Huỷ</button>
         <button class="btn btn-p" id="btn-unbox-save" onclick="doUnboxSealBox()">Xác nhận khui</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEAL: BÀN GIAO CA ══ -->
+  <div class="ov" id="mhandover">
+    <div class="modal modal-lg">
+      <div class="m-title">🔄 Bàn giao seal cuối ca</div>
+      <div class="m-sub">Ghi nhận bàn giao thùng seal đang dùng cho nhân viên ca kế tiếp</div>
+
+      <div id="ho-no-active" style="display:none;padding:14px;text-align:center;color:var(--text3);background:var(--bg3);border-radius:7px;font-size:11px">
+        Hiện tại không có thùng nào đang dùng — không cần bàn giao.
+      </div>
+
+      <div id="ho-form" style="display:none">
+        <div style="padding:10px 12px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.25);border-radius:7px;margin-bottom:12px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">THÙNG ĐANG DÙNG</div>
+          <div id="ho-box-info" style="font-size:12px;font-weight:700;color:var(--cyan)">—</div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label class="fl">Ca hiện tại</label>
+            <select class="fi" id="ho-ca">
+              <option value="Sáng">☀ Sáng (8h-20h)</option>
+              <option value="Đêm">🌙 Đêm (20h-8h)</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Ngày</label><input class="fi" id="ho-ngay" type="date"></div>
+        </div>
+
+        <div class="g2 mt">
+          <div class="fg"><label class="fl">Nhân viên GIAO (ca vừa xong)</label><input class="fi" id="ho-nv-giao" readonly style="background:var(--bg3)"></div>
+          <div class="fg"><label class="fl">Nhân viên NHẬN (ca kế tiếp) *</label>
+            <select class="fi" id="ho-nv-nhan">
+              <option value="">-- Chọn nhân viên --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="fg mt">
+          <label class="fl">Ghi chú bàn giao</label>
+          <textarea class="fi" id="ho-ghi-chu" rows="2" style="resize:vertical" placeholder="VD: Còn 82 seal, đã dùng 168. Thùng vẫn tốt, không có bất thường."></textarea>
+        </div>
+      </div>
+
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mhandover')">Đóng</button>
+        <button class="btn btn-p" id="btn-ho-save" onclick="saveHandover()">💾 Lưu bàn giao</button>
       </div>
     </div>
   </div>
@@ -3054,7 +3139,7 @@
       users: { title: 'Quản lý Users', badge: '' }
     };
 
-    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealUsageByBox: {}, sealDiscrepancies: [], sealUsage: null, sealTab: 'overview', sealImportRows: [] };
+    let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealUsageByBox: {}, sealDiscrepancies: [], sealHandovers: [], sealUsage: null, sealTab: 'overview', sealImportRows: [] };
 
     // ══════════════════════════════════════════
     // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
@@ -3128,6 +3213,7 @@
         S.sealBoxes        = d.sealBoxes || [];
         S.sealUsageByBox   = d.sealUsageByBox || {};
         S.sealDiscrepancies = d.sealDiscrepancies || [];
+        S.sealHandovers    = d.sealHandovers || [];
         updateSealDiscBadge();
         updateSealSidebarBadge();
         renderBarges(); renderVoyages(); renderGantt(); renderSurveys(); renderKanban(); renderUsers(); renderReportLogs(); renderTonBai(); renderYardMap(); renderSeal(); fillDropdowns();
@@ -4961,10 +5047,119 @@
     function renderSeal() {
       renderSealStats();
       renderSealOverview();
+      renderSealHandoverOverview();
       renderSealBoxesTable();
       renderSealDiscrepancy();
       updateSealDiscBadge();
       if (S.sealTab === 'usage' && S.sealUsage) renderSealUsage();
+    }
+
+    // ── Helper: tìm active box (đã khui + còn seal + không DAMAGED) ──
+    function getActiveBox() {
+      const boxes = S.sealBoxes || [];
+      for (const b of boxes) {
+        if (!sealBoxIsOpened(b)) continue;
+        if (b.box_status === 'DAMAGED') continue;
+        const used = sealUsedCount(b);
+        const total = Number(b.so_seal) || 0;
+        if (used < total) return { ...b, _used: used, _remain: total - used, _pct: total > 0 ? Math.round(used / total * 100) : 0 };
+      }
+      return null;
+    }
+
+    // ── Helper: detect ca hiện tại theo giờ ──
+    function getCurrentCa() {
+      const h = new Date().getHours();
+      return (h >= 8 && h < 20) ? 'Sáng' : 'Đêm';
+    }
+
+    // ── Render section Bàn giao ca trên Tab Tổng quan ──
+    function renderSealHandoverOverview() {
+      const activeCardEl = document.getElementById('seal-active-box-card');
+      const shiftCardEl = document.getElementById('seal-current-shift-card');
+      const listEl = document.getElementById('seal-handover-list');
+      if (!activeCardEl || !shiftCardEl || !listEl) return;
+
+      // ── Active box card ──
+      const active = getActiveBox();
+      if (active) {
+        const pctColor = active._pct >= 90 ? '#ef4444' : active._pct >= 70 ? '#f59e0b' : '#10b981';
+        const photoBtn = active.photo_urls
+          ? `<button class="btn btn-ghost" onclick="viewSealPhotos('${esc(active.photo_urls)}', '${esc(active.box_number)}')" style="font-size:9px;padding:2px 7px;height:auto">📸 Ảnh</button>`
+          : '';
+        activeCardEl.innerHTML = `
+          <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Thùng đang dùng</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="font-size:14px;font-weight:800;color:var(--cyan)">📦 ${esc(active.box_number)}</div>
+            ${photoBtn}
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-family:monospace">${esc(active.serial_from)} → ${esc(active.serial_to)}</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <div style="flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="width:${active._pct}%;height:100%;background:${pctColor};transition:width .3s"></div></div>
+            <div style="font-size:11px;font-weight:700;color:${pctColor}">${active._pct}%</div>
+          </div>
+          <div style="font-size:11px;color:var(--text2)">
+            Đã dùng: <b style="color:var(--text)">${fmt(active._used)}</b> · Còn: <b style="color:${pctColor}">${fmt(active._remain)}</b> / ${fmt(active.so_seal)} seal
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">🔓 Khui: ${esc(active.unbox_date)} bởi <b style="color:var(--text2)">${esc(active.unbox_by) || '—'}</b></div>
+        `;
+      } else {
+        activeCardEl.innerHTML = `
+          <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Thùng đang dùng</div>
+          <div style="padding:14px;text-align:center;color:var(--text3);font-size:11px">
+            <div style="font-size:24px;margin-bottom:6px;opacity:.4">📦</div>
+            Không có thùng nào đang dùng.<br>
+            <span style="font-size:10px">Nhấn nút 🔓 ở bảng Thùng Seal để khui thùng mới.</span>
+          </div>
+        `;
+      }
+
+      // ── Ca hiện tại card ──
+      const now = new Date();
+      const currentCa = getCurrentCa();
+      const caIcon = currentCa === 'Sáng' ? '☀' : '🌙';
+      const caTime = currentCa === 'Sáng' ? '8h-20h' : '20h-8h';
+      const pad = n => String(n).padStart(2, '0');
+      const dateStr = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+      const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      shiftCardEl.innerHTML = `
+        <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Ca hiện tại</div>
+        <div style="font-size:14px;font-weight:800;color:var(--text)">${caIcon} Ca ${currentCa} <span style="font-size:10px;color:var(--text3);font-weight:400">(${caTime})</span></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">📅 ${dateStr} · ⏱ ${timeStr}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Phụ trách: <b style="color:var(--text)">${esc((S.user && S.user.fullname) || '—')}</b></div>
+      `;
+
+      // ── Lịch sử bàn giao 7 ngày ──
+      const recent = (S.sealHandovers || []).slice(0, 10);
+      if (!recent.length) {
+        listEl.innerHTML = `<div style="padding:8px;text-align:center;color:var(--text3);font-size:11px">Chưa có bàn giao nào</div>`;
+      } else {
+        listEl.innerHTML = recent.map(h => {
+          const caIcon = h.ca === 'Sáng' ? '☀' : '🌙';
+          return `<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,.04);display:flex;align-items:center;gap:8px;font-size:10.5px">
+            <div style="color:var(--text3);white-space:nowrap;width:100px">${esc(h.thoi_gian)}</div>
+            <div style="width:55px;color:var(--text2)">${caIcon} ${esc(h.ca)}</div>
+            <div style="flex:1"><b style="color:var(--text)">${esc(h.nv_giao)}</b> → <b style="color:var(--cyan)">${esc(h.nv_nhan)}</b></div>
+            <div style="color:var(--text2);font-family:monospace">${esc(h.box_number)}</div>
+            <div style="color:var(--text3);text-align:right;min-width:70px">${fmt(h.seal_con_lai)} seal</div>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // ── View photos popup (đơn giản) ──
+    function viewSealPhotos(photoUrls, boxNumber) {
+      const urls = String(photoUrls || '').split('|').filter(Boolean);
+      if (!urls.length) { toast('Chưa có ảnh', 'err'); return; }
+      const labels = ['📷 Niêm phong trước mở', '🏷 Nhãn series', '📦 Sau khi mở'];
+      const html = urls.map((u, i) => `
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${labels[i] || 'Ảnh ' + (i+1)}</div>
+          <a href="${esc(u)}" target="_blank" style="color:var(--cyan);font-size:11px;word-break:break-all;display:block;padding:6px 8px;background:var(--bg3);border-radius:5px;border:1px solid var(--border);text-decoration:none">${esc(u)}</a>
+        </div>
+      `).join('');
+      const w = window.open('', '_blank', 'width=500,height=600');
+      w.document.write(`<html><head><title>Ảnh khui thùng ${esc(boxNumber)}</title></head><body style="font-family:Tahoma;padding:20px"><h3>📦 ${esc(boxNumber)}</h3>${html}</body></html>`);
     }
 
     function updateSealDiscBadge() {
@@ -5122,6 +5317,10 @@
              <div style="width:90px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:3px"><div style="width:${pct}%;height:100%;background:${pctColor}"></div></div>`
           : `<span style="color:var(--text3);font-size:10px">—</span>`;
 
+        const photoBadge = b.photo_urls
+          ? `<button class="btn btn-ghost" onclick="viewSealPhotos('${esc(b.photo_urls)}', '${esc(b.box_number)}')" title="Xem ảnh khui" style="font-size:10px;padding:3px 7px;height:auto;margin-right:3px">📸</button>`
+          : '';
+
         return `<tr style="border-top:1px solid var(--border)">
           <td style="padding:9px 10px;font-weight:700;color:var(--text)">${esc(b.box_number)}</td>
           <td style="padding:9px 10px;font-family:monospace;font-size:10px;color:var(--text2)">${esc(b.serial_from)} → ${esc(b.serial_to)}</td>
@@ -5131,6 +5330,7 @@
           <td style="padding:9px 10px">${statusBadge}</td>
           <td style="padding:9px 10px">${usedCell}</td>
           <td style="padding:9px 10px;text-align:center">
+            ${photoBadge}
             ${opened ? '' : `<button class="btn btn-g" onclick="openUnboxModal(${b.seq})" title="Khui thùng" style="font-size:10px;padding:3px 8px;height:auto;margin-right:3px">🔓</button>`}
             <button class="btn btn-ghost" onclick="openSealBoxModal(${b.seq})" title="Sửa" style="font-size:10px;padding:3px 8px;height:auto;margin-right:3px">✎</button>
             <button class="btn btn-d" onclick="confirmDeleteSealBox(${b.seq})" title="Xoá" style="font-size:10px;padding:3px 8px;height:auto">🗑</button>
@@ -5241,12 +5441,35 @@
       if (!b) return;
       _v('unbox-seq', seq);
       document.getElementById('unbox-info').innerHTML = `Thùng <b>${esc(b.box_number)}</b> · ${esc(b.serial_from)} → ${esc(b.serial_to)} · ${fmt(b.so_seal)} seal`;
-      // Auto fill now
+      // Auto fill now + user
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       _v('unbox-date', `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`);
       _v('unbox-by', (S.user && S.user.fullname) || '');
+      // Reset 3 ô ảnh + override
+      _v('unbox-photo1', ''); _v('unbox-photo2', ''); _v('unbox-photo3', '');
+      _v('unbox-override-reason', '');
+      document.getElementById('unbox-override').checked = false;
+      document.getElementById('unbox-override-wrap').style.display = 'none';
+
+      // Kiểm tra có active box không → hiện warning
+      const active = getActiveBox();
+      const warnEl = document.getElementById('unbox-warn');
+      if (active && String(active.seq) !== String(seq)) {
+        warnEl.style.display = '';
+        document.getElementById('unbox-warn-text').innerHTML =
+          `⚠ Đang có thùng <b>${esc(active.box_number)}</b> chưa dùng hết (còn <b>${active._remain}/${active.so_seal}</b> seal).<br>Theo nguyên tắc, phải dùng hết thùng này trước khi khui mới.`;
+      } else {
+        warnEl.style.display = 'none';
+      }
+
       openOv('munbox');
+    }
+
+    function toggleUnboxOverride() {
+      const on = document.getElementById('unbox-override').checked;
+      document.getElementById('unbox-override-wrap').style.display = on ? '' : 'none';
+      if (!on) _v('unbox-override-reason', '');
     }
 
     async function doUnboxSealBox() {
@@ -5254,13 +5477,100 @@
       const unbox_date = _g('unbox-date');
       const unbox_by = _g('unbox-by').trim();
       if (!unbox_date || !unbox_by) { toast('Vui lòng nhập ngày khui và người khui', 'err'); return; }
+
+      // Check override nếu đang hiện warning
+      const warnVisible = document.getElementById('unbox-warn').style.display !== 'none';
+      const overrideOn = document.getElementById('unbox-override').checked;
+      const overrideReason = _g('unbox-override-reason').trim();
+      if (warnVisible && !overrideOn) { toast('Còn thùng đang dùng — phải tick Override + nhập lý do nếu muốn khui tiếp', 'err'); return; }
+      if (warnVisible && overrideOn && !overrideReason) { toast('Vui lòng nhập lý do override', 'err'); return; }
+
+      // Gom 3 URL ảnh
+      const photos = [_g('unbox-photo1').trim(), _g('unbox-photo2').trim(), _g('unbox-photo3').trim()].filter(Boolean);
+      if (photos.length && photos.length < 3) {
+        if (!confirm('Chỉ có ' + photos.length + '/3 ảnh. Tiếp tục lưu?')) return;
+      }
+
       const btn = document.getElementById('btn-unbox-save');
       btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
       try {
-        const res = await post({ action: 'unboxSealBox', seq, unbox_date, unbox_by });
+        const payload = { action: 'unboxSealBox', seq, unbox_date, unbox_by, photo_urls: photos };
+        if (overrideOn && overrideReason) payload.override_reason = overrideReason;
+        const res = await post(payload);
         if (res.success) {
-          toast('Đã ghi nhận khui thùng', 'ok');
+          toast('✅ Đã ghi nhận khui thùng', 'ok');
           closeOv('munbox');
+          await loadAll(); renderSeal();
+        } else if (res.error === 'ACTIVE_BOX_EXISTS') {
+          // Edge case: server chặn (trường hợp frontend miss). Hiện lại banner.
+          toast(res.message || 'Còn thùng đang dùng', 'err');
+          const warnEl = document.getElementById('unbox-warn');
+          warnEl.style.display = '';
+          document.getElementById('unbox-warn-text').innerHTML = esc(res.message);
+        } else toast(res.error || 'Lỗi', 'err');
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = oldText; }
+    }
+
+    // ── Bàn giao ca ──
+    function openHandoverModal() {
+      const active = getActiveBox();
+      const formEl = document.getElementById('ho-form');
+      const noActiveEl = document.getElementById('ho-no-active');
+      const btnSave = document.getElementById('btn-ho-save');
+      if (!active) {
+        formEl.style.display = 'none';
+        noActiveEl.style.display = '';
+        btnSave.style.display = 'none';
+        openOv('mhandover');
+        return;
+      }
+      formEl.style.display = '';
+      noActiveEl.style.display = 'none';
+      btnSave.style.display = '';
+
+      document.getElementById('ho-box-info').innerHTML =
+        `📦 ${esc(active.box_number)} · ${esc(active.serial_from)} → ${esc(active.serial_to)} · còn <b>${active._remain}/${active.so_seal}</b> seal (<b>${active._pct}%</b> đã dùng)`;
+
+      _v('ho-ca', getCurrentCa());
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      _v('ho-ngay', `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`);
+      _v('ho-nv-giao', (S.user && S.user.fullname) || '');
+
+      // Fill NV nhận dropdown — loại bỏ chính user đang login
+      const sel = document.getElementById('ho-nv-nhan');
+      const currentUser = (S.user && S.user.fullname) || '';
+      const users = (S.users || []).filter(u => u.fullname && u.fullname !== currentUser);
+      sel.innerHTML = '<option value="">-- Chọn nhân viên --</option>' +
+        users.map(u => `<option value="${esc(u.fullname)}">${esc(u.fullname)}${u.title ? ' — ' + esc(u.title) : ''}</option>`).join('');
+
+      _v('ho-ghi-chu', `Thùng ${active.box_number} còn ${active._remain}/${active.so_seal} seal, đã dùng ${active._used}.`);
+
+      openOv('mhandover');
+    }
+
+    async function saveHandover() {
+      const active = getActiveBox();
+      if (!active) { toast('Không có thùng nào đang dùng', 'err'); return; }
+      const nvNhan = _g('ho-nv-nhan').trim();
+      if (!nvNhan) { toast('Vui lòng chọn nhân viên nhận', 'err'); return; }
+      const btn = document.getElementById('btn-ho-save');
+      btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
+      try {
+        const res = await post({
+          action: 'saveSealHandover',
+          box_number: active.box_number,
+          seal_con_lai: active._remain,
+          ca: _g('ho-ca'),
+          ngay: _g('ho-ngay'),
+          nv_giao: _g('ho-nv-giao').trim(),
+          nv_nhan: nvNhan,
+          ghi_chu: _g('ho-ghi-chu').trim()
+        });
+        if (res.success) {
+          toast('✅ Đã lưu bàn giao ca', 'ok');
+          closeOv('mhandover');
           await loadAll(); renderSeal();
         } else toast(res.error || 'Lỗi', 'err');
       } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
