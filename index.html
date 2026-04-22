@@ -2165,6 +2165,7 @@
                 <option value="UNKNOWN_BOX">🚨 Thùng không xác định</option>
               </select>
               <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-g" onclick="openRepImport()">⊕ Import báo cáo ca bổ sung</button>
                 <button class="btn btn-ghost" onclick="reloadSealUsage()">⟳ Làm mới</button>
               </div>
             </div>
@@ -2708,6 +2709,25 @@
       <div class="mf">
         <button class="btn btn-ghost" onclick="closeOv('msealimp')">Huỷ</button>
         <button class="btn btn-p" id="btn-simp-go" onclick="doSealImport()" disabled>Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEAL: IMPORT BÁO CÁO CA BỔ SUNG ══ -->
+  <div class="ov" id="mrepimp">
+    <div class="modal modal-lg">
+      <div class="m-title">⊕ Import báo cáo ca bổ sung — Đồng bộ seal ngay</div>
+      <div class="m-sub">Upload file báo cáo ca (.xlsx có sheet "RA-VÀO CỔNG") để đồng bộ seal ngay — không cần đợi trigger 10 phút. Seal đã có sẽ được tự động bỏ qua.</div>
+      <div class="upl" onclick="document.getElementById('repimp-file').click()">
+        <div style="font-size:26px;margin-bottom:7px">📂</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Click để chọn file báo cáo ca (.xlsx)</div>
+        <div style="font-size:11px;color:var(--text3)">File phải có sheet <b>RA-VÀO CỔNG</b> với cột Số Niêm Chì / Phương án tác nghiệp / Vào/Ra</div>
+      </div>
+      <input type="file" id="repimp-file" accept=".xls,.xlsx" style="display:none" onchange="handleRepImport(event)">
+      <div id="repimp-preview" style="display:none;margin-top:10px;padding:10px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:7px;font-size:12px"></div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mrepimp')">Huỷ</button>
+        <button class="btn btn-p" id="btn-repimp-go" onclick="doRepImport()" disabled>🔄 Đồng bộ seal</button>
       </div>
     </div>
   </div>
@@ -5841,6 +5861,102 @@
         } else toast(res.error || 'Lỗi import', 'err');
       } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
       finally { btn.disabled = false; btn.textContent = 'Import'; }
+    }
+
+    // ── SEAL: IMPORT BÁO CÁO CA BỔ SUNG ──
+    let repImportParsed = null;
+    function openRepImport() {
+      repImportParsed = null;
+      document.getElementById('repimp-file').value = '';
+      document.getElementById('repimp-preview').style.display = 'none';
+      document.getElementById('btn-repimp-go').disabled = true;
+      openOv('mrepimp');
+    }
+
+    function handleRepImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          if (typeof XLSX === 'undefined') { toast('Thư viện XLSX chưa tải xong', 'err'); return; }
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, { type: 'array', cellDates: true });
+          // Tìm sheet RA-VÀO CỔNG (có dấu hoặc không dấu)
+          const sheetName = wb.SheetNames.find(n => {
+            const norm = String(n).toLowerCase().replace(/[àá]/g,'a').replace(/[ồốộổỗ]/g,'o').replace(/đ/g,'d');
+            return /ra[\s-]*vao[\s-]*c[ôo]ng/i.test(norm) || /ra[\s-]*v[àa]o[\s-]*c[ổôo]ng/i.test(n);
+          }) || wb.SheetNames[0];
+          if (!sheetName) { toast('File không có sheet nào', 'err'); return; }
+
+          const ws = wb.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
+
+          // Check có cột "Phương án tác nghiệp" và "Số Niêm Chì"
+          if (!json.length) { toast('Sheet rỗng', 'err'); return; }
+          const keys = Object.keys(json[0]);
+          const hasPA = keys.some(k => k.toLowerCase().includes('phương án') || k.toLowerCase().includes('phuong an'));
+          const hasSeal = keys.some(k => k.toLowerCase().includes('số niêm chì') || k.toLowerCase().includes('niem chi'));
+          if (!hasPA || !hasSeal) {
+            toast(`Sheet "${sheetName}" thiếu cột Phương án tác nghiệp hoặc Số Niêm Chì`, 'err');
+            return;
+          }
+
+          // Convert Date objects → string "dd/MM/yyyy HH:mm:ss" để tránh lỗi JSON timezone
+          const pad = n => String(n).padStart(2, '0');
+          json.forEach(r => {
+            Object.keys(r).forEach(k => {
+              if (r[k] instanceof Date && !isNaN(r[k])) {
+                const d = r[k];
+                r[k] = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+              }
+            });
+          });
+
+          // Đếm CRKH + Ra + có seal (preview cho user biết sẽ import bao nhiêu)
+          const crkhRa = json.filter(r => {
+            const pa = String(r['Phương án tác nghiệp'] || '').split(':')[0].trim();
+            const vr = String(r['Vào/Ra'] || '').trim();
+            const seal = String(r['Số Niêm Chì'] || '').trim();
+            return pa === 'CRKH' && vr === 'Ra' && seal && seal !== '0';
+          });
+
+          repImportParsed = { rows: json, file_name: file.name };
+          const preview = document.getElementById('repimp-preview');
+          preview.style.display = 'block';
+          preview.innerHTML = `✅ File <b>${esc(file.name)}</b><br>
+            📊 Sheet: <b>${esc(sheetName)}</b> — ${json.length} dòng<br>
+            🎯 Cấp rỗng CRKH có seal: <b style="color:var(--cyan);font-size:14px">${crkhRa.length}</b> dòng sẽ xử lý<br>
+            <span style="color:var(--text3);font-size:11px">Seal đã có trong hệ thống sẽ được tự động bỏ qua (dedupe)</span>`;
+          document.getElementById('btn-repimp-go').disabled = !crkhRa.length;
+        } catch (err) {
+          toast('Lỗi đọc file: ' + err.message, 'err');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    async function doRepImport() {
+      if (!repImportParsed || !repImportParsed.rows.length) { toast('Chưa có data', 'err'); return; }
+      const btn = document.getElementById('btn-repimp-go');
+      btn.disabled = true; btn.textContent = '⏳ Đang đồng bộ...';
+      try {
+        const res = await post({
+          action: 'importSealFromReportRows',
+          rows: repImportParsed.rows,
+          file_name: repImportParsed.file_name
+        });
+        if (res.success) {
+          toast(`✅ Đồng bộ xong: ${res.inserted} seal mới${res.discrepancies ? ` · ${res.discrepancies} bất thường` : ''}`, 'ok');
+          closeOv('mrepimp');
+          repImportParsed = null;
+          S.sealUsage = null; // force reload
+          await loadAll();
+          await loadSealUsage();
+          renderSeal();
+        } else toast(res.error || 'Lỗi đồng bộ', 'err');
+      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.innerHTML = '🔄 Đồng bộ seal'; }
     }
 
     // ── SEAL: LỊCH SỬ CẤP (Tab 3) ──
