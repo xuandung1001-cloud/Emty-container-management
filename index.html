@@ -3,7 +3,9 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Empty Container Management — ICD Thạnh Phước</title>
   <style>
     * {
@@ -1553,6 +1555,75 @@
         flex-direction: column;
         align-items: stretch;
       }
+    }
+
+    /* ============================================================
+       iPad / Tablet — chỉ active trên touch device (pointer:coarse)
+       iPad Pro 11" landscape 1194px, portrait 834px
+       iPad Pro 12.9"/13" landscape 1366px, portrait 1024px
+       ============================================================ */
+    @media (pointer: coarse) and (min-width: 700px) and (max-width: 1366px) {
+      /* Touch targets tối thiểu 40-44px (Apple HIG) */
+      .btn { min-height: 40px; padding: 9px 14px; font-size: 13px; }
+      .fi { min-height: 40px; padding: 9px 11px; font-size: 13.5px; }
+      select.fi { min-height: 40px; }
+      .tab-bar .tab { min-height: 42px; padding: 10px 16px; font-size: 13px; }
+
+      /* Kanban: scroll ngang horizontal, cột vừa tay kéo */
+      .kb-board {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 6px;
+      }
+      .kb-col {
+        min-width: 300px;
+        max-width: 320px;
+        scroll-snap-align: start;
+        flex: 0 0 auto;
+      }
+      .kcard {
+        padding: 11px 13px;
+        font-size: 12.5px;
+        /* Chặn iOS text selection gây khó chịu khi giữ card */
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+      .kcard:active { transform: scale(0.98); }
+
+      /* Grid 3 cột → 2 cột khi portrait hẹp */
+      .g3 { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* iPad portrait (834px): thu gọn thêm */
+    @media (pointer: coarse) and (max-width: 900px) {
+      .g3, .g2 { grid-template-columns: 1fr 1fr; gap: 9px; }
+      .tab-bar { flex-wrap: wrap; gap: 4px; }
+      /* Modal full-width hơn trên portrait */
+      .mf { width: 95vw !important; max-width: 95vw !important; }
+    }
+
+    /* SortableJS ghost/chosen styles */
+    .kcard.sortable-ghost {
+      opacity: 0.4;
+      background: var(--cyan-dim) !important;
+      border-style: dashed !important;
+    }
+    .kcard.sortable-chosen {
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      transform: scale(1.03);
+      z-index: 999;
+    }
+    .kcard.sortable-drag {
+      opacity: 0.95;
+      cursor: grabbing;
+    }
+    .kb-list.kb-drop-active {
+      background: rgba(0, 212, 255, .06);
+      outline: 2px dashed rgba(0, 212, 255, .35);
+      outline-offset: -4px;
+      border-radius: 8px;
     }
 
     /* ── PERMISSIONS CHECKBOXES ── */
@@ -3853,6 +3924,9 @@
           <div style="font-size:10px;opacity:.4;line-height:1.5">${meta[c].emptyText}</div>
         </div>`;
       }
+
+      // Kích hoạt SortableJS (touch + mouse) sau khi render
+      initKanbanSortable();
     }
 
     function generateTaskCard(t, st, viTriMap = {}) {
@@ -3911,7 +3985,7 @@
       const taskColor = t.phan_loai === 'Cấp rỗng' ? '#3b82f6' : t.phan_loai === 'Dọn bãi' ? '#10b981' : t.phan_loai === 'Sửa chữa' ? '#f97316' : '#8b5cf6';
       const taskBg    = t.phan_loai === 'Cấp rỗng' ? 'rgba(59,130,246,.06)' : t.phan_loai === 'Dọn bãi' ? 'rgba(16,185,129,.06)' : t.phan_loai === 'Sửa chữa' ? 'rgba(249,115,22,.06)' : 'rgba(139,92,246,.06)';
       return `
-    <div class="kcard ${hasFlag ? 'has-flag' : ''}" style="border-left:3px solid ${taskColor}" draggable="true" data-type="task" data-seq="${t.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
+    <div class="kcard ${hasFlag ? 'has-flag' : ''}" style="border-left:3px solid ${taskColor}" data-type="task" data-seq="${t.seq}">
       <div class="kc-top">
         <div class="kc-title" style="color:var(--text);font-size:12px;font-weight:700">${icon} ${esc(t.tieu_de)}</div>
         <div class="kc-vno" style="background:${taskBg};border:1px solid ${taskColor}40;color:${taskColor};font-size:8px;font-weight:700">${esc(t.phan_loai)}</div>
@@ -4102,7 +4176,7 @@
       const stBg    = st === 0 ? 'rgba(245,158,11,.06)' : st === 1 ? 'rgba(59,130,246,.06)' : st === 2 ? 'rgba(249,115,22,.06)' : 'rgba(16,185,129,.06)';
 
       return `
-    <div class="kcard ${hasFlag ? 'has-flag' : ''}" draggable="true" data-type="voyage" data-seq="${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)" style="border-left:3px solid ${stColor}">
+    <div class="kcard ${hasFlag ? 'has-flag' : ''}" data-type="voyage" data-seq="${v.seq}" style="border-left:3px solid ${stColor}">
       <div class="kc-top">
         <div class="kc-title" style="color:var(--text);font-size:12px;font-weight:700">⛵ ${esc(v.ten_salan)}</div>
         ${v.voyage_no ? `<div class="kc-vno" style="background:${stBg};border:1px solid ${stColor}40;color:${stColor};font-size:8px;font-weight:700">${esc(v.voyage_no)}</div>` : ``}
@@ -4124,7 +4198,7 @@
   `;
     }
 
-    // Drag & Drop Handlers
+    // Drag & Drop Handlers (HTML5 fallback + SortableJS bridge)
     function kDragStart(e) {
       e.currentTarget.classList.add('dragging');
       draggedItem = { type: e.currentTarget.dataset.type || 'voyage', seq: e.currentTarget.dataset.seq };
@@ -4133,6 +4207,87 @@
     function kbDragOver(e) { e.preventDefault(); }
     function kbDragEnter(e) { if (e.currentTarget.classList.contains('kb-col')) e.currentTarget.classList.add('drag-over'); }
     function kbDragLeave(e) { if (e.currentTarget.classList.contains('kb-col')) e.currentTarget.classList.remove('drag-over'); }
+
+    // Core move logic — dùng chung cho HTML5 drag + SortableJS touch
+    async function kanbanApplyMove(type, seq, targetStatus) {
+      if (type === 'task') {
+        const t = S.tasks.find(x => String(x.seq) === String(seq));
+        if (!t) return;
+        const oldStatus = parseInt(t.trang_thai) || 0;
+        if (oldStatus === targetStatus) return;
+        t.trang_thai = targetStatus;
+        let extraFields = {};
+        if (targetStatus === 1 && oldStatus !== 1) { t.started_at = Date.now(); extraFields.started_at = t.started_at; }
+        if (targetStatus === 2 && oldStatus !== 2) { t.review_at = Date.now(); extraFields.review_at = t.review_at; }
+        if (targetStatus === 3 && oldStatus !== 3) { t.done_at = Date.now(); extraFields.done_at = t.done_at; }
+        renderKanban();
+        try {
+          const res = await post({ action: 'updateTaskStatus', seq: t.seq, trang_thai: targetStatus, ...extraFields });
+          if (!res.success) throw new Error(res.error);
+        } catch (err) { toast('Lỗi cập nhật server', 'err'); await loadAll(); }
+        return;
+      }
+      const v = S.voyages.find(x => String(x.seq) === String(seq));
+      if (!v) return;
+      let updateData = { seq: v.seq };
+      const now2 = new Date();
+      const pad2 = n => String(n).padStart(2, '0');
+      const nowStr = pad2(now2.getDate()) + '/' + pad2(now2.getMonth() + 1) + '/' + now2.getFullYear() + ' ' + pad2(now2.getHours()) + ':' + pad2(now2.getMinutes());
+      let changed = false;
+      if (targetStatus === 1 && !v.bat_dau) { updateData.bat_dau = nowStr; v.bat_dau = nowStr; changed = true; }
+      else if (targetStatus === 1 && v.ket_thuc) { updateData.ket_thuc = ''; v.ket_thuc = ''; changed = true; }
+      else if (targetStatus === 2 && !v.ket_thuc) { updateData.ket_thuc = nowStr; v.ket_thuc = nowStr; changed = true; }
+      else if (targetStatus === 3 && v.trang_thai_survey !== 'Đã survey') {
+        toast('Vui lòng làm chức năng Khảo sát để cập nhật cột này!', 'err'); renderKanban(); return;
+      }
+      else if (targetStatus === 0) {
+        if (v.bat_dau) { updateData.bat_dau = ''; v.bat_dau = ''; changed = true; }
+        if (v.ket_thuc) { updateData.ket_thuc = ''; v.ket_thuc = ''; changed = true; }
+      }
+      renderKanban();
+      if (changed) {
+        try {
+          const res = await post({ action: 'updateVoyageStatus', ...updateData });
+          if (!res.success) throw new Error(res.error);
+        } catch (err) { toast('Lỗi cập nhật server: ' + err.message, 'err'); await loadAll(); }
+      }
+    }
+
+    // Init SortableJS trên mỗi cột kanban — hoạt động cho cả mouse + touch
+    function initKanbanSortable() {
+      if (typeof Sortable === 'undefined') return;
+      const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+      for (let c = 0; c < 4; c++) {
+        const list = document.getElementById('kcol-' + c);
+        if (!list) continue;
+        if (list._sortable) { list._sortable.destroy(); list._sortable = null; }
+        list._sortable = Sortable.create(list, {
+          group: 'kanban',
+          animation: 180,
+          forceFallback: isTouch,
+          fallbackOnBody: true,
+          fallbackTolerance: 5,
+          delay: isTouch ? 180 : 0,
+          delayOnTouchOnly: true,
+          touchStartThreshold: 5,
+          draggable: '.kcard',
+          ghostClass: 'sortable-ghost',
+          chosenClass: 'sortable-chosen',
+          dragClass: 'sortable-drag',
+          onStart: () => document.body.style.overflow = 'hidden',
+          onEnd: async (evt) => {
+            document.body.style.overflow = '';
+            const toId = evt.to && evt.to.id;
+            if (!toId || !toId.startsWith('kcol-')) { renderKanban(); return; }
+            const targetStatus = parseInt(toId.replace('kcol-', ''));
+            const type = evt.item.dataset.type || 'voyage';
+            const seq = evt.item.dataset.seq;
+            await kanbanApplyMove(type, seq, targetStatus);
+          }
+        });
+      }
+    }
+
     async function kbDrop(e, targetStatus) {
       e.preventDefault();
       e.currentTarget.classList.remove('drag-over');
@@ -7916,6 +8071,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </body>
 
 </html>
