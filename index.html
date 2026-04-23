@@ -1569,61 +1569,114 @@
       select.fi { min-height: 40px; }
       .tab-bar .tab { min-height: 42px; padding: 10px 16px; font-size: 13px; }
 
-      /* Kanban: scroll ngang horizontal, cột vừa tay kéo */
+      /* Kanban: scroll ngang horizontal — KHÔNG dùng scroll-snap vì đá nhau với drag */
       .kb-board {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
         padding-bottom: 6px;
+        overscroll-behavior-x: contain;
       }
       .kb-col {
         min-width: 300px;
         max-width: 320px;
-        scroll-snap-align: start;
         flex: 0 0 auto;
+      }
+      .kb-list {
+        /* Cho phép pan-y trong list, horizontal drag Sortable xử lý */
+        touch-action: pan-y;
+        min-height: 80px;
       }
       .kcard {
         padding: 11px 13px;
         font-size: 12.5px;
-        /* Chặn iOS text selection gây khó chịu khi giữ card */
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
+        /* Hardware acceleration — tránh jank khi drag */
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        touch-action: manipulation;
       }
-      .kcard:active { transform: scale(0.98); }
 
-      /* Grid 3 cột → 2 cột khi portrait hẹp */
-      .g3 { grid-template-columns: 1fr 1fr; }
+      /* ===== Yard Map cho iPad ===== */
+      .ym-layout {
+        height: calc(100vh - 180px);
+      }
+      .ym-panel { width: 200px; }
+      .ym-block-btn {
+        padding: 11px 12px;
+        font-size: 12.5px;
+        min-height: 40px;
+      }
+      .ym-canvas-body {
+        padding: 16px;
+        gap: 24px 28px;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x pan-y pinch-zoom;
+      }
+      #myard-svg {
+        touch-action: pan-x pan-y pinch-zoom;
+        -webkit-overflow-scrolling: touch;
+      }
     }
 
-    /* iPad portrait (834px): thu gọn thêm */
+    /* iPad portrait (834px, ≤900px): stack layout */
     @media (pointer: coarse) and (max-width: 900px) {
       .g3, .g2 { grid-template-columns: 1fr 1fr; gap: 9px; }
       .tab-bar { flex-wrap: wrap; gap: 4px; }
-      /* Modal full-width hơn trên portrait */
       .mf { width: 95vw !important; max-width: 95vw !important; }
+
+      /* Yard map: stack panel lên top, canvas bên dưới */
+      .ym-layout {
+        flex-direction: column;
+        height: auto;
+      }
+      .ym-panel {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 8px;
+      }
+      .ym-panel-card {
+        flex: 0 0 auto;
+        min-width: 220px;
+      }
+      .ym-panel-card.scroll {
+        max-height: 180px;
+        flex: 0 0 auto;
+        min-width: 260px;
+      }
+      .ym-canvas-wrap {
+        min-height: 60vh;
+      }
     }
 
-    /* SortableJS ghost/chosen styles */
+    /* ===== SortableJS ghost/chosen — tối ưu cho mượt ===== */
     .kcard.sortable-ghost {
-      opacity: 0.4;
+      opacity: 0.35;
       background: var(--cyan-dim) !important;
-      border-style: dashed !important;
+      border: 2px dashed rgba(0,212,255,.4) !important;
     }
     .kcard.sortable-chosen {
-      box-shadow: 0 8px 24px rgba(0,0,0,.25);
-      transform: scale(1.03);
+      box-shadow: 0 10px 28px rgba(0,0,0,.3);
       z-index: 999;
+      /* KHÔNG set transform scale ở đây — sortable-drag đã xử lý */
     }
     .kcard.sortable-drag {
-      opacity: 0.95;
+      opacity: 0.95 !important;
       cursor: grabbing;
+      transition: none !important;
+      will-change: transform;
+      pointer-events: none;
     }
-    .kb-list.kb-drop-active {
-      background: rgba(0, 212, 255, .06);
-      outline: 2px dashed rgba(0, 212, 255, .35);
-      outline-offset: -4px;
-      border-radius: 8px;
+    /* Fallback clone của Sortable (iOS/touch) */
+    .sortable-fallback {
+      opacity: 1 !important;
+      box-shadow: 0 14px 36px rgba(0,0,0,.35) !important;
+      transform: rotate(2deg) scale(1.02);
+      transition: none !important;
     }
 
     /* ── PERMISSIONS CHECKBOXES ── */
@@ -2254,6 +2307,12 @@
                 <span id="ym-canvas-title">Chọn khu vực để xem sơ đồ 3D</span>
                 <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
                   <div id="ym-cap-info" style="font-size:10px;color:var(--text3)"></div>
+                  <div class="ym-zoom-ctrl" style="display:flex;gap:2px;align-items:center">
+                    <button class="btn btn-ghost" title="Thu nhỏ" style="padding:3px 9px;font-size:13px;min-width:32px" onclick="ymZoom(-0.15)">−</button>
+                    <span id="ym-zoom-level" style="font-size:10px;color:var(--text3);min-width:38px;text-align:center">100%</span>
+                    <button class="btn btn-ghost" title="Phóng to" style="padding:3px 9px;font-size:13px;min-width:32px" onclick="ymZoom(0.15)">+</button>
+                    <button class="btn btn-ghost" title="Reset" style="padding:3px 8px;font-size:10px" onclick="ymZoom(0, true)">⊙</button>
+                  </div>
                   <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="openYardConfig()">⚙ Dung tích</button>
                   <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="ymRefresh()">⟳ Làm mới</button>
                 </div>
@@ -4129,6 +4188,46 @@
       }
 
       openOv('myard');
+      // Attach pinch-zoom cho SVG modal
+      setTimeout(attachMyardPinch, 80);
+    }
+
+    // Pinch-zoom cho modal myard SVG
+    function attachMyardPinch() {
+      const body = document.getElementById('myard-svg');
+      if (!body) return;
+      const svg = body.querySelector('svg');
+      if (!svg) return;
+      // Reset
+      svg.style.transformOrigin = 'center top';
+      svg.style.transform = 'scale(1)';
+      let scale = 1, startDist = 0, startScale = 1, pinching = false;
+      if (body._pinchAttached) return;
+      body._pinchAttached = true;
+      body.addEventListener('touchstart', e => {
+        if (e.touches.length === 2) {
+          const [a, b] = e.touches;
+          startDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          startScale = scale;
+          pinching = true;
+        }
+      }, { passive: true });
+      body.addEventListener('touchmove', e => {
+        if (pinching && e.touches.length === 2) {
+          const [a, b] = e.touches;
+          const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          scale = Math.max(0.6, Math.min(3, startScale * (d / startDist)));
+          const currentSvg = body.querySelector('svg');
+          if (currentSvg) {
+            currentSvg.style.transformOrigin = 'center top';
+            currentSvg.style.transform = `scale(${scale})`;
+          }
+          e.preventDefault();
+        }
+      }, { passive: false });
+      body.addEventListener('touchend', e => {
+        if (e.touches.length < 2) pinching = false;
+      }, { passive: true });
     }
 
     function ymGoToFullView() {
@@ -4263,20 +4362,34 @@
         if (list._sortable) { list._sortable.destroy(); list._sortable = null; }
         list._sortable = Sortable.create(list, {
           group: 'kanban',
-          animation: 180,
-          forceFallback: isTouch,
+          animation: 150,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          forceFallback: isTouch,          // iOS Safari HTML5 drag broken → fallback
           fallbackOnBody: true,
-          fallbackTolerance: 5,
-          delay: isTouch ? 180 : 0,
+          fallbackClass: 'sortable-fallback',
+          fallbackTolerance: 3,
+          delay: isTouch ? 120 : 0,        // giảm từ 180 → 120ms cho mượt
           delayOnTouchOnly: true,
-          touchStartThreshold: 5,
+          touchStartThreshold: 3,
           draggable: '.kcard',
           ghostClass: 'sortable-ghost',
           chosenClass: 'sortable-chosen',
           dragClass: 'sortable-drag',
-          onStart: () => document.body.style.overflow = 'hidden',
+          scroll: true,                    // auto scroll cột khi card đến edge
+          scrollSensitivity: 80,
+          scrollSpeed: 16,
+          bubbleScroll: true,
+          emptyInsertThreshold: 12,
+          onChoose: (evt) => {
+            // Haptic feedback trên iOS nếu có
+            if (window.navigator && navigator.vibrate) navigator.vibrate(8);
+            evt.item.style.willChange = 'transform';
+          },
+          onUnchoose: (evt) => { evt.item.style.willChange = ''; },
+          onStart: () => { document.body.classList.add('kb-dragging'); },
           onEnd: async (evt) => {
-            document.body.style.overflow = '';
+            document.body.classList.remove('kb-dragging');
+            evt.item.style.willChange = '';
             const toId = evt.to && evt.to.id;
             if (!toId || !toId.startsWith('kcol-')) { renderKanban(); return; }
             const targetStatus = parseInt(toId.replace('kcol-', ''));
@@ -7143,6 +7256,59 @@
       renderYardMap();
       toast('Đã cập nhật sơ đồ bãi', 'ok');
     }
+
+    // ───── YARD MAP ZOOM (buttons + pinch) ─────
+    let ymScale = 1;
+    function ymZoom(delta, reset) {
+      const body = document.getElementById('ym-canvas-body');
+      if (!body) return;
+      ymScale = reset ? 1 : Math.max(0.5, Math.min(2.5, ymScale + delta));
+      // Scale all block stacks (direct children, bỏ qua empty state)
+      Array.from(body.children).forEach(child => {
+        if (child.classList && child.classList.contains('ym-empty-state')) return;
+        child.style.transform = `scale(${ymScale})`;
+        child.style.transformOrigin = 'top left';
+        child.style.transition = 'transform 0.18s cubic-bezier(0.22,1,0.36,1)';
+      });
+      const lv = document.getElementById('ym-zoom-level');
+      if (lv) lv.textContent = Math.round(ymScale * 100) + '%';
+    }
+
+    // Pinch-zoom 2 ngón cho iPad trên canvas body
+    (function initYmPinch() {
+      const body = document.getElementById('ym-canvas-body');
+      if (!body || body._pinchInit) return;
+      body._pinchInit = true;
+      let startDist = 0, startScale = 1, pinching = false;
+      body.addEventListener('touchstart', e => {
+        if (e.touches.length === 2) {
+          const [a, b] = e.touches;
+          startDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          startScale = ymScale;
+          pinching = true;
+        }
+      }, { passive: true });
+      body.addEventListener('touchmove', e => {
+        if (pinching && e.touches.length === 2) {
+          const [a, b] = e.touches;
+          const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          const ratio = d / startDist;
+          ymScale = Math.max(0.5, Math.min(2.5, startScale * ratio));
+          Array.from(body.children).forEach(child => {
+            if (child.classList && child.classList.contains('ym-empty-state')) return;
+            child.style.transform = `scale(${ymScale})`;
+            child.style.transformOrigin = 'top left';
+            child.style.transition = 'none';
+          });
+          const lv = document.getElementById('ym-zoom-level');
+          if (lv) lv.textContent = Math.round(ymScale * 100) + '%';
+          e.preventDefault();
+        }
+      }, { passive: false });
+      body.addEventListener('touchend', e => {
+        if (e.touches.length < 2) pinching = false;
+      }, { passive: true });
+    })();
 
     function ymSelectBlock(block) {
       ymCurrentBlock = block;
