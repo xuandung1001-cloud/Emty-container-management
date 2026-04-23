@@ -2760,6 +2760,7 @@
               <option value="Sáng">☀ Sáng (8h-20h)</option>
               <option value="Đêm">🌙 Đêm (20h-8h)</option>
             </select>
+            <div id="ho-ca-hint" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
           </div>
           <div class="fg"><label class="fl">Ngày</label><input class="fi" id="ho-ngay" type="date"></div>
           <div class="fg"><label class="fl">NV Nhận (ca kế tiếp) *</label>
@@ -5241,6 +5242,18 @@
       return (h >= 8 && h < 20) ? 'Sáng' : 'Đêm';
     }
 
+    // Default ca cho modal Bàn giao — ưu tiên ca VỪA KẾT THÚC khi đang trong giờ giao ca.
+    // 07:00-09:00: giờ giao ca Đêm → mặc định 'Đêm' (ca vừa xong)
+    // 19:00-21:00: giờ giao ca Sáng → mặc định 'Sáng' (ca vừa xong)
+    // Ngoài khoảng đó → dùng ca hiện tại (user muốn preview cuối ca sắp kết thúc)
+    function getHandoverDefaultCa() {
+      const now = new Date();
+      const totalMin = now.getHours() * 60 + now.getMinutes();
+      if (totalMin >= 7 * 60 && totalMin <= 9 * 60) return 'Đêm';
+      if (totalMin >= 19 * 60 && totalMin <= 21 * 60) return 'Sáng';
+      return getCurrentCa();
+    }
+
     // Parse handover record (h.ngay = "DD/MM/YYYY", h.ca = "Sáng"|"Đêm") → khung giờ thực tế của ca
     // Ca Sáng: 08:00 → 20:00 cùng ngày
     // Ca Đêm: 20:00 hôm trước → 08:00 ngày h.ngay
@@ -5936,7 +5949,7 @@
         toast('⏳ Đang tải dữ liệu seal...', 'ok');
         await loadSealUsage();
       }
-      const ca = getCurrentCa();
+      const ca = getHandoverDefaultCa();
       _v('ho-ca', ca);
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
@@ -5969,6 +5982,15 @@
       const active = activeList[0] || null;          // newest (cho is_active flag)
       const boxNumbers = new Set(Object.keys(activityMap));
       activeList.forEach(b => boxNumbers.add(b.box_number));
+
+      // Hiện hint khung giờ ca
+      const hintEl = document.getElementById('ho-ca-hint');
+      if (hintEl) {
+        const r = getShiftRange(ca);
+        const pd = n => String(n).padStart(2, '0');
+        const fmt = d => `${pd(d.getDate())}/${pd(d.getMonth()+1)} ${pd(d.getHours())}:${pd(d.getMinutes())}`;
+        hintEl.innerHTML = `📅 Khung giờ: <b>${fmt(r.start)}</b> → <b>${fmt(r.end)}</b>`;
+      }
 
       if (!boxNumbers.size) {
         formEl.style.display = 'none';
