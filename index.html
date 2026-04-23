@@ -6204,7 +6204,9 @@
     }
 
     // Chain-based stats cho MODAL (đang nhập handover mới của ca hiện tại)
-    //   - tonDauCa     = previous_handover.seal_con_lai (nếu có), else box.so_seal
+    //   - tonDauCa     = seal_con_lai của handover GẦN NHẤT trước giờ hiện tại (bất kể ca nào)
+    //     Lý do dùng NOW thay vì shift_start: handover được lưu SAU shift boundary là phổ biến
+    //     (VD: Đêm ca kết thúc 8h, user lưu handover lúc 8:11 — vẫn là "ca trước").
     //   - conLaiAtEnd  = total - usedTotal (remaining hiện tại)
     //   - capTrongCa   = tonDauCa - conLaiAtEnd (khớp với thực tế user đã cấp)
     function computeShiftStatsForModal(boxNumber, ca) {
@@ -6212,8 +6214,7 @@
       const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === bn);
       if (!box) return null;
       const total = Number(box.so_seal) || 0;
-      const range = getShiftRange(ca);
-      const prev = findPrevHandover(bn, range.start);
+      const prev = findPrevHandover(bn, new Date());
       const tonDauCa = prev ? (Number(prev.seal_con_lai) || 0) : total;
       const conLaiAtEnd = total - sealUsedCount(box);
       const capTrongCa = Math.max(0, tonDauCa - conLaiAtEnd);
