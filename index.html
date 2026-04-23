@@ -5673,27 +5673,15 @@
       const usageLoaded = !!S.sealUsage;
 
       allHO.forEach(h => {
-        const k = String(h.box_number || '').trim();
-        const range = _getShiftRangeFromHandover(h);
-        // Ưu tiên dùng computeShiftStats (chính xác từ seal_usage với khung giờ chặt).
-        // Fallback nếu chưa load usage → dùng giá trị lưu trong sheet (ton_dau_ca, cap_trong_ca).
-        if (usageLoaded && range) {
-          const stats = computeShiftStats(k, range);
-          if (stats) {
-            h._ton_ca_truoc  = stats.tonDauCa;
-            h._cap_trong_ca  = stats.capTrongCa;
-            h._con_lai_ca    = stats.conLaiAtEnd;
-          } else {
-            h._ton_ca_truoc = Number(h.ton_dau_ca) || null;
-            h._cap_trong_ca = Number(h.cap_trong_ca) || null;
-            h._con_lai_ca   = Number(h.seal_con_lai) || 0;
-          }
+        // Chain-based: tồn đầu ca = seal_con_lai của handover trước của cùng thùng.
+        const stats = computeShiftStatsForHistory(h);
+        if (stats) {
+          h._ton_ca_truoc = stats.tonDauCa;
+          h._cap_trong_ca = stats.capTrongCa;
+          h._con_lai_ca   = stats.conLaiAtEnd;
         } else {
-          // Sheet fallback — dùng giá trị đã lưu
-          const tonSheet = Number(h.ton_dau_ca);
-          const capSheet = Number(h.cap_trong_ca);
-          h._ton_ca_truoc = (h.ton_dau_ca !== '' && !isNaN(tonSheet)) ? tonSheet : null;
-          h._cap_trong_ca = (h.cap_trong_ca !== '' && !isNaN(capSheet)) ? capSheet : null;
+          h._ton_ca_truoc = Number(h.ton_dau_ca) || null;
+          h._cap_trong_ca = Number(h.cap_trong_ca) || null;
           h._con_lai_ca   = Number(h.seal_con_lai) || 0;
         }
       });
@@ -6199,31 +6187,54 @@
       return { start, end };
     }
 
-    // Helper chung: tính {tonDauCa, capTrongCa, conLaiAtEnd} cho 1 thùng trong 1 ca.
-    // Mọi số đều tính từ seal_usage theo mốc thời gian CHẶT — không dựa seal_con_lai.
-    // - tonDauCa      = tổng seal - (seal đã cấp TRƯỚC range.start)
-    // - capTrongCa    = seal cấp trong [range.start, range.end]
-    // - conLaiAtEnd   = tổng seal - (seal đã cấp ĐẾN range.end)
-    function computeShiftStats(boxNumber, range) {
-      const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === String(boxNumber).trim());
+    // Tìm handover TRƯỚC của cùng 1 thùng (tham chiếu mốc thời gian beforeDate).
+    // Trả về record gần nhất có thời gian < beforeDate.
+    function findPrevHandover(boxNumber, beforeDate) {
+      const bn = String(boxNumber || '').trim();
+      if (!bn || !beforeDate) return null;
+      let best = null, bestT = null;
+      (S.sealHandovers || []).forEach(h => {
+        if (String(h.box_number || '').trim() !== bn) return;
+        const t = parseTimeOut(h.thoi_gian) || parseTimeOut(h.created_at);
+        if (!t) return;
+        if (t >= beforeDate) return;
+        if (!bestT || t > bestT) { best = h; bestT = t; }
+      });
+      return best;
+    }
+
+    // Chain-based stats cho MODAL (đang nhập handover mới của ca hiện tại)
+    //   - tonDauCa     = previous_handover.seal_con_lai (nếu có), else box.so_seal
+    //   - conLaiAtEnd  = total - usedTotal (remaining hiện tại)
+    //   - capTrongCa   = tonDauCa - conLaiAtEnd (khớp với thực tế user đã cấp)
+    function computeShiftStatsForModal(boxNumber, ca) {
+      const bn = String(boxNumber || '').trim();
+      const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === bn);
       if (!box) return null;
       const total = Number(box.so_seal) || 0;
-      let usedBefore = 0, usedIn = 0, usedUpToEnd = 0;
-      const usage = S.sealUsage || [];
-      for (const u of usage) {
-        if (String(u.box_number || '').trim() !== String(boxNumber).trim()) continue;
-        const t = parseTimeOut(u.time_out);
-        if (!t) continue;
-        if (t < range.start) usedBefore++;
-        if (t >= range.start && t <= range.end) usedIn++;
-        if (t <= range.end) usedUpToEnd++;
-      }
-      return {
-        total,
-        tonDauCa: total - usedBefore,
-        capTrongCa: usedIn,
-        conLaiAtEnd: total - usedUpToEnd
-      };
+      const range = getShiftRange(ca);
+      const prev = findPrevHandover(bn, range.start);
+      const tonDauCa = prev ? (Number(prev.seal_con_lai) || 0) : total;
+      const conLaiAtEnd = total - sealUsedCount(box);
+      const capTrongCa = Math.max(0, tonDauCa - conLaiAtEnd);
+      return { total, tonDauCa, capTrongCa, conLaiAtEnd };
+    }
+
+    // Chain-based stats cho HISTORY (bàn giao đã lưu)
+    //   - tonDauCa     = previous_handover.seal_con_lai trước handover này
+    //   - conLaiAtEnd  = seal_con_lai đã lưu của handover này
+    //   - capTrongCa   = tonDauCa - conLaiAtEnd
+    function computeShiftStatsForHistory(h) {
+      const bn = String(h.box_number || '').trim();
+      const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === bn);
+      if (!box) return null;
+      const total = Number(box.so_seal) || 0;
+      const hTime = parseTimeOut(h.thoi_gian) || parseTimeOut(h.created_at);
+      const prev = hTime ? findPrevHandover(bn, hTime) : null;
+      const tonDauCa = prev ? (Number(prev.seal_con_lai) || 0) : total;
+      const conLaiAtEnd = Number(h.seal_con_lai) || 0;
+      const capTrongCa = Math.max(0, tonDauCa - conLaiAtEnd);
+      return { total, tonDauCa, capTrongCa, conLaiAtEnd };
     }
 
     // Parse "DD/MM/YYYY HH:MM:SS" hoặc "DD/MM/YYYY HH:MM" → Date
@@ -6312,17 +6323,16 @@
 
       const activeBoxSet = new Set(activeList.map(b => b.box_number));
       const rows = [];
-      const range = getShiftRange(ca);
       boxNumbers.forEach(bn => {
         const box = (S.sealBoxes || []).find(b => b.box_number === bn);
         if (!box) return;
-        // Tính bằng computeShiftStats theo khung giờ chặt của ca → chính xác kể cả khi
-        // user lưu handover sau/trước giờ kết thúc ca, và không phụ thuộc seal_con_lai hiện tại.
-        const stats = computeShiftStats(bn, range);
+        // Chain-based: tồn đầu ca = handover trước của cùng thùng đã giao lại bao nhiêu.
+        // Không phụ thuộc seal_usage (thường bị lag do import trễ từ báo cáo ca).
+        const stats = computeShiftStatsForModal(bn, ca);
         const total = stats ? stats.total : (Number(box.so_seal) || 0);
-        const tonDauCa   = stats ? stats.tonDauCa    : total;
-        const usedInShift = stats ? stats.capTrongCa : (activityMap[bn] || 0);
-        const conLai     = stats ? stats.conLaiAtEnd : (total - sealUsedCount(box));
+        const tonDauCa    = stats ? stats.tonDauCa    : total;
+        const usedInShift = stats ? stats.capTrongCa  : 0;
+        const conLai      = stats ? stats.conLaiAtEnd : (total - sealUsedCount(box));
         const exhausted = conLai <= 0;
         rows.push({
           seq: box.seq,
