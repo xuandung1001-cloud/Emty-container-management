@@ -5674,33 +5674,27 @@
 
       allHO.forEach(h => {
         const k = String(h.box_number || '').trim();
-        const conLai = Number(h.seal_con_lai) || 0;
         const range = _getShiftRangeFromHandover(h);
-        let actualCap = null;
+        // Ưu tiên dùng computeShiftStats (chính xác từ seal_usage với khung giờ chặt).
+        // Fallback nếu chưa load usage → dùng giá trị lưu trong sheet (ton_dau_ca, cap_trong_ca).
         if (usageLoaded && range) {
-          actualCap = 0;
-          for (const u of S.sealUsage) {
-            if (String(u.box_number || '').trim() !== k) continue;
-            const t = parseTimeOut(u.time_out);
-            if (!t) continue;
-            if (t >= range.start && t <= range.end) actualCap++;
-          }
-        }
-        if (actualCap !== null) {
-          h._cap_trong_ca = actualCap;
-          h._ton_ca_truoc = conLai + actualCap;
-        } else {
-          // Fallback math cũ
-          const list = byBox[k] || [];
-          const idx = list.indexOf(h);
-          const prev = (idx >= 0 && idx + 1 < list.length) ? list[idx + 1] : null;
-          if (prev) {
-            h._ton_ca_truoc = Number(prev.seal_con_lai) || 0;
+          const stats = computeShiftStats(k, range);
+          if (stats) {
+            h._ton_ca_truoc  = stats.tonDauCa;
+            h._cap_trong_ca  = stats.capTrongCa;
+            h._con_lai_ca    = stats.conLaiAtEnd;
           } else {
-            const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === k);
-            h._ton_ca_truoc = box ? (Number(box.so_seal) || 0) : null;
+            h._ton_ca_truoc = Number(h.ton_dau_ca) || null;
+            h._cap_trong_ca = Number(h.cap_trong_ca) || null;
+            h._con_lai_ca   = Number(h.seal_con_lai) || 0;
           }
-          h._cap_trong_ca = (h._ton_ca_truoc !== null) ? (h._ton_ca_truoc - conLai) : null;
+        } else {
+          // Sheet fallback — dùng giá trị đã lưu
+          const tonSheet = Number(h.ton_dau_ca);
+          const capSheet = Number(h.cap_trong_ca);
+          h._ton_ca_truoc = (h.ton_dau_ca !== '' && !isNaN(tonSheet)) ? tonSheet : null;
+          h._cap_trong_ca = (h.cap_trong_ca !== '' && !isNaN(capSheet)) ? capSheet : null;
+          h._con_lai_ca   = Number(h.seal_con_lai) || 0;
         }
       });
 
@@ -5725,6 +5719,7 @@
             const caIcon = h.ca === 'Sáng' ? '☀' : '🌙';
             const tonStr = h._ton_ca_truoc !== null ? fmt(h._ton_ca_truoc) : '—';
             const capStr = h._cap_trong_ca !== null ? fmt(h._cap_trong_ca) : '—';
+            const conStr = h._con_lai_ca !== null && h._con_lai_ca !== undefined ? fmt(h._con_lai_ca) : fmt(h.seal_con_lai);
             const capColor = (h._cap_trong_ca > 50) ? 'var(--red)' : (h._cap_trong_ca > 20) ? 'var(--orange)' : 'var(--text2)';
             return `<tr style="border-top:1px solid rgba(0,0,0,.04)">
               <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${esc(h.thoi_gian)}</td>
@@ -5733,7 +5728,7 @@
               <td style="padding:4px 6px;color:var(--text2);font-family:monospace">${esc(h.box_number)}</td>
               <td style="padding:4px 6px;text-align:right;color:var(--text3)">${tonStr}</td>
               <td style="padding:4px 6px;text-align:right;color:${capColor};font-weight:600">${capStr}</td>
-              <td style="padding:4px 6px;text-align:right;color:var(--green);font-weight:700">${fmt(h.seal_con_lai)}</td>
+              <td style="padding:4px 6px;text-align:right;color:var(--green);font-weight:700">${conStr}</td>
             </tr>`;
           }).join('')}
           </tbody>
@@ -6180,25 +6175,55 @@
 
     // ── Bàn giao ca ──
     // Tính khoảng thời gian của ca hiện tại
-    function getShiftRange(ca) {
-      const now = new Date();
+    // Trả về khung giờ chặt của ca (dùng cả khi ca đã kết thúc).
+    // Sáng = 8h-20h cùng ngày. Đêm = 20h ngày trước → 8h ngày sau (chọn dải chứa `refDate`).
+    function getShiftRange(ca, refDate) {
+      const now = refDate || new Date();
       const h = now.getHours();
-      let start, end = now;
+      let start, end;
       if (ca === 'Sáng') {
-        // Ca sáng: 8h hôm nay → 20h hôm nay (hoặc now nếu chưa 20h)
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+        end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 0, 0);
       } else {
-        // Ca đêm: phụ thuộc giờ hiện tại
+        // Đêm: dải chứa refDate
         if (h >= 20) {
-          // Đang trong buổi tối sau 20h → ca đêm bắt đầu hôm nay
+          // 20h-23:59 → ca đêm bắt đầu hôm nay
           start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 0, 0);
+          end   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0, 0);
         } else {
-          // 0h-20h → ca đêm là từ 20h hôm qua
-          const y = new Date(now); y.setDate(y.getDate() - 1);
-          start = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 20, 0, 0);
+          // 0h-19:59 → ca đêm là từ 20h hôm qua
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 20, 0, 0);
+          end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
         }
       }
       return { start, end };
+    }
+
+    // Helper chung: tính {tonDauCa, capTrongCa, conLaiAtEnd} cho 1 thùng trong 1 ca.
+    // Mọi số đều tính từ seal_usage theo mốc thời gian CHẶT — không dựa seal_con_lai.
+    // - tonDauCa      = tổng seal - (seal đã cấp TRƯỚC range.start)
+    // - capTrongCa    = seal cấp trong [range.start, range.end]
+    // - conLaiAtEnd   = tổng seal - (seal đã cấp ĐẾN range.end)
+    function computeShiftStats(boxNumber, range) {
+      const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === String(boxNumber).trim());
+      if (!box) return null;
+      const total = Number(box.so_seal) || 0;
+      let usedBefore = 0, usedIn = 0, usedUpToEnd = 0;
+      const usage = S.sealUsage || [];
+      for (const u of usage) {
+        if (String(u.box_number || '').trim() !== String(boxNumber).trim()) continue;
+        const t = parseTimeOut(u.time_out);
+        if (!t) continue;
+        if (t < range.start) usedBefore++;
+        if (t >= range.start && t <= range.end) usedIn++;
+        if (t <= range.end) usedUpToEnd++;
+      }
+      return {
+        total,
+        tonDauCa: total - usedBefore,
+        capTrongCa: usedIn,
+        conLaiAtEnd: total - usedUpToEnd
+      };
     }
 
     // Parse "DD/MM/YYYY HH:MM:SS" hoặc "DD/MM/YYYY HH:MM" → Date
@@ -6287,14 +6312,17 @@
 
       const activeBoxSet = new Set(activeList.map(b => b.box_number));
       const rows = [];
+      const range = getShiftRange(ca);
       boxNumbers.forEach(bn => {
         const box = (S.sealBoxes || []).find(b => b.box_number === bn);
         if (!box) return;
-        const total = Number(box.so_seal) || 0;
-        const usedTotal = sealUsedCount(box);
-        const usedInShift = activityMap[bn] || 0;
-        const conLai = total - usedTotal;
-        const tonDauCa = conLai + usedInShift; // seal còn lại đầu ca = còn lại hiện tại + đã dùng trong ca
+        // Tính bằng computeShiftStats theo khung giờ chặt của ca → chính xác kể cả khi
+        // user lưu handover sau/trước giờ kết thúc ca, và không phụ thuộc seal_con_lai hiện tại.
+        const stats = computeShiftStats(bn, range);
+        const total = stats ? stats.total : (Number(box.so_seal) || 0);
+        const tonDauCa   = stats ? stats.tonDauCa    : total;
+        const usedInShift = stats ? stats.capTrongCa : (activityMap[bn] || 0);
+        const conLai     = stats ? stats.conLaiAtEnd : (total - sealUsedCount(box));
         const exhausted = conLai <= 0;
         rows.push({
           seq: box.seq,
@@ -6302,7 +6330,6 @@
           serial_from: box.serial_from,
           serial_to: box.serial_to,
           so_seal: total,
-          used_total: usedTotal,
           used_in_shift: usedInShift,
           ton_dau_ca: tonDauCa,
           con_lai: conLai,
