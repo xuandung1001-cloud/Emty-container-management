@@ -5208,6 +5208,10 @@
       renderSealDiscrepancy();
       updateSealDiscBadge();
       if (S.sealTab === 'usage' && S.sealUsage) renderSealUsage();
+      // Auto load sealUsage để Lịch sử bàn giao tính đúng "Cấp trong ca" theo khung giờ ca
+      if (!S.sealUsage && (S.sealHandovers || []).length) {
+        loadSealUsage().then(function() { renderSealHandoverOverview(); });
+      }
     }
 
     // ── Helper: tìm TẤT CẢ active boxes (đã khui + còn seal + không DAMAGED) ──
@@ -5235,6 +5239,20 @@
     function getCurrentCa() {
       const h = new Date().getHours();
       return (h >= 8 && h < 20) ? 'Sáng' : 'Đêm';
+    }
+
+    // Parse handover record (h.ngay = "DD/MM/YYYY", h.ca = "Sáng"|"Đêm") → khung giờ thực tế của ca
+    // Ca Sáng: 08:00 → 20:00 cùng ngày
+    // Ca Đêm: 20:00 hôm trước → 08:00 ngày h.ngay
+    function _getShiftRangeFromHandover(h) {
+      const m = String(h.ngay || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (!m) return null;
+      const d = parseInt(m[1]), mo = parseInt(m[2]) - 1, y = parseInt(m[3]);
+      if (h.ca === 'Sáng') {
+        return { start: new Date(y, mo, d, 8, 0, 0), end: new Date(y, mo, d, 20, 0, 0) };
+      }
+      // Ca Đêm: 20h hôm trước → 8h ngày h.ngay
+      return { start: new Date(y, mo, d - 1, 20, 0, 0), end: new Date(y, mo, d, 8, 0, 0) };
     }
 
     // ── Render section Bàn giao ca trên Tab Tổng quan ──
@@ -5345,31 +5363,49 @@
       `;
 
       // ── Lịch sử bàn giao ──
-      // S.sealHandovers sort desc theo seq sẵn. Tính tồn ca trước + cấp trong ca dựa trên bàn giao kế trước CÙNG BOX.
-      // Xây 1 map: với mỗi handover (desc), tìm kế trước cùng box → seal_con_lai của nó = tồn ca trước.
+      // CẤP TRONG CA: đếm seal_usage có time_out trong khung giờ ca của bàn giao đó.
+      // TỒN CA TRƯỚC: = seal_con_lai + cấp trong ca (chính xác cho mọi handover).
+      // Fallback: nếu chưa load sealUsage → dùng math cũ (prev.seal_con_lai hoặc box.so_seal).
       const allHO = (S.sealHandovers || []).slice(); // desc by seq
-      // Pre-index bàn giao theo box_number + seq → để tìm prev nhanh
       const byBox = {};
       allHO.forEach(h => {
         const k = String(h.box_number || '').trim();
         if (!byBox[k]) byBox[k] = [];
         byBox[k].push(h);
       });
-      // Mỗi list byBox[k] đã desc. Với handover ở idx i trong list → prev = list[i+1]
+
+      const usageLoaded = !!S.sealUsage;
+
       allHO.forEach(h => {
         const k = String(h.box_number || '').trim();
-        const list = byBox[k] || [];
-        const idx = list.indexOf(h);
-        const prev = (idx >= 0 && idx + 1 < list.length) ? list[idx + 1] : null;
-        if (prev) {
-          h._ton_ca_truoc = Number(prev.seal_con_lai) || 0;
-        } else {
-          // Bàn giao đầu tiên của box này → tồn ca trước = tổng seal của box
-          const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === k);
-          h._ton_ca_truoc = box ? (Number(box.so_seal) || 0) : null;
-        }
         const conLai = Number(h.seal_con_lai) || 0;
-        h._cap_trong_ca = (h._ton_ca_truoc !== null) ? (h._ton_ca_truoc - conLai) : null;
+        const range = _getShiftRangeFromHandover(h);
+        let actualCap = null;
+        if (usageLoaded && range) {
+          actualCap = 0;
+          for (const u of S.sealUsage) {
+            if (String(u.box_number || '').trim() !== k) continue;
+            const t = parseTimeOut(u.time_out);
+            if (!t) continue;
+            if (t >= range.start && t <= range.end) actualCap++;
+          }
+        }
+        if (actualCap !== null) {
+          h._cap_trong_ca = actualCap;
+          h._ton_ca_truoc = conLai + actualCap;
+        } else {
+          // Fallback math cũ
+          const list = byBox[k] || [];
+          const idx = list.indexOf(h);
+          const prev = (idx >= 0 && idx + 1 < list.length) ? list[idx + 1] : null;
+          if (prev) {
+            h._ton_ca_truoc = Number(prev.seal_con_lai) || 0;
+          } else {
+            const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === k);
+            h._ton_ca_truoc = box ? (Number(box.so_seal) || 0) : null;
+          }
+          h._cap_trong_ca = (h._ton_ca_truoc !== null) ? (h._ton_ca_truoc - conLai) : null;
+        }
       });
 
       const recent = allHO.slice(0, 10);
@@ -5929,9 +5965,10 @@
       const btnSave = document.getElementById('btn-ho-save');
 
       const activityMap = getShiftBoxActivity(ca);   // { box_number: used_in_shift }
-      const active = getActiveBox();
+      const activeList = getActiveBoxes();           // tất cả thùng đang active
+      const active = activeList[0] || null;          // newest (cho is_active flag)
       const boxNumbers = new Set(Object.keys(activityMap));
-      if (active) boxNumbers.add(active.box_number);
+      activeList.forEach(b => boxNumbers.add(b.box_number));
 
       if (!boxNumbers.size) {
         formEl.style.display = 'none';
@@ -5943,6 +5980,7 @@
       noActiveEl.style.display = 'none';
       btnSave.style.display = '';
 
+      const activeBoxSet = new Set(activeList.map(b => b.box_number));
       const rows = [];
       boxNumbers.forEach(bn => {
         const box = (S.sealBoxes || []).find(b => b.box_number === bn);
@@ -5964,7 +6002,7 @@
           ton_dau_ca: tonDauCa,
           con_lai: conLai,
           exhausted: exhausted,
-          is_active: active && active.box_number === bn
+          is_active: activeBoxSet.has(bn)
         });
       });
       // Sort: thùng đã hết trước (để user thấy cần ghi nhận), active cuối
