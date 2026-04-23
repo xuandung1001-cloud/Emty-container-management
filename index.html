@@ -2760,7 +2760,7 @@
               <option value="Sáng">☀ Sáng (8h-20h)</option>
               <option value="Đêm">🌙 Đêm (20h-8h)</option>
             </select>
-            <div id="ho-ca-hint" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+            <div id="ho-ca-hint" style="font-size:10px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:visible"></div>
           </div>
           <div class="fg"><label class="fl">Ngày</label><input class="fi" id="ho-ngay" type="date"></div>
           <div class="fg"><label class="fl">NV Nhận (ca kế tiếp) *</label>
@@ -5988,8 +5988,8 @@
       if (hintEl) {
         const r = getShiftRange(ca);
         const pd = n => String(n).padStart(2, '0');
-        const fmt = d => `${pd(d.getDate())}/${pd(d.getMonth()+1)} ${pd(d.getHours())}:${pd(d.getMinutes())}`;
-        hintEl.innerHTML = `📅 Khung giờ: <b>${fmt(r.start)}</b> → <b>${fmt(r.end)}</b>`;
+        const fmt = d => `${pd(d.getDate())}/${pd(d.getMonth()+1)} ${pd(d.getHours())}h`;
+        hintEl.innerHTML = `📅 <b>${fmt(r.start)}</b> → <b>${fmt(r.end)}</b>`;
       }
 
       if (!boxNumbers.size) {
