@@ -1669,7 +1669,6 @@
       cursor: grabbing;
       transition: none !important;
       will-change: transform;
-      pointer-events: none;
     }
     /* Fallback clone của Sortable (iOS/touch) */
     .sortable-fallback {
@@ -4044,7 +4043,7 @@
       const taskColor = t.phan_loai === 'Cấp rỗng' ? '#3b82f6' : t.phan_loai === 'Dọn bãi' ? '#10b981' : t.phan_loai === 'Sửa chữa' ? '#f97316' : '#8b5cf6';
       const taskBg    = t.phan_loai === 'Cấp rỗng' ? 'rgba(59,130,246,.06)' : t.phan_loai === 'Dọn bãi' ? 'rgba(16,185,129,.06)' : t.phan_loai === 'Sửa chữa' ? 'rgba(249,115,22,.06)' : 'rgba(139,92,246,.06)';
       return `
-    <div class="kcard ${hasFlag ? 'has-flag' : ''}" style="border-left:3px solid ${taskColor}" data-type="task" data-seq="${t.seq}">
+    <div class="kcard ${hasFlag ? 'has-flag' : ''}" style="border-left:3px solid ${taskColor}" draggable="true" data-type="task" data-seq="${t.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)">
       <div class="kc-top">
         <div class="kc-title" style="color:var(--text);font-size:12px;font-weight:700">${icon} ${esc(t.tieu_de)}</div>
         <div class="kc-vno" style="background:${taskBg};border:1px solid ${taskColor}40;color:${taskColor};font-size:8px;font-weight:700">${esc(t.phan_loai)}</div>
@@ -4275,7 +4274,7 @@
       const stBg    = st === 0 ? 'rgba(245,158,11,.06)' : st === 1 ? 'rgba(59,130,246,.06)' : st === 2 ? 'rgba(249,115,22,.06)' : 'rgba(16,185,129,.06)';
 
       return `
-    <div class="kcard ${hasFlag ? 'has-flag' : ''}" data-type="voyage" data-seq="${v.seq}" style="border-left:3px solid ${stColor}">
+    <div class="kcard ${hasFlag ? 'has-flag' : ''}" draggable="true" data-type="voyage" data-seq="${v.seq}" ondragstart="kDragStart(event)" ondragend="kDragEnd(event)" style="border-left:3px solid ${stColor}">
       <div class="kc-top">
         <div class="kc-title" style="color:var(--text);font-size:12px;font-weight:700">⛵ ${esc(v.ten_salan)}</div>
         ${v.voyage_no ? `<div class="kc-vno" style="background:${stBg};border:1px solid ${stColor}40;color:${stColor};font-size:8px;font-weight:700">${esc(v.voyage_no)}</div>` : ``}
@@ -4352,10 +4351,27 @@
       }
     }
 
-    // Init SortableJS trên mỗi cột kanban — hoạt động cho cả mouse + touch
+    // Detect real mobile/tablet (iOS/iPadOS/Android) — KHÔNG dựa vào maxTouchPoints
+    // vì laptop Windows có touchscreen cũng có maxTouchPoints > 0.
+    function _isMobileTablet() {
+      const ua = navigator.userAgent || '';
+      // iPadOS 13+ lie as Mac — nhận dạng qua maxTouchPoints
+      const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+      return /iPad|iPhone|iPod|Android/i.test(ua) || isIPadOS;
+    }
+
+    // Init SortableJS chỉ cho touch device (iOS/Android). Desktop giữ HTML5 drag.
     function initKanbanSortable() {
       if (typeof Sortable === 'undefined') return;
-      const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+      if (!_isMobileTablet()) return;   // Laptop → để HTML5 drag hoạt động nguyên bản
+
+      // Bỏ HTML5 draggable để tránh conflict với Sortable fallback
+      document.querySelectorAll('.kcard').forEach(card => {
+        card.removeAttribute('draggable');
+        card.removeAttribute('ondragstart');
+        card.removeAttribute('ondragend');
+      });
+
       for (let c = 0; c < 4; c++) {
         const list = document.getElementById('kcol-' + c);
         if (!list) continue;
@@ -4364,24 +4380,23 @@
           group: 'kanban',
           animation: 150,
           easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          forceFallback: isTouch,          // iOS Safari HTML5 drag broken → fallback
+          forceFallback: true,             // iOS Safari HTML5 drag broken
           fallbackOnBody: true,
           fallbackClass: 'sortable-fallback',
           fallbackTolerance: 3,
-          delay: isTouch ? 120 : 0,        // giảm từ 180 → 120ms cho mượt
+          delay: 120,
           delayOnTouchOnly: true,
           touchStartThreshold: 3,
           draggable: '.kcard',
           ghostClass: 'sortable-ghost',
           chosenClass: 'sortable-chosen',
           dragClass: 'sortable-drag',
-          scroll: true,                    // auto scroll cột khi card đến edge
+          scroll: true,
           scrollSensitivity: 80,
           scrollSpeed: 16,
           bubbleScroll: true,
           emptyInsertThreshold: 12,
           onChoose: (evt) => {
-            // Haptic feedback trên iOS nếu có
             if (window.navigator && navigator.vibrate) navigator.vibrate(8);
             evt.item.style.willChange = 'transform';
           },
