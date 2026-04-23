@@ -6041,7 +6041,7 @@
             : `<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(100,116,139,.12);color:var(--text3)">—</span>`;
         return `<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border)">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-            <input type="checkbox" class="ho-box-check" data-seq="${r.seq}" data-box="${esc(r.box_number)}" data-con="${r.con_lai}" checked>
+            <input type="checkbox" class="ho-box-check" data-seq="${r.seq}" data-box="${esc(r.box_number)}" data-con="${r.con_lai}" data-ton="${r.ton_dau_ca}" data-cap="${r.used_in_shift}" checked>
           </label>
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:6px">
@@ -6077,10 +6077,12 @@
         for (const el of checks) {
           const box_number = el.dataset.box;
           const seal_con_lai = Number(el.dataset.con) || 0;
+          const ton_dau_ca = Number(el.dataset.ton) || 0;
+          const cap_trong_ca = Number(el.dataset.cap) || 0;
           try {
             const res = await post({
               action: 'saveSealHandover',
-              box_number, seal_con_lai, ca, ngay,
+              box_number, seal_con_lai, ton_dau_ca, cap_trong_ca, ca, ngay,
               nv_giao: nvGiao, nv_nhan: nvNhan,
               ghi_chu: ghiChu
             });
