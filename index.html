@@ -2012,6 +2012,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Quản lý Users
         </div>
+        <div class="nav-item" id="nav-actlog" onclick="nav('actlog',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
+          Nhật ký hoạt động
+        </div>
       </div>
 
       <div class="sb-footer">
@@ -2585,6 +2589,56 @@
                 <tbody id="rptbody"></tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <!-- ══ ACTIVITY LOG ══ -->
+        <div class="screen" id="screen-actlog">
+          <div class="stats-row" id="al-stats"></div>
+          <div class="filter-bar">
+            <div class="srch" style="flex:1;max-width:220px"><span class="srch-ic">🔍</span><input placeholder="Tìm theo người dùng..." id="al-user" oninput="dAlSearch()"></div>
+            <div class="srch" style="flex:1;max-width:220px"><span class="srch-ic">🎯</span><input placeholder="ID/cont/seal/box..." id="al-id" oninput="dAlSearch()"></div>
+            <div class="filter-group">
+              <select class="fi" id="al-entity" onchange="renderActLog()" style="width:140px">
+                <option value="">🏷 Tất cả phân loại</option>
+                <option value="auth">🔑 Đăng nhập</option>
+                <option value="barge">🚢 Sà lan</option>
+                <option value="voyage">📅 Kế hoạch</option>
+                <option value="survey">📄 Survey</option>
+                <option value="task">📋 Công việc</option>
+                <option value="seal">🔐 Seal</option>
+                <option value="yard">🏗 Bãi</option>
+                <option value="slxd">📈 SLXD</option>
+                <option value="report">📊 Báo cáo ca</option>
+                <option value="user">👥 Users</option>
+              </select>
+              <select class="fi" id="al-action" onchange="renderActLog()" style="width:180px">
+                <option value="">⚡ Tất cả hành động</option>
+              </select>
+              <input type="date" class="fi" id="al-from" onchange="renderActLog()" style="width:140px">
+              <input type="date" class="fi" id="al-to" onchange="renderActLog()" style="width:140px">
+            </div>
+            <div class="ml" style="display:flex;gap:7px">
+              <button class="btn btn-ghost" onclick="fetchActLog()">⟳ Làm mới</button>
+              <button class="btn btn-g" onclick="exportActLogCsv()">⬆ Export</button>
+            </div>
+          </div>
+          <div style="font-size:10.5px;color:var(--text3);margin:0 0 10px" id="al-info"></div>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:44px">STT</th>
+                  <th>THỜI GIAN</th>
+                  <th>NGƯỜI DÙNG</th>
+                  <th>HÀNH ĐỘNG</th>
+                  <th>PHÂN LOẠI</th>
+                  <th>MÃ/ID</th>
+                  <th>CHI TIẾT</th>
+                </tr>
+              </thead>
+              <tbody id="altbody"></tbody>
+            </table>
           </div>
         </div>
 
@@ -3422,7 +3476,8 @@
       slxd: { title: 'Sản lượng xếp dỡ', badge: '' },
       yardmap: { title: 'Sơ đồ Bãi 3D', badge: '' },
       seal: { title: 'Quản lý Seal', badge: '' },
-      users: { title: 'Quản lý Users', badge: '' }
+      users: { title: 'Quản lý Users', badge: '' },
+      actlog: { title: 'Nhật ký hoạt động', badge: '' }
     };
 
     let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealUsageByBox: {}, sealDiscrepancies: [], sealHandovers: [], sealUsage: null, sealTab: 'overview', sealImportRows: [] };
@@ -3437,6 +3492,10 @@
     }
     async function post(body) {
       try {
+        // Auto-inject _user cho activity log (nếu chưa có field username/nguoi_tao...)
+        if (S.user && S.user.fullname && body && typeof body === 'object' && !body._user) {
+          body._user = S.user.fullname;
+        }
         const r = await fetch(GAS_URL, {
           method: 'POST',
           body: JSON.stringify(body),
@@ -3475,6 +3534,10 @@
     }
     function showErr(m) { const e = document.getElementById('lerr'); e.textContent = m; e.style.display = 'block'; }
     function doLogout() {
+      // Fire-and-forget log (không chặn UI)
+      if (S.user && S.user._username) {
+        try { api('logout', { _user: S.user.fullname || '', username: S.user._username }); } catch(_){}
+      }
       S.user = null;
       document.getElementById('app').classList.remove('on');
       document.getElementById('login-screen').style.display = 'flex';
@@ -3517,7 +3580,8 @@
       slxd:   { navId: 'nav-slxd',   label: 'Sản lượng XD' },
       yardmap: { navId: 'nav-yardmap', label: 'Sơ đồ bãi 3D' },
       seal: { navId: 'nav-seal', label: 'Quản lý Seal' },
-      users: { navId: 'nav-users', label: 'Quản lý Users', adminOnly: true }
+      users: { navId: 'nav-users', label: 'Quản lý Users', adminOnly: true },
+      actlog: { navId: 'nav-actlog', label: 'Nhật ký hoạt động', adminOnly: true }
     };
 
     function hasPermission(screen) {
@@ -3560,6 +3624,135 @@
       if (screen === 'yardmap') renderYardMap();
       if (screen === 'slxd') renderSlxd();
       if (screen === 'seal') renderSeal();
+      if (screen === 'actlog') fetchActLog();
+    }
+
+    // ══════════════════════════════════════════
+    // ACTIVITY LOG (admin)
+    // ══════════════════════════════════════════
+    const ACTION_LABEL = {
+      login: '🔑 Đăng nhập', logout: '⎋ Đăng xuất', changePassword: '🔑 Đổi mật khẩu',
+      saveBarge: '➕ Thêm sà lan', updateBarge: '✎ Sửa sà lan', deleteBarge: '🗑 Xoá sà lan',
+      saveVoyage: '➕ Thêm kế hoạch', updateVoyage: '✎ Sửa kế hoạch', deleteVoyage: '🗑 Xoá kế hoạch', updateVoyageStatus: '🔄 Cập nhật trạng thái voyage',
+      saveSurvey: '➕ Thêm survey', updateSurvey: '✎ Sửa survey', deleteSurvey: '🗑 Xoá survey', importSurveys: '⬆ Import survey',
+      saveTask: '➕ Thêm việc', updateTask: '✎ Sửa việc', deleteTask: '🗑 Xoá việc', updateTaskStatus: '🔄 Cập nhật trạng thái việc',
+      saveUser: '➕ Thêm user', updateUser: '✎ Sửa user', deleteUser: '🗑 Xoá user',
+      saveSealBox: '➕ Thêm thùng seal', updateSealBox: '✎ Sửa thùng seal', deleteSealBox: '🗑 Xoá thùng seal',
+      unboxSealBox: '🔓 Khui thùng', importSealBoxes: '⬆ Import thùng seal',
+      importSealFromReportRows: '🔄 Đồng bộ seal báo cáo ca',
+      logSealDiscrepancy: '🚨 Ghi nhận bất thường', resolveSealDiscrepancy: '✓ Xử lý bất thường',
+      saveSealHandover: '💾 Bàn giao seal', uploadSealPhoto: '📷 Upload ảnh seal',
+      saveYardConfig: '⚙ Lưu yard config', saveYardSetup: '⚙ Lưu yard setup',
+      importSlxd: '⬆ Import SLXD',
+      sendReportManual: '📧 Gửi báo cáo', saveReportEmail: '➕ Thêm email', deleteReportEmail: '🗑 Xoá email', saveReportCC: '💾 Lưu CC'
+    };
+    const ENTITY_META = {
+      auth:   { label: '🔑 Đăng nhập',    color: '#8b5cf6' },
+      barge:  { label: '🚢 Sà lan',       color: '#3b82f6' },
+      voyage: { label: '📅 Kế hoạch',     color: '#6366f1' },
+      survey: { label: '📄 Survey',       color: '#10b981' },
+      task:   { label: '📋 Công việc',    color: '#06b6d4' },
+      seal:   { label: '🔐 Seal',         color: '#eab308' },
+      yard:   { label: '🏗 Bãi',          color: '#8870e3' },
+      slxd:   { label: '📈 SLXD',         color: '#ec4899' },
+      report: { label: '📊 Báo cáo ca',   color: '#f59e0b' },
+      user:   { label: '👥 User',         color: '#ef4444' },
+      other:  { label: '📌 Khác',         color: '#64748b' }
+    };
+
+    async function fetchActLog() {
+      const tb = document.getElementById('altbody');
+      if (tb) tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)"><span class="spinner"></span> Đang tải...</td></tr>';
+      try {
+        const params = {
+          user:   _g('al-user').trim(),
+          action: _g('al-action'),
+          entity: _g('al-entity'),
+          id:     _g('al-id').trim(),
+          from:   _g('al-from'),
+          to:     _g('al-to'),
+          limit:  1000
+        };
+        const res = await api('getActivityLog', params);
+        S.actLog = (res.success && Array.isArray(res.data)) ? res.data : [];
+        S.actLogTotal = res.total || S.actLog.length;
+        fillActionDropdown();
+        renderActLog();
+      } catch (e) {
+        if (tb) tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--red)">Lỗi tải: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    function fillActionDropdown() {
+      const sel = document.getElementById('al-action');
+      if (!sel) return;
+      const cur = sel.value;
+      const actions = [...new Set((S.actLog || []).map(r => r.action))].sort();
+      sel.innerHTML = '<option value="">⚡ Tất cả hành động</option>' +
+        actions.map(a => `<option value="${esc(a)}" ${a === cur ? 'selected' : ''}>${esc(ACTION_LABEL[a] || a)}</option>`).join('');
+    }
+
+    let _alSearchTimer;
+    function dAlSearch() { clearTimeout(_alSearchTimer); _alSearchTimer = setTimeout(renderActLog, 280); }
+
+    function renderActLog() {
+      const rows = S.actLog || [];
+      const q = (_g('al-user') || '').toLowerCase().trim();
+      const qId = (_g('al-id') || '').toUpperCase().trim();
+      const fEntity = _g('al-entity');
+      const fAction = _g('al-action');
+      const filtered = rows.filter(r => {
+        if (q && !(r.username || '').toLowerCase().includes(q)) return false;
+        if (qId && !(r.entity_id || '').toUpperCase().includes(qId)) return false;
+        if (fEntity && r.entity !== fEntity) return false;
+        if (fAction && r.action !== fAction) return false;
+        return true;
+      });
+
+      // Stats
+      const tot = S.actLogTotal || rows.length;
+      const today = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const todayStr = pad(today.getDate()) + '/' + pad(today.getMonth()+1) + '/' + today.getFullYear();
+      const todayRows = rows.filter(r => String(r.timestamp).startsWith(todayStr)).length;
+      const uniqUser = new Set(rows.map(r => r.username).filter(Boolean)).size;
+      document.getElementById('al-stats').innerHTML =
+        sc('TỔNG LOG', fmt(tot), 'c-cyan') +
+        sc('HÔM NAY', fmt(todayRows), 'c-green') +
+        sc('NGƯỜI DÙNG HĐ', fmt(uniqUser), 'c-purple') +
+        sc('ĐANG HIỂN THỊ', fmt(filtered.length), 'c-yellow');
+
+      const info = document.getElementById('al-info');
+      if (info) info.textContent = `📋 Hiển thị ${filtered.length} / ${rows.length} record · lưu 90 ngày gần nhất`;
+
+      const tb = document.getElementById('altbody');
+      if (!tb) return;
+      if (!filtered.length) {
+        tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)">Không có log phù hợp</td></tr>';
+        return;
+      }
+      tb.innerHTML = filtered.map((r, i) => {
+        const em = ENTITY_META[r.entity] || ENTITY_META.other;
+        const actLabel = esc(ACTION_LABEL[r.action] || r.action);
+        return `<tr>
+          <td style="color:var(--text3)">${i + 1}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text2);white-space:nowrap">${esc(r.timestamp)}</td>
+          <td style="font-weight:600;color:var(--text)">${esc(r.username) || '<span style="color:var(--text3)">—</span>'}</td>
+          <td style="font-size:11px">${actLabel}</td>
+          <td><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:${em.color}15;border:1px solid ${em.color}40;color:${em.color}">${em.label}</span></td>
+          <td style="font-family:monospace;font-size:11px;color:var(--cyan)">${esc(r.entity_id) || '—'}</td>
+          <td style="font-size:11px;color:var(--text2);max-width:420px;white-space:normal;word-break:break-word">${esc(r.detail)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function exportActLogCsv() {
+      const rows = S.actLog || [];
+      if (!rows.length) { toast('Không có data', 'err'); return; }
+      dlCsv('activity_log_' + todayStr() + '.csv',
+        ['Timestamp', 'User', 'Action', 'Entity', 'ID', 'Detail'],
+        rows.map(r => [r.timestamp, r.username, ACTION_LABEL[r.action] || r.action, r.entity, r.entity_id, r.detail])
+      );
     }
 
     // ══════════════════════════════════════════
