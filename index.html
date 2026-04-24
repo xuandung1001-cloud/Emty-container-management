@@ -3664,14 +3664,16 @@
       const tb = document.getElementById('altbody');
       if (tb) tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)"><span class="spinner"></span> Đang tải...</td></tr>';
       try {
+        // LƯU Ý: dùng `act` thay vì `action` vì `action` là routing param của GAS.
+        // Nếu trùng tên → e.parameter.action = '' (value cuối) → route sai → lỗi.
         const params = {
-          user:   _g('al-user').trim(),
-          action: _g('al-action'),
-          entity: _g('al-entity'),
-          id:     _g('al-id').trim(),
-          from:   _g('al-from'),
-          to:     _g('al-to'),
-          limit:  1000
+          user:    _g('al-user').trim(),
+          act:     _g('al-action'),
+          entity:  _g('al-entity'),
+          id:      _g('al-id').trim(),
+          from:    _g('al-from'),
+          to:      _g('al-to'),
+          limit:   1000
         };
         const res = await api('getActivityLog', params);
         S.actLog = (res.success && Array.isArray(res.data)) ? res.data : [];
