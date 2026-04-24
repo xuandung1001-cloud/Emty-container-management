@@ -5610,14 +5610,23 @@
       const C_VAO  = findC(['vào bãi', 'vao bai']);
       const C_RA   = findC(['ra bãi', 'ra bai']);
 
+      // SheetJS cellDates:true trả Date được interpret như UTC (component UTC = giờ user thấy trong Excel).
+      // Ở timezone UTC+7, giờ tối (17:00+) sẽ bị bump sang ngày hôm sau khi dùng getDate() local.
+      // → Convert về local wall-time giữ nguyên component visible trong Excel.
+      function excelDateToLocal(d) {
+        return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds());
+      }
       function parseD(v) {
         if (!v) return null;
-        // cellDates:true + raw:true → Date object trực tiếp từ SheetJS
-        if (v instanceof Date && !isNaN(v)) return v;
+        // cellDates:true + raw:true → Date object trực tiếp từ SheetJS (UTC-interpreted)
+        if (v instanceof Date && !isNaN(v)) return excelDateToLocal(v);
         const s = String(v).trim();
         // Excel serial number (khi raw:true mà cell không phải date type)
         const n = parseFloat(s);
-        if (!isNaN(n) && n > 40000 && n < 60000) return new Date(Math.round((n - 25568) * 86400) * 1000);
+        if (!isNaN(n) && n > 40000 && n < 60000) {
+          const utcMs = Math.round((n - 25569) * 86400 * 1000);
+          return excelDateToLocal(new Date(utcMs));
+        }
         // ISO YYYY-MM-DD
         if (s.match(/^\d{4}-\d{2}-\d{2}/)) { const p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
         // DD/MM/YYYY (legacy TOS text export)
