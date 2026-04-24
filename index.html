@@ -3054,18 +3054,9 @@
   <!-- ══ IMPORT SLXD ══ -->
   <div class="ov" id="mslxd">
     <div class="modal modal-lg">
-      <div class="m-title">📊 Import sản lượng xếp dỡ</div>
-      <div class="m-sub">Upload file Excel xuất từ TOS</div>
+      <div class="m-title">📊 Import / cập nhật sản lượng</div>
+      <div class="m-sub">Upload file Excel xuất từ TOS — chỉ ngày có trong file bị ghi đè, ngày khác giữ nguyên</div>
       <div class="g2">
-        <div class="fg"><label class="fl">Loại *</label>
-          <select class="fi" id="slxd-imp-loai">
-            <option value="tuan">📅 File tuần</option>
-            <option value="thang">📆 File tháng</option>
-          </select>
-        </div>
-        <div class="fg"></div>
-      </div>
-      <div class="g2 mt">
         <div class="fg"><label class="fl">Từ ngày *</label><input class="fi" id="slxd-imp-tu" type="date"></div>
         <div class="fg"><label class="fl">Đến ngày *</label><input class="fi" id="slxd-imp-den" type="date"></div>
       </div>
@@ -5502,7 +5493,6 @@
     // ── Import file Excel ──
     function openSlxdImport() {
       slxdParsedRows = null;
-      _v('slxd-imp-loai', 'thang');
       _v('slxd-imp-tu', ''); _v('slxd-imp-den', '');
       document.getElementById('slxd-file').value = '';
       document.getElementById('slxd-imp-preview').style.display = 'none';
@@ -5597,7 +5587,7 @@
 
     async function doSlxdImport() {
       if (!slxdParsedRows || !slxdParsedRows.length) { toast('Chưa có data', 'err'); return; }
-      const loai = _g('slxd-imp-loai');
+      const loai = 'thang';
       const tu = _g('slxd-imp-tu'), den = _g('slxd-imp-den');
       if (!tu || !den) { toast('Vui lòng chọn khoảng ngày', 'err'); return; }
 
