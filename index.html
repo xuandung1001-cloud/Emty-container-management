@@ -5217,7 +5217,7 @@
         if (!p) return;
         const d = new Date(p.yy, p.mm - 1, p.dd);
         const key = mode === 'tuan'
-          ? 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + d.getFullYear()
+          ? isoWeekKey(d)
           : String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
         if (!periodMap[key]) periodMap[key] = {};
         const pa = r.phuong_an || 'OTHER';
@@ -5297,7 +5297,7 @@
         if (view === 'nam') opts.add(String(yy));
         else if (view === 'quy') opts.add('Q' + Math.ceil(mm / 3) + '/' + yy);
         else if (view === 'thang') opts.add(String(mm).padStart(2,'0') + '/' + yy);
-        else { const wk = getISOWeek(new Date(yy, mm-1, dd)); opts.add('W' + String(wk).padStart(2,'0') + '/' + yy); }
+        else opts.add(isoWeekKey(new Date(yy, mm-1, dd)));
       });
 
       const sorted = [...opts].sort().reverse();
@@ -5311,6 +5311,20 @@
       date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
       const week1 = new Date(date.getFullYear(), 0, 4);
       return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    }
+
+    // ISO week-year: năm của Thứ Năm trong tuần quyết định năm ISO
+    // VD: 29/12/2025 (Mon) → W01/2026 vì Thứ 5 của tuần là 01/01/2026
+    function getISOWeekYear(d) {
+      const date = new Date(d.getTime());
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+      return date.getFullYear();
+    }
+
+    // Trả về key tuần "Wxx/yyyy" đúng chuẩn ISO — dùng thay cho pattern cũ
+    function isoWeekKey(d) {
+      return 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + getISOWeekYear(d);
     }
 
     // Với tháng nào đã có loai=thang thì loại bỏ loai=tuan cùng tháng (tránh cộng đôi)
@@ -5341,8 +5355,7 @@
         if (view === 'nam') return String(yy) === period;
         if (view === 'quy') return ('Q' + Math.ceil(mm/3) + '/' + yy) === period;
         if (view === 'thang') return (String(mm).padStart(2,'0') + '/' + yy) === period;
-        const wk = getISOWeek(new Date(yy, mm-1, dd));
-        return ('W' + String(wk).padStart(2,'0') + '/' + yy) === period;
+        return isoWeekKey(new Date(yy, mm-1, dd)) === period;
       });
     }
 
@@ -5401,7 +5414,7 @@
         if (!p) return;
         const d = new Date(p.yy, p.mm - 1, p.dd);
         const key = mode === 'weeks'
-          ? 'W' + String(getISOWeek(d)).padStart(2, '0') + '/' + d.getFullYear()
+          ? isoWeekKey(d)
           : String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
         if (!periods[key]) periods[key] = {};
         const pa = r.phuong_an || 'OTHER';
