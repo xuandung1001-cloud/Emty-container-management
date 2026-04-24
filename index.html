@@ -3076,6 +3076,7 @@
       </div>
       <input type="file" id="slxd-file" accept=".xls,.xlsx" style="display:none" onchange="handleSlxdFile(event)">
       <div id="slxd-imp-preview" style="display:none;margin-top:10px;padding:10px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:7px;font-size:12px"></div>
+      <div id="slxd-imp-result" style="display:none;margin-top:10px;padding:12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.25);border-radius:7px;font-size:12px;max-height:320px;overflow:auto"></div>
       <div class="mf">
         <button class="btn btn-ghost" onclick="closeOv('mslxd')">Huỷ</button>
         <button class="btn btn-p" id="btn-slxd-import" onclick="doSlxdImport()" disabled>Import</button>
@@ -5505,7 +5506,10 @@
       _v('slxd-imp-tu', ''); _v('slxd-imp-den', '');
       document.getElementById('slxd-file').value = '';
       document.getElementById('slxd-imp-preview').style.display = 'none';
-      document.getElementById('btn-slxd-import').disabled = true;
+      const resBox = document.getElementById('slxd-imp-result');
+      if (resBox) { resBox.style.display = 'none'; resBox.innerHTML = ''; }
+      const btn = document.getElementById('btn-slxd-import');
+      btn.disabled = true; btn.textContent = 'Import';
       openOv('mslxd');
     }
 
@@ -5674,18 +5678,64 @@
           imported_by: S.user ? S.user.fullname : ''
         });
         if (res.success) {
-          let msg = 'Import thành công! ' + res.raw_rows + ' dòng → ' + res.daily_rows + ' dòng tổng hợp, tổng SL=' + (res.debug ? res.debug.sum_sl : '?');
-          toast(msg, 'ok');
-          if (res.debug) console.log('[SLXD Import Debug]', JSON.stringify(res.debug, null, 2));
-          closeOv('mslxd');
+          renderSlxdImportDiff(res);
+          toast('Import thành công', 'ok');
           S.slxdDaily = null; S.slxdCustomer = null; S.slxdImportLog = null;
           slxdParsedRows = null;
-          await renderSlxd();
+          renderSlxd();
         } else {
           toast(res.error || 'Lỗi import', 'err');
+          btn.disabled = false; btn.textContent = 'Import';
         }
-      } catch (e) { toast('Lỗi: ' + e.message, 'err'); }
-      finally { btn.disabled = false; btn.textContent = 'Import'; }
+      } catch (e) {
+        toast('Lỗi: ' + e.message, 'err');
+        btn.disabled = false; btn.textContent = 'Import';
+      }
+    }
+
+    function renderSlxdImportDiff(res) {
+      const box = document.getElementById('slxd-imp-result');
+      if (!box) return;
+      const d = res.diff || {};
+      const delta = d.delta_total || 0;
+      const deltaCol = delta > 0 ? 'var(--green)' : (delta < 0 ? 'var(--red)' : 'var(--text2)');
+      const sign = v => (v > 0 ? '+' : '') + fmt(v);
+      const byPa = (d.by_pa || []).filter(r => r.old !== r.new);
+      const headerLine = d.is_first_import
+        ? `<div style="font-weight:700;color:var(--green);margin-bottom:6px">✅ Import mới — ${fmt(d.new_row_count)} dòng tổng hợp, tổng SL = ${fmt(d.new_total)}</div>`
+        : `<div style="font-weight:700;color:var(--cyan);margin-bottom:6px">🔄 Ghi đè data cũ cùng khoảng — so sánh:</div>
+           <div style="display:grid;grid-template-columns:auto auto auto;gap:4px 12px;margin-bottom:8px">
+             <div style="color:var(--text3)">Số dòng tổng hợp:</div>
+             <div>${fmt(d.old_row_count)} → ${fmt(d.new_row_count)}</div>
+             <div style="color:${d.new_row_count - d.old_row_count !== 0 ? deltaCol : 'var(--text3)'}">${sign(d.new_row_count - d.old_row_count)}</div>
+             <div style="color:var(--text3)">Tổng sản lượng:</div>
+             <div>${fmt(d.old_total)} → ${fmt(d.new_total)}</div>
+             <div style="color:${deltaCol};font-weight:700">${sign(delta)}</div>
+           </div>`;
+      const paTable = byPa.length
+        ? `<div style="font-weight:600;margin-top:6px;margin-bottom:4px;color:var(--text2)">Thay đổi theo phương án:</div>
+           <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+             <thead><tr style="border-bottom:1px solid var(--border)">
+               <th style="text-align:left;padding:3px 6px">Phương án</th>
+               <th style="text-align:right;padding:3px 6px">Cũ</th>
+               <th style="text-align:right;padding:3px 6px">Mới</th>
+               <th style="text-align:right;padding:3px 6px">Chênh lệch</th>
+             </tr></thead>
+             <tbody>${byPa.map(r => {
+               const c = r.delta > 0 ? 'var(--green)' : (r.delta < 0 ? 'var(--red)' : 'var(--text2)');
+               return `<tr>
+                 <td style="padding:3px 6px">${esc(r.pa)}</td>
+                 <td style="text-align:right;padding:3px 6px;color:var(--text3)">${fmt(r.old)}</td>
+                 <td style="text-align:right;padding:3px 6px">${fmt(r.new)}</td>
+                 <td style="text-align:right;padding:3px 6px;color:${c};font-weight:600">${sign(r.delta)}</td>
+               </tr>`;
+             }).join('')}</tbody>
+           </table>`
+        : (d.is_first_import ? '' : '<div style="color:var(--text3);font-style:italic">Không có thay đổi về phương án</div>');
+      box.innerHTML = headerLine + paTable;
+      box.style.display = 'block';
+      const btn = document.getElementById('btn-slxd-import');
+      if (btn) { btn.textContent = 'Đã import ✓'; btn.disabled = true; }
     }
 
     function exportSlxdExcel() {
