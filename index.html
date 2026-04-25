@@ -3633,7 +3633,7 @@
       unboxSealBox: '🔓 Khui thùng', importSealBoxes: '⬆ Import thùng seal',
       importSealFromReportRows: '🔄 Đồng bộ seal báo cáo ca',
       logSealDiscrepancy: '🚨 Ghi nhận bất thường', resolveSealDiscrepancy: '✓ Xử lý bất thường',
-      saveSealHandover: '💾 Bàn giao seal', uploadSealPhoto: '📷 Upload ảnh seal',
+      saveSealHandover: '💾 Bàn giao seal', deleteSealHandover: '🗑 Xoá bàn giao', uploadSealPhoto: '📷 Upload ảnh seal',
       saveYardConfig: '⚙ Lưu yard config', saveYardSetup: '⚙ Lưu yard setup',
       importSlxd: '⬆ Import SLXD',
       sendReportManual: '📧 Gửi báo cáo', saveReportEmail: '➕ Thêm email', deleteReportEmail: '🗑 Xoá email', saveReportCC: '💾 Lưu CC'
@@ -5955,6 +5955,7 @@
       if (!recent.length) {
         listEl.innerHTML = `<div style="padding:8px;text-align:center;color:var(--text3);font-size:11px">Chưa có bàn giao nào</div>`;
       } else {
+        const isAdmin = S.user && S.user.role === 'admin';
         listEl.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;font-size:10.5px;border-collapse:collapse">
           <thead>
             <tr style="color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.04em">
@@ -5965,6 +5966,7 @@
               <th style="text-align:right;padding:4px 6px" title="Seal còn lại từ ca trước">Tồn ca trước</th>
               <th style="text-align:right;padding:4px 6px" title="Số seal đã cấp trong ca vừa xong">Cấp trong ca</th>
               <th style="text-align:right;padding:4px 6px" title="Số seal người nhận sẽ cầm">Nhận bàn giao</th>
+              ${isAdmin ? '<th style="width:30px"></th>' : ''}
             </tr>
           </thead>
           <tbody>
@@ -5974,6 +5976,10 @@
             const capStr = h._cap_trong_ca !== null ? fmt(h._cap_trong_ca) : '—';
             const conStr = h._con_lai_ca !== null && h._con_lai_ca !== undefined ? fmt(h._con_lai_ca) : fmt(h.seal_con_lai);
             const capColor = (h._cap_trong_ca > 50) ? 'var(--red)' : (h._cap_trong_ca > 20) ? 'var(--orange)' : 'var(--text2)';
+            const delLabel = `${h.thoi_gian} · ${h.ca} · ${h.box_number} · ${h.nv_giao} → ${h.nv_nhan}`;
+            const delBtn = isAdmin
+              ? `<td style="padding:4px 4px;text-align:center"><span onclick="deleteSealHandover('${esc(h.seq)}','${esc(delLabel)}')" title="Xoá bản ghi này (admin)" style="cursor:pointer;color:var(--red);opacity:.55;font-size:13px;padding:2px 5px;border-radius:4px" onmouseenter="this.style.opacity=1;this.style.background='rgba(225,69,92,.1)'" onmouseleave="this.style.opacity=.55;this.style.background=''">🗑</span></td>`
+              : '';
             return `<tr style="border-top:1px solid rgba(0,0,0,.04)">
               <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${esc(h.thoi_gian)}</td>
               <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${caIcon} ${esc(h.ca)}</td>
@@ -5982,6 +5988,7 @@
               <td style="padding:4px 6px;text-align:right;color:var(--text3)">${tonStr}</td>
               <td style="padding:4px 6px;text-align:right;color:${capColor};font-weight:600">${capStr}</td>
               <td style="padding:4px 6px;text-align:right;color:var(--green);font-weight:700">${conStr}</td>
+              ${delBtn}
             </tr>`;
           }).join('')}
           </tbody>
@@ -6659,6 +6666,21 @@
       }).join('');
     }
 
+    // Promise wrapper cho confirmDlg — dùng trong async flow
+    function confirmAsync(msg) {
+      return new Promise(resolve => {
+        document.getElementById('conf-msg').innerHTML = msg;
+        const okBtn = document.getElementById('conf-ok');
+        const oldHandler = okBtn.onclick;
+        const ovEl = document.getElementById('mconf');
+        const cleanup = () => { okBtn.onclick = oldHandler; ovEl.removeEventListener('click', onBackdrop); };
+        const onBackdrop = (e) => { if (e.target === ovEl) { cleanup(); closeOv('mconf'); resolve(false); } };
+        okBtn.onclick = () => { cleanup(); closeOv('mconf'); resolve(true); };
+        ovEl.addEventListener('click', onBackdrop);
+        openOv('mconf');
+      });
+    }
+
     async function saveHandover() {
       const checks = Array.from(document.querySelectorAll('.ho-box-check:checked'));
       if (!checks.length) { toast('Vui lòng tick ít nhất 1 thùng', 'err'); return; }
@@ -6672,28 +6694,57 @@
       const nvGiao = _g('ho-nv-giao').trim();
       const ghiChu = _g('ho-ghi-chu').trim();
 
-      let ok = 0, fail = 0;
+      let ok = 0, fail = 0, skipped = 0;
       try {
         for (const el of checks) {
           const box_number = el.dataset.box;
           const seal_con_lai = Number(el.dataset.con) || 0;
           const ton_dau_ca = Number(el.dataset.ton) || 0;
           const cap_trong_ca = Number(el.dataset.cap) || 0;
+          const basePayload = {
+            action: 'saveSealHandover',
+            box_number, seal_con_lai, ton_dau_ca, cap_trong_ca, ca, ngay,
+            nv_giao: nvGiao, nv_nhan: nvNhan,
+            ghi_chu: ghiChu
+          };
           try {
-            const res = await post({
-              action: 'saveSealHandover',
-              box_number, seal_con_lai, ton_dau_ca, cap_trong_ca, ca, ngay,
-              nv_giao: nvGiao, nv_nhan: nvNhan,
-              ghi_chu: ghiChu
-            });
-            if (res.success) ok++; else fail++;
+            let res = await post(basePayload);
+            if (!res.success && res.error === 'DUPLICATE' && res.existing) {
+              const ex = res.existing;
+              const confirmMsg = `⚠ <b>Đã có bàn giao</b> cho thùng <b>${esc(ex.box_number)}</b><br>
+                Ca <b>${esc(ex.ca)}</b> ngày <b>${esc(ex.ngay)}</b>:<br>
+                <span style="color:var(--text2)">→ ${esc(ex.thoi_gian)} · <b>${esc(ex.nv_giao)}</b> giao cho <b>${esc(ex.nv_nhan)}</b> · còn lại ${ex.seal_con_lai}</span><br><br>
+                Ghi đè bằng bản ghi mới?`;
+              const yes = await confirmAsync(confirmMsg);
+              if (yes) {
+                res = await post({ ...basePayload, force_overwrite: true });
+                if (res.success) ok++; else fail++;
+              } else {
+                skipped++;
+              }
+            } else if (res.success) ok++;
+            else fail++;
           } catch(e) { fail++; }
         }
-        if (ok > 0) toast(`✅ Đã lưu ${ok} bàn giao${fail ? ` (${fail} lỗi)` : ''}`, ok > 0 && !fail ? 'ok' : 'err');
-        else toast('Lỗi — không lưu được bàn giao', 'err');
+        const msg = [];
+        if (ok)      msg.push('✅ ' + ok + ' bàn giao');
+        if (skipped) msg.push('⏭ ' + skipped + ' bỏ qua');
+        if (fail)    msg.push('❌ ' + fail + ' lỗi');
+        toast(msg.join(' · ') || 'Không có thao tác', fail ? 'err' : 'ok');
         closeOv('mhandover');
         await loadAll(); renderSeal();
       } finally { btn.disabled = false; btn.textContent = oldText; }
+    }
+
+    // Admin xoá 1 bàn giao seal (dùng để dọn record sai)
+    async function deleteSealHandover(seq, label) {
+      const yes = await confirmAsync('🗑 Xoá bản ghi bàn giao này?<br><span style="color:var(--text3);font-size:11px">' + esc(label || ('seq ' + seq)) + '</span>');
+      if (!yes) return;
+      try {
+        const res = await post({ action: 'deleteSealHandover', seq });
+        if (res.success) { toast('Đã xoá bàn giao', 'ok'); await loadAll(); renderSeal(); }
+        else toast(res.error || 'Lỗi', 'err');
+      } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
     }
 
     // ── Import Excel ──
