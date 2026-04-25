@@ -6549,7 +6549,43 @@
       return map;
     }
 
+    // Check khung giờ cho phép bàn giao:
+    //   Ca Đêm vừa hết (mốc 7h) → cho bàn giao 7:00 - 9:00
+    //   Ca Sáng vừa hết (mốc 19h) → cho bàn giao 19:00 - 21:00
+    // Trả { allowed: bool, ca?: 'Sáng'|'Đêm', message?: string }
+    function checkHandoverWindow() {
+      const now = new Date();
+      const totalMin = now.getHours() * 60 + now.getMinutes();
+      if (totalMin >= 7 * 60 && totalMin <= 9 * 60)   return { allowed: true,  ca: 'Đêm' };
+      if (totalMin >= 19 * 60 && totalMin <= 21 * 60) return { allowed: true,  ca: 'Sáng' };
+      // Ngoài khung giờ — gợi ý mốc kế tiếp
+      let nextWindow;
+      if (totalMin < 7 * 60)              nextWindow = '7:00 sáng (bàn giao ca Đêm)';
+      else if (totalMin < 19 * 60)        nextWindow = '19:00 tối (bàn giao ca Sáng)';
+      else                                nextWindow = '7:00 sáng mai (bàn giao ca Đêm)';
+      return {
+        allowed: false,
+        message: '⛔ Chưa đến giờ bàn giao ca.\n\nKhung giờ cho phép:\n• 7:00 - 9:00 (sau khi ca Đêm kết thúc)\n• 19:00 - 21:00 (sau khi ca Sáng kết thúc)\n\nĐợi đến: ' + nextWindow
+      };
+    }
+
     async function openHandoverModal() {
+      // Khoá button ngoài giờ — Admin được override để dọn data lịch sử
+      const isAdmin = S.user && S.user.role === 'admin';
+      const win = checkHandoverWindow();
+      if (!win.allowed) {
+        if (!isAdmin) {
+          toast(win.message, 'err');
+          return;
+        }
+        // Admin: hỏi confirm
+        const yes = await confirmAsync('⚠ <b>Ngoài khung giờ bàn giao</b><br><br>' +
+          '<span style="color:var(--text2);font-size:11px;line-height:1.6">' +
+          'Khung giờ chuẩn:<br>• 7:00 - 9:00 (sau ca Đêm)<br>• 19:00 - 21:00 (sau ca Sáng)<br><br>' +
+          'Bạn là admin — có thể tạo bàn giao thủ công (dọn data, sửa lỗi).</span><br><br>Tiếp tục?');
+        if (!yes) return;
+      }
+
       // Bảo đảm sealUsage đã load để tính activity trong ca
       if (!S.sealUsage) {
         toast('⏳ Đang tải dữ liệu seal...', 'ok');
