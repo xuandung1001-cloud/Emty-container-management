@@ -6507,19 +6507,37 @@
     }
 
     // Stats cho HISTORY (bàn giao đã lưu)
-    //   - tonDauCa     = seal_con_lai của handover trước (chain)
-    //   - capTrongCa   = đếm seal_usage trong khung giờ ca của handover
-    //   - conLaiAtEnd  = seal_con_lai đã lưu (snapshot lúc giao ca thực tế)
+    //   - Ưu tiên giá trị đã lưu trong sheet (snapshot lúc bàn giao). Đó mới là số thực
+    //     do user xác nhận, đáng tin cậy hơn việc recompute từ chain handover hoặc
+    //     đếm sealUsage live (vì usage có thể bị xoá/sửa, locale parse sai...).
+    //   - Chỉ recompute khi sheet thiếu data (record cũ chưa có cột ton_dau_ca/cap_trong_ca).
     function computeShiftStatsForHistory(h) {
       const bn = String(h.box_number || '').trim();
       const box = (S.sealBoxes || []).find(b => String(b.box_number).trim() === bn);
       if (!box) return null;
       const total = Number(box.so_seal) || 0;
-      const hTime = parseTimeOut(h.thoi_gian) || parseTimeOut(h.created_at);
-      const prev = hTime ? findPrevHandover(bn, hTime) : null;
-      const tonDauCa = prev ? (Number(prev.seal_con_lai) || 0) : total;
-      const range = _getShiftRangeFromHandover(h);
-      const capTrongCa = range ? countUsageInRange(bn, range.start, range.end) : 0;
+
+      // tonDauCa: ưu tiên h.ton_dau_ca, fallback chain (prev.seal_con_lai)
+      const savedTon = (h.ton_dau_ca !== '' && h.ton_dau_ca != null) ? Number(h.ton_dau_ca) : NaN;
+      let tonDauCa;
+      if (!isNaN(savedTon) && savedTon > 0) {
+        tonDauCa = savedTon;
+      } else {
+        const hTime = parseTimeOut(h.thoi_gian) || parseTimeOut(h.created_at);
+        const prev = hTime ? findPrevHandover(bn, hTime) : null;
+        tonDauCa = prev ? (Number(prev.seal_con_lai) || 0) : total;
+      }
+
+      // capTrongCa: ưu tiên h.cap_trong_ca, fallback đếm sealUsage trong khung giờ ca
+      const savedCap = (h.cap_trong_ca !== '' && h.cap_trong_ca != null) ? Number(h.cap_trong_ca) : NaN;
+      let capTrongCa;
+      if (!isNaN(savedCap) && savedCap >= 0) {
+        capTrongCa = savedCap;
+      } else {
+        const range = _getShiftRangeFromHandover(h);
+        capTrongCa = range ? countUsageInRange(bn, range.start, range.end) : 0;
+      }
+
       const conLaiAtEnd = Number(h.seal_con_lai) || 0;
       return { total, tonDauCa, capTrongCa, conLaiAtEnd };
     }
