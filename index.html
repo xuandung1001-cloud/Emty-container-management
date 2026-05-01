@@ -3293,50 +3293,50 @@
           📄 Ứng dụng MNR Estimate
         </div>
         <div class="perm-grid">
-          <label class="perm-item" id="pi-estimate">
-            <input type="checkbox" id="perm-estimate" onchange="updatePermItem('estimate')"> ✏️ Nhập Báo Giá
+          <label class="perm-item" id="pi-m-estimate">
+            <input type="checkbox" id="mperm-estimate" onchange="updateMpermItem('estimate')"> ✏️ Nhập Báo Giá
           </label>
-          <label class="perm-item" id="pi-revise">
-            <input type="checkbox" id="perm-revise" onchange="updatePermItem('revise')"> 📝 Chỉnh sửa Báo Giá
+          <label class="perm-item" id="pi-m-revise">
+            <input type="checkbox" id="mperm-revise" onchange="updateMpermItem('revise')"> 📝 Chỉnh sửa Báo Giá
           </label>
-          <label class="perm-item" id="pi-ovm">
-            <input type="checkbox" id="perm-ovm" onchange="updatePermItem('ovm')"> ☁️ Cập nhật OVM
+          <label class="perm-item" id="pi-m-ovm">
+            <input type="checkbox" id="mperm-ovm" onchange="updateMpermItem('ovm')"> ☁️ Cập nhật OVM
           </label>
-          <label class="perm-item" id="pi-tracking">
-            <input type="checkbox" id="perm-tracking" onchange="updatePermItem('tracking')"> 📊 Danh sách Báo Giá
+          <label class="perm-item" id="pi-m-tracking">
+            <input type="checkbox" id="mperm-tracking" onchange="updateMpermItem('tracking')"> 📊 Danh sách Báo Giá
           </label>
-          <label class="perm-item" id="pi-summary">
-            <input type="checkbox" id="perm-summary" onchange="updatePermItem('summary')"> 📈 Tổng hợp
+          <label class="perm-item" id="pi-m-summary">
+            <input type="checkbox" id="mperm-summary" onchange="updateMpermItem('summary')"> 📈 Tổng hợp
           </label>
-          <label class="perm-item" id="pi-bulk">
-            <input type="checkbox" id="perm-bulk" onchange="updatePermItem('bulk')"> ⬇️ Xuất Bulk
+          <label class="perm-item" id="pi-m-bulk">
+            <input type="checkbox" id="mperm-bulk" onchange="updateMpermItem('bulk')"> ⬇️ Xuất Bulk
           </label>
-          <label class="perm-item" id="pi-stock">
-            <input type="checkbox" id="perm-stock" onchange="updatePermItem('stock')"> 💳 Tồn Rỗng
+          <label class="perm-item" id="pi-m-stock">
+            <input type="checkbox" id="mperm-stock" onchange="updateMpermItem('stock')"> 💳 Tồn Rỗng
           </label>
-          <label class="perm-item" id="pi-warehouse">
-            <input type="checkbox" id="perm-warehouse" onchange="updatePermItem('warehouse')"> 🏠 Thống kê kho
+          <label class="perm-item" id="pi-m-warehouse">
+            <input type="checkbox" id="mperm-warehouse" onchange="updateMpermItem('warehouse')"> 🏠 Thống kê kho
           </label>
-          <label class="perm-item" id="pi-phieu-kho">
-            <input type="checkbox" id="perm-phieu-kho" onchange="updatePermItem('phieu-kho')"> 📄 Phiếu nhập xuất
+          <label class="perm-item" id="pi-m-phieu-kho">
+            <input type="checkbox" id="mperm-phieu-kho" onchange="updateMpermItem('phieu-kho')"> 📄 Phiếu nhập xuất
           </label>
-          <label class="perm-item" id="pi-ccdc">
-            <input type="checkbox" id="perm-ccdc" onchange="updatePermItem('ccdc')"> ⚙️ Lịch sử CCDC
+          <label class="perm-item" id="pi-m-ccdc">
+            <input type="checkbox" id="mperm-ccdc" onchange="updateMpermItem('ccdc')"> ⚙️ Lịch sử CCDC
           </label>
-          <label class="perm-item" id="pi-tariff">
-            <input type="checkbox" id="perm-tariff" onchange="updatePermItem('tariff')"> ⚙️ Quản lý Bảng Giá
+          <label class="perm-item" id="pi-m-tariff">
+            <input type="checkbox" id="mperm-tariff" onchange="updateMpermItem('tariff')"> ⚙️ Quản lý Bảng Giá
           </label>
-          <label class="perm-item" id="pi-report">
-            <input type="checkbox" id="perm-report" onchange="updatePermItem('report')"> 📅 Báo cáo tháng
+          <label class="perm-item" id="pi-m-report">
+            <input type="checkbox" id="mperm-report" onchange="updateMpermItem('report')"> 📅 Báo cáo tháng
           </label>
-          <label class="perm-item" id="pi-pictures">
-            <input type="checkbox" id="perm-pictures" onchange="updatePermItem('pictures')"> 📷 Xuất hình ảnh
+          <label class="perm-item" id="pi-m-pictures">
+            <input type="checkbox" id="mperm-pictures" onchange="updateMpermItem('pictures')"> 📷 Xuất hình ảnh
           </label>
-          <label class="perm-item" id="pi-inventory">
-            <input type="checkbox" id="perm-inventory" onchange="updatePermItem('inventory')"> 📦 MSC Inventory
+          <label class="perm-item" id="pi-m-inventory">
+            <input type="checkbox" id="mperm-inventory" onchange="updateMpermItem('inventory')"> 📦 MSC Inventory
           </label>
-          <label class="perm-item" id="pi-photos">
-            <input type="checkbox" id="perm-photos" onchange="updatePermItem('photos')"> 🖼️ Xem Hình ảnh
+          <label class="perm-item" id="pi-m-photos">
+            <input type="checkbox" id="mperm-photos" onchange="updateMpermItem('photos')"> 🖼️ Xem Hình ảnh
           </label>
         </div>
       </div>
@@ -3579,9 +3579,19 @@
     function hasPermission(screen) {
       if (!S.user) return false;
       if (S.user.role === 'admin') return true;
-      if (!S.user.permissions) return false;
-      if (S.user.permissions === 'all') return true;
-      return S.user.permissions.split(',').map(p => p.trim()).includes(screen);
+      // Schema mới: app QLR đọc permissions_qlr (chứa QLR keys).
+      // Fallback permissions cho user cũ chưa migrate (nếu permissions chứa QLR keys).
+      let qlr = S.user.permissions_qlr;
+      if (qlr === undefined || qlr === null || qlr === '') {
+        // Legacy fallback: nếu permissions chứa QLR key (vd 'barges') → coi như permissions cũ
+        const legacy = S.user.permissions || '';
+        if (legacy && legacy !== 'all' && QLR_SCREENS.some(s => legacy.split(',').map(p => p.trim()).includes(s))) {
+          qlr = legacy;
+        }
+      }
+      if (!qlr) return false;
+      if (qlr === 'all') return true;
+      return qlr.split(',').map(p => p.trim()).includes(screen);
     }
 
     function applyPermissions(user) {
@@ -4804,16 +4814,24 @@
           ? '<span class="badge" style="background:rgba(155,114,246,.1);border:1px solid rgba(155,114,246,.3);color:var(--purple)">Admin</span>'
           : '<span class="badge" style="background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);color:var(--cyan)">User</span>';
         const isSelf = S.user && S.user.fullname === u.fullname;
-        // Render permissions badges
+        // Render permissions badges — hiện cả 2 nhóm: QLR + MNR
         let permHtml = '';
-        if (u.permissions === 'all' || u.role === 'admin') {
+        if (u.role === 'admin' || (u.permissions === 'all' && u.permissions_qlr === 'all')) {
           permHtml = '<span class="perm-all-badge">✦ All</span>';
-        } else if (u.permissions) {
-          const screenLabels = { barges: '🚢', voyages: '📅', kanban: '📋', gantt: '📊', survey: '📄', report: '📊', tonbai: '📦', slxd: '📈', yardmap: '🏗', seal: '🔐', users: '👥' };
-          permHtml = u.permissions.split(',').map(p => p.trim()).filter(Boolean)
-            .map(p => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);margin:1px">${screenLabels[p] || ''}${p}</span>`).join(' ');
         } else {
-          permHtml = '<span style="color:var(--text3);font-size:10px">—</span>';
+          const qlrLabels = { barges: '🚢', voyages: '📅', kanban: '📋', survey: '📄', report: '📊', tonbai: '📦', slxd: '📈', yardmap: '🏗', seal: '🔐', users: '👥' };
+          const mnrLabels = { estimate: '✏️', revise: '📝', ovm: '☁️', tracking: '📊', summary: '📈', bulk: '⬇️', stock: '💳', warehouse: '🏠', 'phieu-kho': '📄', ccdc: '⚙️', tariff: '⚙️', report: '📅', pictures: '📷', inventory: '📦', photos: '🖼️' };
+          const renderGroup = (label, str, labels, color) => {
+            if (str === 'all') return `<div style="font-size:9px;color:${color};font-weight:700;margin:2px 0">▸ ${label}: <span class="perm-all-badge" style="font-size:9px;padding:1px 6px">All</span></div>`;
+            if (!str) return '';
+            const items = str.split(',').map(p => p.trim()).filter(Boolean);
+            if (!items.length) return '';
+            return `<div style="font-size:9px;color:${color};font-weight:700;margin:2px 0">▸ ${label}</div>` +
+              items.map(p => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);margin:1px;display:inline-block">${labels[p] || ''}${p}</span>`).join(' ');
+          };
+          const qlrHtml = renderGroup('QLR', u.permissions_qlr || '', qlrLabels, 'var(--cyan2)');
+          const mnrHtml = renderGroup('MNR', u.permissions     || '', mnrLabels, 'var(--yellow)');
+          permHtml = (qlrHtml + mnrHtml) || '<span style="color:var(--text3);font-size:10px">—</span>';
         }
         return `<tr>
           <td style="color:var(--text3)">${i + 1}</td>
@@ -4847,51 +4865,87 @@
       }
     });
 
-    // ── PERMISSIONS CHECKBOXES ──
-    // Tất cả màn hình của cả 2 app
-    const ALL_SCREENS = [
-      // App Quản lý Rồng (không có gantt — đã bỏ)
-      'barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'slxd', 'yardmap', 'seal', 'users',
-      // App MNR Estimate
-      'estimate', 'revise', 'ovm', 'tracking', 'summary', 'bulk', 'stock',
-      'warehouse', 'phieu-kho', 'ccdc', 'tariff', 'report', 'pictures', 'inventory', 'photos'
-    ];
-    const THIS_APP_SCREENS = ['barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'slxd', 'yardmap', 'seal', 'users'];
+    // ── PERMISSIONS CHECKBOXES (tách 2 schema thống nhất với App MNR) ──
+    //   - permissions      = MNR keys (App MNR primary, App QLR cross-app)
+    //   - permissions_qlr  = QLR keys (App QLR primary, App MNR cross-app)
+    // Modal QLR có 2 cụm checkbox: prefix `perm-` cho QLR, `mperm-` cho MNR.
+    const QLR_SCREENS = ['barges', 'voyages', 'kanban', 'survey', 'report', 'tonbai', 'slxd', 'yardmap', 'seal', 'users'];
+    const MNR_SCREENS = ['estimate', 'revise', 'ovm', 'tracking', 'summary', 'bulk', 'stock',
+                         'warehouse', 'phieu-kho', 'ccdc', 'tariff', 'report', 'pictures', 'inventory', 'photos'];
+    const THIS_APP_SCREENS = QLR_SCREENS;
 
+    // Toggle highlight class khi tick (cụm QLR)
     function updatePermItem(screen) {
       const cb = document.getElementById('perm-' + screen);
       const pi = document.getElementById('pi-' + screen);
       if (cb && pi) pi.classList.toggle('checked', cb.checked);
     }
+    // Toggle highlight class khi tick (cụm MNR)
+    function updateMpermItem(screen) {
+      const cb = document.getElementById('mperm-' + screen);
+      const pi = document.getElementById('pi-m-' + screen);
+      if (cb && pi) pi.classList.toggle('checked', cb.checked);
+    }
 
-    function setPermCheckboxes(permStr, role) {
-      const isAll = role === 'admin' || permStr === 'all';
-      ALL_SCREENS.forEach(s => {
+    function setPermCheckboxes(qlrPermStr, mnrPermStr, role) {
+      const isAll = role === 'admin';
+      const isAllQlr = isAll || qlrPermStr === 'all';
+      const isAllMnr = isAll || mnrPermStr === 'all';
+      const qlrList = isAllQlr ? null : (qlrPermStr || '').split(',').map(p => p.trim()).filter(Boolean);
+      const mnrList = isAllMnr ? null : (mnrPermStr || '').split(',').map(p => p.trim()).filter(Boolean);
+      QLR_SCREENS.forEach(s => {
         const cb = document.getElementById('perm-' + s);
         const pi = document.getElementById('pi-' + s);
         if (!cb) return;
-        cb.checked = isAll || permStr.split(',').map(p => p.trim()).includes(s);
-        cb.disabled = role === 'admin'; // admin luôn có tất cả, không cho bỏ tick
+        cb.checked = isAllQlr || qlrList.includes(s);
+        cb.disabled = isAll;
+        if (pi) pi.classList.toggle('checked', cb.checked);
+      });
+      MNR_SCREENS.forEach(s => {
+        const cb = document.getElementById('mperm-' + s);
+        const pi = document.getElementById('pi-m-' + s);
+        if (!cb) return;
+        cb.checked = isAllMnr || mnrList.includes(s);
+        cb.disabled = isAll;
         if (pi) pi.classList.toggle('checked', cb.checked);
       });
       const info = document.getElementById('mu-perm-info');
-      if (info) info.textContent = role === 'admin'
+      if (info) info.textContent = isAll
         ? '✅ Admin có tất cả quyền truy cập (không thể thay đổi)'
         : 'Chọn từng màn hình bên dưới (Admin tự động có tất cả)';
     }
 
     function onRoleChange() {
       const role = _g('mu-role');
-      setPermCheckboxes(role === 'admin' ? 'all' : '', role);
+      if (role === 'admin') {
+        setPermCheckboxes('all', 'all', role);
+      } else {
+        // Khi đổi từ admin → user, giữ lại checkbox đang ticked (tránh reset)
+        const curQlr = QLR_SCREENS.filter(s => {
+          const cb = document.getElementById('perm-' + s);
+          return cb && cb.checked;
+        }).join(',');
+        const curMnr = MNR_SCREENS.filter(s => {
+          const cb = document.getElementById('mperm-' + s);
+          return cb && cb.checked;
+        }).join(',');
+        setPermCheckboxes(curQlr, curMnr, role);
+      }
     }
 
-    function getPermFromCheckboxes(role) {
+    function getQlrPermFromCheckboxes(role) {
       if (role === 'admin') return 'all';
-      const checked = ALL_SCREENS.filter(s => {
+      return QLR_SCREENS.filter(s => {
         const cb = document.getElementById('perm-' + s);
         return cb && cb.checked;
-      });
-      return checked.join(',');
+      }).join(',');
+    }
+    function getMnrPermFromCheckboxes(role) {
+      if (role === 'admin') return 'all';
+      return MNR_SCREENS.filter(s => {
+        const cb = document.getElementById('mperm-' + s);
+        return cb && cb.checked;
+      }).join(',');
     }
 
     function openUserModal(u = null) {
@@ -4907,8 +4961,12 @@
       document.getElementById('mu-username').disabled = !!u;
       document.getElementById('mu-key-label').textContent = u ? 'Key mới (bỏ trống = giữ cũ)' : 'Key đăng nhập *';
       document.getElementById('btn-save-user').disabled = false;
-      // Set permissions checkboxes
-      setPermCheckboxes(u ? (u.permissions || '') : '', u ? u.role : 'user');
+      // Set 2 cụm checkbox: QLR (u.permissions_qlr) + MNR (u.permissions)
+      setPermCheckboxes(
+        u ? (u.permissions_qlr || '') : '',
+        u ? (u.permissions     || '') : '',
+        u ? u.role : 'user'
+      );
       openOv('mu');
     }
 
@@ -4920,7 +4978,8 @@
       const expiry = _g('mu-expiry');
       const role = _g('mu-role');
       const title = _g('mu-title-input').trim();
-      const permissions = getPermFromCheckboxes(role);
+      const permissions     = getMnrPermFromCheckboxes(role); // MNR keys
+      const permissions_qlr = getQlrPermFromCheckboxes(role); // QLR keys
 
       if (!username || !fullname) { toast('Vui lòng nhập Username và Họ tên', 'err'); return; }
       if (mode === 'new' && !key) { toast('Vui lòng nhập Key đăng nhập', 'err'); return; }
@@ -4930,9 +4989,9 @@
       try {
         let res;
         if (mode === 'edit') {
-          res = await post({ action: 'updateUser', username, fullname, new_key: key || undefined, expiry, role, title, permissions });
+          res = await post({ action: 'updateUser', username, fullname, new_key: key || undefined, expiry, role, title, permissions, permissions_qlr });
         } else {
-          res = await post({ action: 'saveUser', username, key, fullname, expiry, role, title, permissions });
+          res = await post({ action: 'saveUser', username, key, fullname, expiry, role, title, permissions, permissions_qlr });
         }
         if (res.success) {
           toast(mode === 'edit' ? 'Đã cập nhật user' : 'Đã thêm user', 'ok');
