@@ -2173,6 +2173,41 @@
       box-shadow: 0 0 0 3px rgba(91,108,255,.18);
       outline: none;
     }
+
+    /* ── #9 PAGINATION BAR ── */
+    .pg-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; margin-top: 10px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-md); font-size: 11px;
+      flex-wrap: wrap;
+    }
+    .pg-bar:empty { display: none; }
+    .pg-info { color: var(--text-3); }
+    .pg-info b { color: var(--text); font-weight: 700; }
+    .pg-btns { display: flex; gap: 3px; margin-left: auto; align-items: center; }
+    .pg-btn {
+      min-width: 30px; height: 28px; padding: 0 8px;
+      border-radius: var(--r-sm); border: 1px solid var(--border2);
+      background: var(--bg); color: var(--text-2);
+      cursor: pointer; font-size: 11px; font-weight: 600;
+      font-family: inherit;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all .15s var(--ease);
+    }
+    .pg-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary-2); background: var(--primary-dim); }
+    .pg-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .pg-btn.active {
+      background: var(--primary); border-color: var(--primary); color: #fff;
+      box-shadow: 0 0 0 2px rgba(91,108,255,.15);
+    }
+    .pg-per {
+      padding: 5px 8px; border: 1px solid var(--border2); border-radius: var(--r-sm);
+      background: var(--bg2); color: var(--text); font-size: 11px;
+      font-family: inherit; cursor: pointer;
+    }
+    .pg-per:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(91,108,255,.15); }
+    .pg-dots { padding: 0 4px; color: var(--text-3); user-select: none; }
   </style>
 </head>
 
@@ -2349,6 +2384,7 @@
               <tbody id="btbody"></tbody>
             </table>
           </div>
+          <div class="pg-bar" id="pg-barges"></div>
         </div>
 
         <!-- ══ VOYAGES ══ -->
@@ -2396,6 +2432,7 @@
               <tbody id="vtbody"></tbody>
             </table>
           </div>
+          <div class="pg-bar" id="pg-voyages"></div>
         </div>
 
         <!-- ══ GANTT ══ -->
@@ -2490,6 +2527,7 @@
               <tbody id="stbody"></tbody>
             </table>
           </div>
+          <div class="pg-bar" id="pg-survey"></div>
         </div>
 
         <!-- ══ KANBAN ══ -->
@@ -2576,6 +2614,7 @@
               <tbody id="tbtbody"></tbody>
             </table>
           </div>
+          <div class="pg-bar" id="pg-tonbai"></div>
         </div>
 
         <!-- ══ SƠ ĐỒ BÃI 3D ══ -->
@@ -2743,6 +2782,7 @@
                 <tbody id="seal-tbody"></tbody>
               </table>
             </div>
+            <div class="pg-bar" id="pg-sealBoxes"></div>
           </div>
 
           <!-- Tab: Lịch sử cấp -->
@@ -2787,6 +2827,7 @@
                 <tbody id="seal-usage-tbody"></tbody>
               </table>
             </div>
+            <div class="pg-bar" id="pg-sealUsage"></div>
           </div>
 
           <!-- Tab: Bất thường -->
@@ -2831,6 +2872,7 @@
                 <tbody id="seal-disc-tbody"></tbody>
               </table>
             </div>
+            <div class="pg-bar" id="pg-sealDisc"></div>
           </div>
         </div>
 
@@ -2946,6 +2988,7 @@
                 <tbody id="rptbody"></tbody>
               </table>
             </div>
+            <div class="pg-bar" id="pg-reportLogs"></div>
           </div>
         </div>
 
@@ -3017,6 +3060,7 @@
               <tbody id="altbody"></tbody>
             </table>
           </div>
+          <div class="pg-bar" id="pg-actlog"></div>
         </div>
 
         <!-- ══ USERS ══ -->
@@ -3053,6 +3097,7 @@
               <tbody id="utbody"></tbody>
             </table>
           </div>
+          <div class="pg-bar" id="pg-users"></div>
         </div>
 
       </div><!-- /content -->
@@ -4170,13 +4215,15 @@
       if (!tb) return;
       if (!filtered.length) {
         tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)">Không có log phù hợp</td></tr>';
+        pgFill('actlog', paginate([], 'actlog', 50));
         return;
       }
-      tb.innerHTML = filtered.map((r, i) => {
+      const _pg = paginate(filtered, 'actlog', 50);
+      tb.innerHTML = _pg.slice.map((r, i) => {
         const em = ENTITY_META[r.entity] || ENTITY_META.other;
         const actLabel = esc(ACTION_LABEL[r.action] || r.action);
         return `<tr>
-          <td style="color:var(--text3)">${i + 1}</td>
+          <td style="color:var(--text3)">${_pg.start + i + 1}</td>
           <td style="font-family:monospace;font-size:11px;color:var(--text2);white-space:nowrap">${esc(r.timestamp)}</td>
           <td style="font-weight:600;color:var(--text)">${esc(r.username) || '<span style="color:var(--text3)">—</span>'}</td>
           <td style="font-size:11px">${actLabel}</td>
@@ -4185,7 +4232,9 @@
           <td style="font-size:11px;color:var(--text2);max-width:420px;white-space:normal;word-break:break-word">${esc(r.detail)}</td>
         </tr>`;
       }).join('');
+      pgFill('actlog', _pg);
     }
+    PG_RENDERERS.actlog = renderActLog;
 
     function exportActLogCsv() {
       const rows = S.actLog || [];
@@ -4204,10 +4253,79 @@
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // ══════════════════════════════════════════
+    // PAGINATION HELPERS — apply for all table screens
+    // ══════════════════════════════════════════
+    const PG = {}; // { key: { page, perPage } }
+    const PG_RENDERERS = {}; // key → renderFn (filled below after each renderer defined)
+    function getPg(key, defPer) {
+      if (!PG[key]) PG[key] = { page: 1, perPage: defPer || 25 };
+      return PG[key];
+    }
+    function paginate(arr, key, defPer) {
+      const st = getPg(key, defPer);
+      const total = arr.length;
+      const totalPages = Math.max(1, Math.ceil(total / st.perPage));
+      if (st.page > totalPages) st.page = totalPages;
+      if (st.page < 1) st.page = 1;
+      const start = (st.page - 1) * st.perPage;
+      return { slice: arr.slice(start, start + st.perPage), page: st.page, perPage: st.perPage, totalPages, total, start };
+    }
+    function pgGo(key, page) {
+      if (!PG[key]) PG[key] = { page: 1, perPage: 25 };
+      PG[key].page = Math.max(1, parseInt(page) || 1);
+      if (PG_RENDERERS[key]) PG_RENDERERS[key]();
+    }
+    function pgSetPer(key, per) {
+      if (!PG[key]) PG[key] = { page: 1, perPage: 25 };
+      PG[key].perPage = Math.max(1, parseInt(per) || 25);
+      PG[key].page = 1;
+      if (PG_RENDERERS[key]) PG_RENDERERS[key]();
+    }
+    function pgReset(key) { if (PG[key]) PG[key].page = 1; }
+    function pgBarHTML(key, p) {
+      if (p.total === 0) return '';
+      const cur = p.page, max = p.totalPages;
+      const btn = (txt, page, dis, active) => `<button class="pg-btn${active ? ' active' : ''}" ${dis ? 'disabled' : ''} onclick="pgGo('${key}',${page})">${txt}</button>`;
+      const dots = '<span class="pg-dots">…</span>';
+      const pages = [];
+      if (max <= 7) {
+        for (let i = 1; i <= max; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        if (cur > 4) pages.push('...');
+        for (let i = Math.max(2, cur - 1); i <= Math.min(max - 1, cur + 1); i++) pages.push(i);
+        if (cur < max - 3) pages.push('...');
+        pages.push(max);
+      }
+      const pageBtns = pages.map(x => x === '...' ? dots : btn(x, x, false, x === cur)).join('');
+      const from = p.start + 1;
+      const to = p.start + p.slice.length;
+      return `
+        <span class="pg-info">Hiển thị <b>${from}-${to}</b> / <b>${fmt(p.total)}</b></span>
+        <select class="pg-per" onchange="pgSetPer('${key}',this.value)">
+          ${[10, 25, 50, 100, 200].map(n => `<option value="${n}" ${n === p.perPage ? 'selected' : ''}>${n} / trang</option>`).join('')}
+        </select>
+        <div class="pg-btns">
+          ${btn('«', 1, cur === 1)}
+          ${btn('‹', cur - 1, cur === 1)}
+          ${pageBtns}
+          ${btn('›', cur + 1, cur === max)}
+          ${btn('»', max, cur === max)}
+        </div>
+      `;
+    }
+    function pgFill(key, p) {
+      const el = document.getElementById('pg-' + key);
+      if (el) el.innerHTML = pgBarHTML(key, p);
+    }
+
     // ── BARGES ──
     function renderBarges() {
       const q = (_g('bsrch') || '').toLowerCase();
-      const rows = S.barges.filter(b => !q || b.ten.toLowerCase().includes(q) || b.code.toLowerCase().includes(q) || (b.so_dang_ky || '').toLowerCase().includes(q));
+      const allRows = S.barges.filter(b => !q || b.ten.toLowerCase().includes(q) || b.code.toLowerCase().includes(q) || (b.so_dang_ky || '').toLowerCase().includes(q));
+      const _pg = paginate(allRows, 'barges');
+      const rows = _pg.slice;
       let tot = S.barges.length, on = 0, off = 0, bt = 0, teus = 0;
       S.barges.forEach(b => {
         if (b.tinh_trang === 'HOAT_DONG') { on++; teus += (b.so_teus || 0); }
@@ -4219,10 +4337,13 @@
         sc('NGỪNG HOẠT ĐỘNG', fmt(off), 'c-red') + sc('BẢO TRÌ', fmt(bt), 'c-yellow') +
         sc('TEUS ĐANG HOẠT ĐỘNG', fmt(teus), 'c-orange');
       const tb = document.getElementById('btbody');
-      if (!rows.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`; return; }
+      if (!rows.length) {
+        tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;
+        pgFill('barges', _pg); return;
+      }
       // FIX #4: Dùng data-index + event delegation thay vì inline onclick với JSON
       tb.innerHTML = rows.map((b, i) => `<tr>
-    <td style="color:var(--text3);width:44px">${i + 1}</td>
+    <td style="color:var(--text3);width:44px">${_pg.start + i + 1}</td>
     <td class="td-n">${esc(b.code)} — ${esc(b.ten)}</td>
     <td>${esc(b.so_dang_ky) || '—'}</td>
     <td style="text-align:right">${fmt(b.trong_tai)}</td>
@@ -4230,11 +4351,13 @@
     <td>${esc(b.nam_dong) || '—'}</td>
     <td>${ttBadge(b.tinh_trang)}</td>
     <td><div class="acts">
-      <div class="ibtn e" data-action="edit-barge" data-idx="${i}" title="Sửa">✎</div>
+      <div class="ibtn e" data-action="edit-barge" data-idx="${_pg.start + i}" title="Sửa">✎</div>
       <div class="ibtn d" data-action="del-barge" data-seq="${b.seq}" data-name="${esc(b.ten)}" title="Xoá">🗑</div>
     </div></td>
   </tr>`).join('');
+      pgFill('barges', _pg);
     }
+    PG_RENDERERS.barges = renderBarges;
     // Event delegation cho bảng Barges
     document.getElementById('btbody').addEventListener('click', function (e) {
       const el = e.target.closest('[data-action]');
@@ -4309,7 +4432,9 @@
       });
     }
     function renderVoyages() {
-      let rows = getFilteredVoyages();
+      const allRows = getFilteredVoyages();
+      const _pg = paginate(allRows, 'voyages');
+      let rows = _pg.slice;
       let tot = S.voyages.length, teus = 0, cs = 0, ht = 0, tc = 0;
       S.voyages.forEach(v => {
         const sl = parseInt(v.so_luong) || 0;
@@ -4321,9 +4446,12 @@
         sc('TỔNG SÀ LAN', fmt(tot), 'c-cyan') + sc('TỔNG TEUS', fmt(teus), 'c-cyan') +
         sc('CHƯA SURVEY', fmt(cs), 'c-yellow') + sc('HOÀN THÀNH', fmt(ht), 'c-green') + sc('TEUS CHỜ DỠ', fmt(tc), 'c-red');
       const tb = document.getElementById('vtbody');
-      if (!rows.length) { tb.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`; return; }
+      if (!rows.length) {
+        tb.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;
+        pgFill('voyages', _pg); return;
+      }
       tb.innerHTML = rows.map((v, i) => `<tr>
-    <td style="color:var(--text3)">${i + 1}</td>
+    <td style="color:var(--text3)">${_pg.start + i + 1}</td>
     <td class="td-n">${esc(v.ten_salan)}</td>
     <td style="color:var(--text2)">${esc(v.voyage_no) || '—'}</td>
     <td>${esc(v.loai_hang) || '—'}</td><td>${esc(v.so_luong) || '—'}</td>
@@ -4334,12 +4462,14 @@
     <td style="font-size:11px">${fmDt(v.ket_thuc)}</td>
     <td>${v.trang_thai_survey === 'Đã survey' ? '<span class="badge b-sv">✔ Đã survey</span>' : '<span class="badge b-ns">Chưa survey</span>'}</td>
     <td><div class="acts">
-      <div class="ibtn s" data-action="quick-survey" data-idx="${i}" title="Survey">📋</div>
-      <div class="ibtn e" data-action="edit-voyage" data-idx="${i}" title="Sửa">✎</div>
+      <div class="ibtn s" data-action="quick-survey" data-idx="${_pg.start + i}" title="Survey">📋</div>
+      <div class="ibtn e" data-action="edit-voyage" data-idx="${_pg.start + i}" title="Sửa">✎</div>
       <div class="ibtn d" data-action="del-voyage" data-seq="${v.seq}" data-name="${esc(v.voyage_no || '')} — ${esc(v.ten_salan)}" title="Xoá">🗑</div>
     </div></td>
   </tr>`).join('');
+      pgFill('voyages', _pg);
     }
+    PG_RENDERERS.voyages = renderVoyages;
     // Event delegation cho bảng Voyages
     document.getElementById('vtbody').addEventListener('click', function (e) {
       const el = e.target.closest('[data-action]');
@@ -5221,7 +5351,9 @@
     function renderUsers() {
       if (!S.user || S.user.role !== 'admin') return;
       const q = (_g('usrch') || '').toLowerCase();
-      const rows = S.users.filter(u => !q || (u.username || '').toLowerCase().includes(q) || (u.fullname || '').toLowerCase().includes(q));
+      const allRows = S.users.filter(u => !q || (u.username || '').toLowerCase().includes(q) || (u.fullname || '').toLowerCase().includes(q));
+      const _pg = paginate(allRows, 'users');
+      const rows = _pg.slice;
       const tot = S.users.length;
       const admins = S.users.filter(u => u.role === 'admin').length;
       const active = S.users.filter(u => {
@@ -5236,7 +5368,10 @@
         sc('ĐANG HOẠT ĐỘNG', fmt(active), 'c-green') + sc('HẾT HẠN', fmt(expired), 'c-red');
 
       const tb = document.getElementById('utbody');
-      if (!rows.length) { tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`; return; }
+      if (!rows.length) {
+        tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;
+        pgFill('users', _pg); return;
+      }
       const now = new Date();
       tb.innerHTML = rows.map((u, i) => {
         let statusBadge = '<span class="badge b-on">Hoạt động</span>';
@@ -5271,7 +5406,7 @@
           permHtml = (qlrHtml + mnrHtml) || '<span style="color:var(--text3);font-size:10px">—</span>';
         }
         return `<tr>
-          <td style="color:var(--text3)">${i + 1}</td>
+          <td style="color:var(--text3)">${_pg.start + i + 1}</td>
           <td class="td-n">${esc(u.username)} ${isSelf ? '<span style="font-size:9px;color:var(--green)">(Bạn)</span>' : ''}</td>
           <td>${esc(u.fullname)}</td>
           <td style="color:var(--text2)">${esc(u.title) || '—'}</td>
@@ -5280,12 +5415,14 @@
           <td style="color:var(--text2)">${esc(u.expiry) || '—'}</td>
           <td>${statusBadge}</td>
           <td><div class="acts">
-            <div class="ibtn e" data-action="edit-user" data-idx="${i}" title="Sửa">✎</div>
+            <div class="ibtn e" data-action="edit-user" data-idx="${_pg.start + i}" title="Sửa">✎</div>
             ${!isSelf ? `<div class="ibtn d" data-action="del-user" data-username="${esc(u.username)}" data-name="${esc(u.fullname)}" title="Xoá">🗑</div>` : ''}
           </div></td>
         </tr>`;
       }).join('');
+      pgFill('users', _pg);
     }
+    PG_RENDERERS.users = renderUsers;
 
     // Event delegation cho bảng Users
     document.getElementById('utbody').addEventListener('click', function (e) {
@@ -5538,16 +5675,17 @@
       const tb = document.getElementById('tbtbody');
       if (!rows.length) {
         tb.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu tồn bãi</td></tr>';
+        pgFill('tonbai', paginate([], 'tonbai', 50));
         return;
       }
-      // Giới hạn hiển thị 500 dòng để tránh lag
-      const show = rows.slice(0, 500);
+      const _pg = paginate(rows, 'tonbai', 50);
+      const show = _pg.slice;
       tb.innerHTML = show.map((r, i) => {
         const ttClass = r.tinh_trang === 'A' ? 'b-on' : 'b-ns';
         const ngayLuu = r.ngay_luu || 0;
         const ngayColor = ngayLuu > 30 ? 'var(--red)' : ngayLuu > 14 ? 'var(--orange)' : 'var(--text)';
         return `<tr>
-          <td style="color:var(--text3)">${i + 1}</td>
+          <td style="color:var(--text3)">${_pg.start + i + 1}</td>
           <td class="td-n" style="font-weight:700">${esc(r.container)}</td>
           <td>${esc(r.hang)}</td>
           <td>${esc(r.kich_co)}</td>
@@ -5561,10 +5699,9 @@
           <td style="font-size:10px;color:var(--text3);max-width:150px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.ghi_chu)}">${esc(r.ghi_chu)}</td>
         </tr>`;
       }).join('');
-      if (rows.length > 500) {
-        tb.insertAdjacentHTML('beforeend', '<tr><td colspan="12" style="text-align:center;padding:12px;color:var(--text3)">... và ' + (rows.length - 500) + ' dòng nữa (export để xem hết)</td></tr>');
-      }
+      pgFill('tonbai', _pg);
     }
+    PG_RENDERERS.tonbai = renderTonBai;
 
     function exportTonBaiExcel() {
       if (!S.tonbai || !S.tonbai.length) { toast('Không có data', 'err'); return; }
@@ -6677,8 +6814,11 @@
 
       if (!list.length) {
         tb.innerHTML = `<tr><td colspan="8" style="padding:28px;text-align:center;color:var(--text3)">Không có thùng nào</td></tr>`;
+        pgFill('sealBoxes', paginate([], 'sealBoxes'));
         return;
       }
+      const _pg = paginate(list, 'sealBoxes');
+      list = _pg.slice;
 
       tb.innerHTML = list.map(b => {
         const opened = sealBoxIsOpened(b);
@@ -6728,7 +6868,9 @@
           </td>
         </tr>`;
       }).join('');
+      pgFill('sealBoxes', _pg);
     }
+    PG_RENDERERS.sealBoxes = renderSealBoxesTable;
 
     // ── Helper: parse "DD/MM/YYYY HH:mm" hoặc "DD/MM/YYYY" → Date
     function parseDmyDate(s) {
@@ -7636,9 +7778,11 @@
       if (info) info.textContent = `Tổng: ${list.length} · Hiển thị: ${filtered.length}`;
       if (!filtered.length) {
         tb.innerHTML = `<tr><td colspan="8" style="padding:28px;text-align:center;color:var(--text3)">${list.length ? 'Không có kết quả phù hợp' : 'Chưa có dữ liệu sử dụng seal'}</td></tr>`;
+        pgFill('sealUsage', paginate([], 'sealUsage', 50));
         return;
       }
-      tb.innerHTML = filtered.slice(0, 500).map(u => {
+      const _pg = paginate(filtered, 'sealUsage', 50);
+      tb.innerHTML = _pg.slice.map(u => {
         const typeBadge = u.seal_type === 'PRIMARY'
           ? `<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3)">CHÍNH</span>`
           : `<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(249,115,22,.12);color:#f97316;border:1px solid rgba(249,115,22,.3)">${esc(u.seal_type).replace('REPLACEMENT_', 'THAY ')}</span>`;
@@ -7656,8 +7800,10 @@
           <td style="padding:7px 10px;font-size:10px;color:var(--text2)">${esc(u.box_number) || '<span style="color:var(--red)">—</span>'}</td>
           <td style="padding:7px 10px;text-align:center">${flagBadge}</td>
         </tr>`;
-      }).join('') + (filtered.length > 500 ? `<tr><td colspan="8" style="padding:12px;text-align:center;color:var(--text3)">... và ${filtered.length - 500} dòng nữa (lọc để xem hết)</td></tr>` : '');
+      }).join('');
+      pgFill('sealUsage', _pg);
     }
+    PG_RENDERERS.sealUsage = renderSealUsage;
 
     // ── SEAL: BẤT THƯỜNG (Tab 4) ──
     function renderSealDiscrepancy() {
@@ -7673,8 +7819,11 @@
       });
       if (!list.length) {
         tb.innerHTML = `<tr><td colspan="7" style="padding:28px;text-align:center;color:var(--text3)">Không có bản ghi bất thường</td></tr>`;
+        pgFill('sealDisc', paginate([], 'sealDisc'));
         return;
       }
+      const _pg = paginate(list, 'sealDisc');
+      list = _pg.slice;
       const loaiLabel = {
         UNKNOWN_BOX: { label: '🚨 Thùng lạ', color: '#ef4444' },
         CUSTOMER_DAMAGED: { label: '🔴 Khách hư', color: '#f97316' },
@@ -7701,7 +7850,9 @@
           </td>
         </tr>`;
       }).join('');
+      pgFill('sealDisc', _pg);
     }
+    PG_RENDERERS.sealDisc = renderSealDiscrepancy;
 
     function openDiscModal(seq) {
       const isEdit = !!seq;
@@ -7779,10 +7930,12 @@
       if (!tb) return;
       if (!logs.length) {
         tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">Chưa có báo cáo nào</td></tr>';
+        pgFill('reportLogs', paginate([], 'reportLogs'));
         return;
       }
-      tb.innerHTML = logs.map((l, i) => `<tr>
-        <td style="color:var(--text3)">${i + 1}</td>
+      const _pg = paginate(logs, 'reportLogs');
+      tb.innerHTML = _pg.slice.map((l, i) => `<tr>
+        <td style="color:var(--text3)">${_pg.start + i + 1}</td>
         <td style="font-weight:600">${esc(l.ngay)}</td>
         <td><span class="badge ${l.ca === 'Đêm' ? 'b-ns' : 'b-sv'}">${l.ca === 'Đêm' ? '🌙' : '☀'} ${esc(l.ca)}</span></td>
         <td style="font-size:11px;color:var(--text2);font-family:monospace">${esc(l.file_name)}</td>
@@ -7793,7 +7946,9 @@
         <td style="font-size:11px;color:var(--text3)">${esc(l.sent_at)}</td>
         <td><span class="badge b-on">✓ ${esc(l.status)}</span></td>
       </tr>`).join('');
+      pgFill('reportLogs', _pg);
     }
+    PG_RENDERERS.reportLogs = renderReportLogs;
 
     // Email list modal
     async function openEmailListModal() {
@@ -7966,7 +8121,9 @@
       });
     }
     function renderSurveys() {
-      let rows = getFilteredSurveys();
+      const allRows = getFilteredSurveys();
+      const _pg = paginate(allRows, 'survey');
+      let rows = _pg.slice;
       let adm = 0, acl = 0, arp = 0, atm = 0, at = 0;
       S.surveys.forEach(r => { adm += r.damaged; acl += r.clean; arp += r.repo; atm += r.termites; at += r.so_luong; });
       document.getElementById('sstats-top').innerHTML =
@@ -7981,9 +8138,12 @@
         sc2('REPO', fmt(frp), 'c-cyan', ft ? (frp / ft * 100).toFixed(1) + '%' : '') +
         sc2('TERMITES', fmt(ftm), 'c-yellow', ft ? (ftm / ft * 100).toFixed(1) + '%' : '');
       const tb = document.getElementById('stbody');
-      if (!rows.length) { tb.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`; return; }
+      if (!rows.length) {
+        tb.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu</td></tr>`;
+        pgFill('survey', _pg); return;
+      }
       tb.innerHTML = rows.map((s, i) => `<tr>
-    <td style="color:var(--text3)">${i + 1}</td>
+    <td style="color:var(--text3)">${_pg.start + i + 1}</td>
     <td class="td-n">${esc(s.ten_salan)}</td>
     <td style="color:var(--text2)">${esc(s.voyage_no) || '—'}</td>
     <td><span class="badge" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);color:var(--cyan)">${esc(s.loai_cont) || '—'}</span></td>
@@ -7995,11 +8155,13 @@
     <td style="text-align:right;font-weight:700">${fmt(s.so_luong)}</td>
     <td style="color:var(--text2)">${fmDt(s.ngay_survey, false)}</td>
     <td><div class="acts">
-      <div class="ibtn e" data-action="edit-survey" data-idx="${i}" title="Sửa">✎</div>
+      <div class="ibtn e" data-action="edit-survey" data-idx="${_pg.start + i}" title="Sửa">✎</div>
       <div class="ibtn d" data-action="del-survey" data-seq="${s.seq}" title="Xoá">🗑</div>
     </div></td>
   </tr>`).join('');
+      pgFill('survey', _pg);
     }
+    PG_RENDERERS.survey = renderSurveys;
     // Event delegation cho bảng Surveys
     document.getElementById('stbody').addEventListener('click', function (e) {
       const el = e.target.closest('[data-action]');
