@@ -946,12 +946,37 @@
     .badge {
       display: inline-flex;
       align-items: center;
+      gap: 5px;
       padding: 3px 9px;
       border-radius: var(--r-pill);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: .03em;
       line-height: 1.4;
+      position: relative;
+    }
+    /* Status dot ::before — đồng bộ kiểu PortOps */
+    .badge.b-on::before,
+    .badge.b-off::before,
+    .badge.b-bt::before,
+    .badge.b-sv::before,
+    .badge.b-ns::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: currentColor;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.04);
+    }
+    .badge.b-on, .badge.b-sv { animation: none; }
+    .badge.b-on::before, .badge.b-sv::before {
+      box-shadow: 0 0 0 2px rgba(20, 184, 166, .15);
+    }
+    .badge.b-bt::before {
+      box-shadow: 0 0 0 2px rgba(243, 135, 61, .15);
+    }
+    .badge.b-ns::before {
+      box-shadow: 0 0 0 2px rgba(234, 160, 21, .15);
     }
 
     .b-on {
@@ -2130,6 +2155,24 @@
     svg text {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, system-ui, sans-serif !important;
     }
+
+    /* ── #7 Table zebra + cleaner row hover (PortOps) ── */
+    .tbl table tbody tr:nth-child(even) td {
+      background: rgba(255,255,255,.012);
+    }
+    .tbl table tbody tr:hover td {
+      background: var(--primary-dim) !important;
+    }
+
+    /* ── #8 fb-field focus ring (consistent w/ PortOps) ── */
+    .fb-field > .fi:focus,
+    .fb-field > input:focus,
+    .fb-field > select:focus,
+    .fb-field > .srch:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(91,108,255,.18);
+      outline: none;
+    }
   </style>
 </head>
 
@@ -2451,24 +2494,26 @@
 
         <!-- ══ KANBAN ══ -->
         <div class="screen" id="screen-kanban">
-          <div class="kb-toolbar-row">
-            <div class="tab-bar">
-              <button class="tab active" id="tab-voyages" onclick="switchKanbanTab('voyages')">🚢 Tiến độ sà lan</button>
-              <button class="tab"        id="tab-tasks"   onclick="switchKanbanTab('tasks')">📋 Công việc bãi</button>
-            </div>
-            <div class="srch" style="flex:0 0 180px"><span class="srch-ic">🔍</span><input placeholder="Tìm kiếm..."
-                id="ksrch" oninput="renderKanban()"></div>
-            <!-- Filter assignee (chỉ hiện ở tab tasks) -->
-            <select class="kb-filter-select" id="kf-assignee" onchange="renderKanban()" style="display:none">
-              <option value="">👤 Tất cả người</option>
-            </select>
-            <div class="ml" style="display:flex;align-items:center;gap:10px">
-              <div class="kb-auto-badge on" id="kb-auto-label" onclick="toggleAutoRefresh()" style="cursor:pointer"
-                title="Bật/tắt auto-refresh">
-                <span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span> Live 30s
+          <div class="fb-card" style="padding:10px 14px;margin-bottom:10px">
+            <div class="kb-toolbar-row" style="margin:0">
+              <div class="tab-bar">
+                <button class="tab active" id="tab-voyages" onclick="switchKanbanTab('voyages')"><i class="bi bi-truck"></i> Tiến độ sà lan</button>
+                <button class="tab"        id="tab-tasks"   onclick="switchKanbanTab('tasks')"><i class="bi bi-list-check"></i> Công việc bãi</button>
               </div>
-              <span style="font-size:10px;color:var(--text3)" id="kb-last-refresh"></span>
-              <button class="btn btn-p" onclick="openTaskModal()">⊕ Thêm việc</button>
+              <div class="srch" style="flex:0 0 180px"><span class="srch-ic">🔍</span><input placeholder="Tìm kiếm..."
+                  id="ksrch" oninput="renderKanban()"></div>
+              <!-- Filter assignee (chỉ hiện ở tab tasks) -->
+              <select class="kb-filter-select" id="kf-assignee" onchange="renderKanban()" style="display:none">
+                <option value="">Tất cả người</option>
+              </select>
+              <div class="ml" style="display:flex;align-items:center;gap:10px">
+                <div class="kb-auto-badge on" id="kb-auto-label" onclick="toggleAutoRefresh()" style="cursor:pointer"
+                  title="Bật/tắt auto-refresh">
+                  <span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span> Live 30s
+                </div>
+                <span style="font-size:10px;color:var(--text3)" id="kb-last-refresh"></span>
+                <button class="btn btn-p" onclick="openTaskModal()"><i class="bi bi-plus-lg"></i> Thêm việc</button>
+              </div>
             </div>
           </div>
           <div class="kb-board" id="kb-board">
