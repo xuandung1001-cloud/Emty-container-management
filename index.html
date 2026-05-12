@@ -1972,6 +1972,7 @@
     .fb-field > .fi,
     .fb-field > input,
     .fb-field > select { width: 100%; }
+    .fb-field > .srch { flex: 1 1 auto; width: 100%; }
     .fb-bottom {
       display: flex; flex-wrap: wrap; align-items: center;
       gap: 8px; margin-top: 12px;
@@ -2274,12 +2275,18 @@
         <!-- ══ BARGES ══ -->
         <div class="screen active" id="screen-barges">
           <div class="stats-row" id="bstats"></div>
-          <div class="filter-bar">
-            <div class="srch" style="flex:1;max-width:300px"><span class="srch-ic">🔍</span><input placeholder="Tìm kiếm sà lan..." id="bsrch"
-                oninput="renderBarges()"></div>
-            <div class="ml" style="display:flex;gap:7px">
-              <button class="btn btn-g" onclick="exportBargesExcel()">⬆ Export Excel</button>
-              <button class="btn btn-p" onclick="openBargeModal()">⊕ Thêm sà lan mới</button>
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Tìm kiếm</label>
+                <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tên / số đăng ký sà lan..." id="bsrch" oninput="renderBarges()"></div>
+              </div>
+            </div>
+            <div class="fb-bottom">
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-g" onclick="exportBargesExcel()"><i class="bi bi-upload"></i> Export Excel</button>
+                <button class="btn btn-p" onclick="openBargeModal()"><i class="bi bi-plus-lg"></i> Thêm sà lan mới</button>
+              </div>
             </div>
           </div>
           <div class="tbl">
@@ -2304,12 +2311,18 @@
         <!-- ══ VOYAGES ══ -->
         <div class="screen" id="screen-voyages">
           <div class="stats-row" id="vstats"></div>
-          <div class="filter-bar">
-            <div class="srch" style="flex:1;max-width:300px"><span class="srch-ic">🔍</span><input placeholder="Tìm theo sà lan, voyage, cảng..."
-                id="vsrch" oninput="renderVoyages()"></div>
-            <div class="ml" style="display:flex;gap:7px">
-              <button class="btn btn-g" onclick="exportVoyagesExcel()">⬆ Export Excel</button>
-              <button class="btn btn-p" onclick="openVoyageModal()">⊕ Thêm kế hoạch sà lan</button>
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Tìm kiếm</label>
+                <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Sà lan, voyage, cảng..." id="vsrch" oninput="renderVoyages()"></div>
+              </div>
+            </div>
+            <div class="fb-bottom">
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-g" onclick="exportVoyagesExcel()"><i class="bi bi-upload"></i> Export Excel</button>
+                <button class="btn btn-p" onclick="openVoyageModal()"><i class="bi bi-plus-lg"></i> Thêm kế hoạch sà lan</button>
+              </div>
             </div>
           </div>
           <div class="ftabs">
@@ -2345,15 +2358,23 @@
         <!-- ══ GANTT ══ -->
         <div class="screen" id="screen-gantt">
           <div class="stats-row" id="gstats"></div>
-          <div class="toolbar">
-            <select class="fi" id="gfbarge" onchange="renderGantt()" style="width:200px">
-              <option value="">-- Tất cả sà lan --</option>
-            </select>
-            <select class="fi" id="gfrange" onchange="renderGantt()" style="width:140px">
-              <option value="week">Tuần này</option>
-              <option value="month" selected>Tháng này</option>
-              <option value="3month">3 tháng</option>
-            </select>
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Sà lan</label>
+                <select class="fi" id="gfbarge" onchange="renderGantt()">
+                  <option value="">Tất cả sà lan</option>
+                </select>
+              </div>
+              <div class="fb-field">
+                <label>Khoảng thời gian</label>
+                <select class="fi" id="gfrange" onchange="renderGantt()">
+                  <option value="week">Tuần này</option>
+                  <option value="month" selected>Tháng này</option>
+                  <option value="3month">3 tháng</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div id="gantt-wrap"
             style="border:1px solid var(--border);border-radius:9px;overflow:auto;max-height:calc(100vh - 310px)"></div>
@@ -2375,20 +2396,33 @@
         <!-- ══ SURVEY ══ -->
         <div class="screen" id="screen-survey">
           <div class="stats-row" id="sstats-top"></div>
-          <div class="filter-bar">
-            <div class="srch" style="flex:1;max-width:240px"><span class="srch-ic">🔍</span><input placeholder="Tìm sà lan..." id="ssrch"
-                oninput="renderSurveys()"></div>
-            <div class="filter-group">
-              <input type="date" class="fi" id="sfrom" onchange="renderSurveys()" style="width:140px">
-              <input type="date" class="fi" id="sto" onchange="renderSurveys()" style="width:140px">
-              <select class="fi" id="sfbarge" onchange="renderSurveys()" style="width:170px">
-                <option value="">🚢 Tất cả sà lan</option>
-              </select>
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Tìm kiếm</label>
+                <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tìm sà lan..." id="ssrch" oninput="renderSurveys()"></div>
+              </div>
+              <div class="fb-field">
+                <label>Từ ngày</label>
+                <input type="date" class="fi" id="sfrom" onchange="renderSurveys()">
+              </div>
+              <div class="fb-field">
+                <label>Đến ngày</label>
+                <input type="date" class="fi" id="sto" onchange="renderSurveys()">
+              </div>
+              <div class="fb-field">
+                <label>Sà lan</label>
+                <select class="fi" id="sfbarge" onchange="renderSurveys()">
+                  <option value="">Tất cả sà lan</option>
+                </select>
+              </div>
             </div>
-            <div class="ml" style="display:flex;gap:7px">
-              <button class="btn btn-g" onclick="exportSurveyExcel()">⬆ Export</button>
-              <button class="btn btn-ghost" onclick="openImportSurvey()">⬆ Import</button>
-              <button class="btn btn-p" onclick="openSurveyModal()">⊕ Thêm survey</button>
+            <div class="fb-bottom">
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-g" onclick="exportSurveyExcel()"><i class="bi bi-upload"></i> Export</button>
+                <button class="btn btn-ghost" onclick="openImportSurvey()"><i class="bi bi-download"></i> Import</button>
+                <button class="btn btn-p" onclick="openSurveyModal()"><i class="bi bi-plus-lg"></i> Thêm survey</button>
+              </div>
             </div>
           </div>
           <div class="stats-row" id="sstats-f" style="margin-bottom:12px"></div>
@@ -2445,26 +2479,34 @@
         <!-- ══ TỒN BÃI ══ -->
         <div class="screen" id="screen-tonbai">
           <div class="stats-row" id="tbstats"></div>
-          <div class="filter-bar">
-            <div class="srch" style="flex:1;max-width:280px"><span class="srch-ic">🔍</span><input placeholder="Tìm container, vị trí, hãng..."
-                id="tbsrch" oninput="dTbSearch()"></div>
-            <div class="filter-group">
-              <select class="fi" id="tbf-hang" onchange="renderTonBai()" style="width:130px">
-                <option value="">🏢 Hãng</option>
-              </select>
-              <select class="fi" id="tbf-size" onchange="renderTonBai()" style="width:115px">
-                <option value="">📐 Kích cỡ</option>
-              </select>
-              <select class="fi" id="tbf-status" onchange="renderTonBai()" style="width:125px">
-                <option value="">✅ Tình trạng</option>
-              </select>
-              <select class="fi" id="tbf-cont-status" onchange="renderTonBai()" style="width:120px">
-                <option value="">🔖 Status</option>
-              </select>
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Tìm kiếm</label>
+                <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Container, vị trí, hãng..." id="tbsrch" oninput="dTbSearch()"></div>
+              </div>
+              <div class="fb-field">
+                <label>Hãng</label>
+                <select class="fi" id="tbf-hang" onchange="renderTonBai()"><option value="">Tất cả hãng</option></select>
+              </div>
+              <div class="fb-field">
+                <label>Kích cỡ</label>
+                <select class="fi" id="tbf-size" onchange="renderTonBai()"><option value="">Tất cả size</option></select>
+              </div>
+              <div class="fb-field">
+                <label>Tình trạng</label>
+                <select class="fi" id="tbf-status" onchange="renderTonBai()"><option value="">Tất cả</option></select>
+              </div>
+              <div class="fb-field">
+                <label>Status</label>
+                <select class="fi" id="tbf-cont-status" onchange="renderTonBai()"><option value="">Tất cả</option></select>
+              </div>
             </div>
-            <div class="ml" style="display:flex;gap:7px">
-              <button class="btn btn-ghost" onclick="fetchTonBai()">⟳ Làm mới</button>
-              <button class="btn btn-g" onclick="exportTonBaiExcel()">⬆ Export</button>
+            <div class="fb-bottom">
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-ghost" onclick="fetchTonBai()"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+                <button class="btn btn-g" onclick="exportTonBaiExcel()"><i class="bi bi-upload"></i> Export</button>
+              </div>
             </div>
           </div>
           <div style="font-size:10.5px;color:var(--text3);margin:0 0 10px;display:flex;align-items:center;gap:6px" id="tb-update-info"></div>
@@ -2615,17 +2657,27 @@
 
           <!-- Tab: Thùng Seal -->
           <div id="seal-pane-boxes" style="display:none">
-            <div class="toolbar" style="margin-top:14px">
-              <input class="fi" id="seal-search" placeholder="🔍 Tìm mã thùng / serial..." oninput="renderSeal()" style="flex:1;max-width:260px">
-              <select class="fi" id="seal-filter-status" onchange="renderSeal()" style="width:160px">
-                <option value="all">Tất cả trạng thái</option>
-                <option value="unopened">🟢 Chưa khui</option>
-                <option value="opened">🔓 Đã khui</option>
-                <option value="damaged">🔴 Hỏng</option>
-              </select>
-              <div class="ml" style="display:flex;gap:7px">
-                <button class="btn btn-g"    onclick="openSealImport()">⊕ Import Excel</button>
-                <button class="btn btn-p"    onclick="openSealBoxModal()">+ Nhập lô mới</button>
+            <div class="fb-card" style="margin-top:14px">
+              <div class="fb-grid">
+                <div class="fb-field">
+                  <label>Tìm kiếm</label>
+                  <div class="srch"><span class="srch-ic">🔍</span><input id="seal-search" placeholder="Mã thùng / serial..." oninput="renderSeal()"></div>
+                </div>
+                <div class="fb-field">
+                  <label>Trạng thái</label>
+                  <select class="fi" id="seal-filter-status" onchange="renderSeal()">
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="unopened">Chưa khui</option>
+                    <option value="opened">Đã khui</option>
+                    <option value="damaged">Hỏng</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fb-bottom">
+                <div class="ml" style="display:flex;gap:7px">
+                  <button class="btn btn-g"    onclick="openSealImport()"><i class="bi bi-upload"></i> Import Excel</button>
+                  <button class="btn btn-p"    onclick="openSealBoxModal()"><i class="bi bi-plus-lg"></i> Nhập lô mới</button>
+                </div>
               </div>
             </div>
 
@@ -2650,16 +2702,26 @@
 
           <!-- Tab: Lịch sử cấp -->
           <div id="seal-pane-usage" style="display:none">
-            <div class="toolbar" style="margin-top:14px">
-              <input class="fi" id="seal-usage-search" placeholder="🔍 Tìm seal / cont / booking..." oninput="renderSealUsage()" style="flex:1;max-width:260px">
-              <select class="fi" id="seal-usage-flag" onchange="renderSealUsage()" style="width:180px">
-                <option value="all">Tất cả</option>
-                <option value="OK">🟢 OK</option>
-                <option value="UNKNOWN_BOX">🚨 Thùng không xác định</option>
-              </select>
-              <div class="ml" style="display:flex;gap:7px">
-                <button class="btn btn-g" onclick="openRepImport()">⊕ Import báo cáo ca bổ sung</button>
-                <button class="btn btn-ghost" onclick="reloadSealUsage()">⟳ Làm mới</button>
+            <div class="fb-card" style="margin-top:14px">
+              <div class="fb-grid">
+                <div class="fb-field">
+                  <label>Tìm kiếm</label>
+                  <div class="srch"><span class="srch-ic">🔍</span><input id="seal-usage-search" placeholder="Seal, cont, booking..." oninput="renderSealUsage()"></div>
+                </div>
+                <div class="fb-field">
+                  <label>Flag</label>
+                  <select class="fi" id="seal-usage-flag" onchange="renderSealUsage()">
+                    <option value="all">Tất cả</option>
+                    <option value="OK">OK</option>
+                    <option value="UNKNOWN_BOX">Thùng không xác định</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fb-bottom">
+                <div class="ml" style="display:flex;gap:7px">
+                  <button class="btn btn-g" onclick="openRepImport()"><i class="bi bi-plus-lg"></i> Import báo cáo ca bổ sung</button>
+                  <button class="btn btn-ghost" onclick="reloadSealUsage()"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+                </div>
               </div>
             </div>
             <div style="font-size:10px;color:var(--text3);margin-bottom:6px" id="seal-usage-info"></div>
@@ -2684,18 +2746,28 @@
 
           <!-- Tab: Bất thường -->
           <div id="seal-pane-disc" style="display:none">
-            <div class="toolbar" style="margin-top:14px">
-              <input class="fi" id="seal-disc-search" placeholder="🔍 Tìm seal / lý do..." oninput="renderSealDiscrepancy()" style="flex:1;max-width:260px">
-              <select class="fi" id="seal-disc-loai" onchange="renderSealDiscrepancy()" style="width:180px">
-                <option value="all">Tất cả loại</option>
-                <option value="UNKNOWN_BOX">🚨 Thùng không xác định</option>
-                <option value="CUSTOMER_DAMAGED">🔴 Khách làm hư</option>
-                <option value="HQ_CUT">✂ Hải quan cắt</option>
-                <option value="LOST">❌ Mất</option>
-                <option value="DAMAGED">💥 Hỏng</option>
-              </select>
-              <div class="ml" style="display:flex;gap:7px">
-                <button class="btn btn-p" onclick="openDiscModal()">+ Ghi nhận mới</button>
+            <div class="fb-card" style="margin-top:14px">
+              <div class="fb-grid">
+                <div class="fb-field">
+                  <label>Tìm kiếm</label>
+                  <div class="srch"><span class="srch-ic">🔍</span><input id="seal-disc-search" placeholder="Seal, lý do..." oninput="renderSealDiscrepancy()"></div>
+                </div>
+                <div class="fb-field">
+                  <label>Loại</label>
+                  <select class="fi" id="seal-disc-loai" onchange="renderSealDiscrepancy()">
+                    <option value="all">Tất cả loại</option>
+                    <option value="UNKNOWN_BOX">Thùng không xác định</option>
+                    <option value="CUSTOMER_DAMAGED">Khách làm hư</option>
+                    <option value="HQ_CUT">Hải quan cắt</option>
+                    <option value="LOST">Mất</option>
+                    <option value="DAMAGED">Hỏng</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fb-bottom">
+                <div class="ml" style="display:flex;gap:7px">
+                  <button class="btn btn-p" onclick="openDiscModal()"><i class="bi bi-plus-lg"></i> Ghi nhận mới</button>
+                </div>
               </div>
             </div>
             <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
@@ -2720,19 +2792,27 @@
         <!-- ══ SẢN LƯỢNG XẾP DỠ ══ -->
         <div class="screen" id="screen-slxd">
           <div class="stats-row" id="slxd-stats"></div>
-          <div class="toolbar">
-            <select class="fi" id="slxd-view" onchange="renderSlxd()" style="width:130px">
-              <option value="tuan">📅 Tuần</option>
-              <option value="thang" selected>📆 Tháng</option>
-              <option value="quy">📊 Quý</option>
-              <option value="nam">📈 Năm</option>
-            </select>
-            <select class="fi" id="slxd-period" onchange="renderSlxd()" style="width:160px">
-              <!-- Filled by JS -->
-            </select>
-            <div class="ml" style="display:flex;gap:7px">
-              <button class="btn btn-g" onclick="exportSlxdExcel()">⬆ Export</button>
-              <button class="btn btn-p" onclick="openSlxdImport()">⊕ Import sản lượng</button>
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Kiểu xem</label>
+                <select class="fi" id="slxd-view" onchange="renderSlxd()">
+                  <option value="tuan">Tuần</option>
+                  <option value="thang" selected>Tháng</option>
+                  <option value="quy">Quý</option>
+                  <option value="nam">Năm</option>
+                </select>
+              </div>
+              <div class="fb-field">
+                <label>Kỳ</label>
+                <select class="fi" id="slxd-period" onchange="renderSlxd()"></select>
+              </div>
+            </div>
+            <div class="fb-bottom">
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-g" onclick="exportSlxdExcel()"><i class="bi bi-upload"></i> Export</button>
+                <button class="btn btn-p" onclick="openSlxdImport()"><i class="bi bi-plus-lg"></i> Import sản lượng</button>
+              </div>
             </div>
           </div>
 
@@ -2827,32 +2907,52 @@
         <!-- ══ ACTIVITY LOG ══ -->
         <div class="screen" id="screen-actlog">
           <div class="stats-row" id="al-stats"></div>
-          <div class="filter-bar">
-            <div class="srch" style="flex:1;max-width:220px"><span class="srch-ic">🔍</span><input placeholder="Tìm theo người dùng..." id="al-user" oninput="dAlSearch()"></div>
-            <div class="srch" style="flex:1;max-width:220px"><span class="srch-ic">🎯</span><input placeholder="ID/cont/seal/box..." id="al-id" oninput="dAlSearch()"></div>
-            <div class="filter-group">
-              <select class="fi" id="al-entity" onchange="renderActLog()" style="width:140px">
-                <option value="">🏷 Tất cả phân loại</option>
-                <option value="auth">🔑 Đăng nhập</option>
-                <option value="barge">🚢 Sà lan</option>
-                <option value="voyage">📅 Kế hoạch</option>
-                <option value="survey">📄 Survey</option>
-                <option value="task">📋 Công việc</option>
-                <option value="seal">🔐 Seal</option>
-                <option value="yard">🏗 Bãi</option>
-                <option value="slxd">📈 SLXD</option>
-                <option value="report">📊 Báo cáo ca</option>
-                <option value="user">👥 Users</option>
-              </select>
-              <select class="fi" id="al-action" onchange="renderActLog()" style="width:180px">
-                <option value="">⚡ Tất cả hành động</option>
-              </select>
-              <input type="date" class="fi" id="al-from" onchange="renderActLog()" style="width:140px">
-              <input type="date" class="fi" id="al-to" onchange="renderActLog()" style="width:140px">
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Người dùng</label>
+                <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Tên user..." id="al-user" oninput="dAlSearch()"></div>
+              </div>
+              <div class="fb-field">
+                <label>ID / Mã</label>
+                <div class="srch"><span class="srch-ic">🎯</span><input placeholder="ID, cont, seal, box..." id="al-id" oninput="dAlSearch()"></div>
+              </div>
+              <div class="fb-field">
+                <label>Phân loại</label>
+                <select class="fi" id="al-entity" onchange="renderActLog()">
+                  <option value="">Tất cả phân loại</option>
+                  <option value="auth">Đăng nhập</option>
+                  <option value="barge">Sà lan</option>
+                  <option value="voyage">Kế hoạch</option>
+                  <option value="survey">Survey</option>
+                  <option value="task">Công việc</option>
+                  <option value="seal">Seal</option>
+                  <option value="yard">Bãi</option>
+                  <option value="slxd">SLXD</option>
+                  <option value="report">Báo cáo ca</option>
+                  <option value="user">Users</option>
+                </select>
+              </div>
+              <div class="fb-field">
+                <label>Hành động</label>
+                <select class="fi" id="al-action" onchange="renderActLog()">
+                  <option value="">Tất cả hành động</option>
+                </select>
+              </div>
+              <div class="fb-field">
+                <label>Từ ngày</label>
+                <input type="date" class="fi" id="al-from" onchange="renderActLog()">
+              </div>
+              <div class="fb-field">
+                <label>Đến ngày</label>
+                <input type="date" class="fi" id="al-to" onchange="renderActLog()">
+              </div>
             </div>
-            <div class="ml" style="display:flex;gap:7px">
-              <button class="btn btn-ghost" onclick="fetchActLog()">⟳ Làm mới</button>
-              <button class="btn btn-g" onclick="exportActLogCsv()">⬆ Export</button>
+            <div class="fb-bottom">
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-ghost" onclick="fetchActLog()"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+                <button class="btn btn-g" onclick="exportActLogCsv()"><i class="bi bi-upload"></i> Export</button>
+              </div>
             </div>
           </div>
           <div style="font-size:10.5px;color:var(--text3);margin:0 0 10px" id="al-info"></div>
@@ -2877,11 +2977,17 @@
         <!-- ══ USERS ══ -->
         <div class="screen" id="screen-users">
           <div class="stats-row" id="ustats"></div>
-          <div class="filter-bar">
-            <div class="srch" style="flex:1;max-width:300px"><span class="srch-ic">🔍</span><input placeholder="Tìm user..." id="usrch"
-                oninput="renderUsers()"></div>
-            <div class="ml" style="display:flex;gap:7px">
-              <button class="btn btn-p" onclick="openUserModal()">⊕ Thêm user mới</button>
+          <div class="fb-card">
+            <div class="fb-grid">
+              <div class="fb-field">
+                <label>Tìm kiếm</label>
+                <div class="srch"><span class="srch-ic">🔍</span><input placeholder="Username, họ tên..." id="usrch" oninput="renderUsers()"></div>
+              </div>
+            </div>
+            <div class="fb-bottom">
+              <div class="ml" style="display:flex;gap:7px">
+                <button class="btn btn-p" onclick="openUserModal()"><i class="bi bi-person-plus"></i> Thêm user mới</button>
+              </div>
             </div>
           </div>
           <div class="tbl">
