@@ -2188,40 +2188,42 @@
       outline: none;
     }
 
-    /* ── #9 PAGINATION BAR ── */
+    /* ── #9 PAGINATION FOOTER (App MNR style) ── */
     .pg-bar {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 12px; margin-top: 10px;
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--r-md); font-size: 11px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; margin-top: 10px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r-md); font-size: 12px; color: var(--text-2);
+      flex-wrap: wrap; gap: 10px;
     }
     .pg-bar:empty { display: none; }
-    .pg-info { color: var(--text-3); }
-    .pg-info b { color: var(--text); font-weight: 700; }
-    .pg-btns { display: flex; gap: 3px; margin-left: auto; align-items: center; }
+    .pg-info { color: var(--text-2); }
+    .pg-info b { color: var(--text); font-weight: 600; }
+    .pg-nav { display: flex; align-items: center; gap: 6px; }
     .pg-btn {
-      min-width: 30px; height: 28px; padding: 0 8px;
-      border-radius: var(--r-sm); border: 1px solid var(--border2);
-      background: var(--bg); color: var(--text-2);
-      cursor: pointer; font-size: 11px; font-weight: 600;
-      font-family: inherit;
+      width: 30px; height: 30px;
       display: inline-flex; align-items: center; justify-content: center;
-      transition: all .15s var(--ease);
+      border: 1px solid var(--border2); background: var(--bg2);
+      border-radius: var(--r-md); cursor: pointer; color: var(--text-2);
+      font-size: 13px; font-family: inherit; line-height: 1;
+      transition: all .12s var(--ease);
     }
-    .pg-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary-2); background: var(--primary-dim); }
-    .pg-btn:disabled { opacity: .35; cursor: not-allowed; }
-    .pg-btn.active {
-      background: var(--primary); border-color: var(--primary); color: #fff;
-      box-shadow: 0 0 0 2px rgba(91,108,255,.15);
+    .pg-btn:hover:not(:disabled) { background: var(--primary-dim); border-color: var(--primary); color: var(--primary-2); }
+    .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .pg-pageinfo { padding: 0 6px; color: var(--text-2); white-space: nowrap; }
+    .pg-pageinfo b { color: var(--text); font-weight: 600; }
+    .pg-size { display: flex; align-items: center; gap: 6px; color: var(--text-3); }
+    .pg-size select {
+      height: 30px; padding: 0 8px;
+      font-size: 12px; border: 1px solid var(--border2);
+      border-radius: var(--r-md); background: var(--bg2);
+      font-family: inherit; cursor: pointer; color: var(--text);
     }
-    .pg-per {
-      padding: 5px 8px; border: 1px solid var(--border2); border-radius: var(--r-sm);
-      background: var(--bg2); color: var(--text); font-size: 11px;
-      font-family: inherit; cursor: pointer;
+    .pg-size select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(91,108,255,.15); }
+    @media (max-width: 768px) {
+      .pg-bar { justify-content: center; text-align: center; }
+      .pg-info { flex-basis: 100%; text-align: center; }
     }
-    .pg-per:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(91,108,255,.15); }
-    .pg-dots { padding: 0 4px; color: var(--text-3); user-select: none; }
   </style>
 </head>
 
@@ -4303,32 +4305,27 @@
     function pgBarHTML(key, p) {
       if (p.total === 0) return '';
       const cur = p.page, max = p.totalPages;
-      const btn = (txt, page, dis, active) => `<button class="pg-btn${active ? ' active' : ''}" ${dis ? 'disabled' : ''} onclick="pgGo('${key}',${page})">${txt}</button>`;
-      const dots = '<span class="pg-dots">…</span>';
-      const pages = [];
-      if (max <= 7) {
-        for (let i = 1; i <= max; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        if (cur > 4) pages.push('...');
-        for (let i = Math.max(2, cur - 1); i <= Math.min(max - 1, cur + 1); i++) pages.push(i);
-        if (cur < max - 3) pages.push('...');
-        pages.push(max);
-      }
-      const pageBtns = pages.map(x => x === '...' ? dots : btn(x, x, false, x === cur)).join('');
       const from = p.start + 1;
       const to = p.start + p.slice.length;
+      const btn = (txt, page, dis, title) => `<button class="pg-btn" ${dis ? 'disabled' : ''} title="${title}" onclick="pgGo('${key}',${page})">${txt}</button>`;
+      // Perpage options — show 9999 as "All"
+      const perOpts = [25, 50, 100, 250, 9999].map(n => {
+        const label = n === 9999 ? 'All' : n;
+        return `<option value="${n}" ${n === p.perPage ? 'selected' : ''}>${label}</option>`;
+      }).join('');
       return `
-        <span class="pg-info">Hiển thị <b>${from}-${to}</b> / <b>${fmt(p.total)}</b></span>
-        <select class="pg-per" onchange="pgSetPer('${key}',this.value)">
-          ${[10, 25, 50, 100, 200].map(n => `<option value="${n}" ${n === p.perPage ? 'selected' : ''}>${n} / trang</option>`).join('')}
-        </select>
-        <div class="pg-btns">
-          ${btn('«', 1, cur === 1)}
-          ${btn('‹', cur - 1, cur === 1)}
-          ${pageBtns}
-          ${btn('›', cur + 1, cur === max)}
-          ${btn('»', max, cur === max)}
+        <div class="pg-info">Hiển thị <b>${from}-${to}</b> / <b>${fmt(p.total)}</b> bản ghi</div>
+        <div class="pg-nav">
+          ${btn('«', 1, cur === 1, 'Trang đầu')}
+          ${btn('‹', cur - 1, cur === 1, 'Trang trước')}
+          <span class="pg-pageinfo">Page <b>${cur}</b> / <b>${max}</b></span>
+          ${btn('›', cur + 1, cur === max, 'Trang sau')}
+          ${btn('»', max, cur === max, 'Trang cuối')}
+        </div>
+        <div class="pg-size">
+          <span>Show:</span>
+          <select onchange="pgSetPer('${key}',this.value)">${perOpts}</select>
+          <span>per page</span>
         </div>
       `;
     }
