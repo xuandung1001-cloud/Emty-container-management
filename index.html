@@ -3925,6 +3925,10 @@
 
     let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealUsageByBox: {}, sealDiscrepancies: [], sealHandovers: [], sealUsage: null, sealTab: 'overview', sealImportRows: [] };
 
+    // ── Pagination state (must be declared TRƯỚC bất kỳ renderXxx nào gán PG_RENDERERS) ──
+    const PG = {};            // { key: { page, perPage } }
+    const PG_RENDERERS = {};  // key → renderFn
+
     // ══════════════════════════════════════════
     // FIX #2 (CRITICAL): POST function — bỏ Content-Type header để tránh CORS preflight
     // GAS web app redirect 302 → browser cần follow redirect đúng cách
@@ -4255,9 +4259,8 @@
 
     // ══════════════════════════════════════════
     // PAGINATION HELPERS — apply for all table screens
+    // (PG + PG_RENDERERS đã khai báo ở top of script để renderers gán an toàn)
     // ══════════════════════════════════════════
-    const PG = {}; // { key: { page, perPage } }
-    const PG_RENDERERS = {}; // key → renderFn (filled below after each renderer defined)
     function getPg(key, defPer) {
       if (!PG[key]) PG[key] = { page: 1, perPage: defPer || 25 };
       return PG[key];
