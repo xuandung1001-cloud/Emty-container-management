@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Empty Container Management — ICD Thạnh Phước</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -60,10 +61,20 @@
       --ease: cubic-bezier(.4, 0, .2, 1);
 
       --sb-w: 230px;
+      --tb-h: 56px;
+
+      /* ── PortOps aliases — để CSS pattern v2 dùng tên chuẩn ── */
+      --primary:      var(--cyan);
+      --primary-2:    var(--cyan2);
+      --primary-dim:  var(--cyan-dim);
+      --purple-dim:   rgba(136, 112, 227, 0.10);
+      --text-2:       var(--text2);
+      --text-3:       var(--text3);
+      --border-2:     var(--border2);
     }
 
     body {
-      font-family: 'Tahoma', system-ui, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       font-size: 13px;
@@ -1903,6 +1914,221 @@
       100% { filter: drop-shadow(0 0 0px rgba(59,130,246,0));   opacity: 1; }
     }
     .ym-hl { animation: ym-blink 0.75s ease-in-out infinite; }
+
+    /* ==========================================================
+       PORTOPS v2 PATTERNS — apply 2026-05-XX
+       Orthogonal với CSS hiện tại (class mới, không đụng class cũ).
+       Dùng khi sửa screen — không bắt buộc thay class cũ ngay.
+       ========================================================== */
+
+    /* ── #1 TOPBAR v2: icon box + title-wrap + subtitle ── */
+    .tb-icon-box {
+      width: 38px; height: 38px;
+      border-radius: var(--r-md);
+      background: var(--ic-bg, var(--bg3));
+      color: var(--ic, var(--primary-2));
+      border: 1px solid var(--ic-border, var(--border-2));
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+      transition: all .18s var(--ease);
+    }
+    .tb-icon-box:empty { display: none; }
+    .tb-title-wrap { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .tb-subtitle {
+      font-size: 11px; color: var(--text-3);
+      font-weight: 400; line-height: 1.3;
+      margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 600px;
+    }
+    .tb-subtitle:empty { display: none; }
+
+    /* ── #2 FILTER BAR v2: label-on-top grid ── */
+    .fb-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .fb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px 14px;
+      align-items: end;
+    }
+    .fb-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .fb-field > label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .fb-field > .fi,
+    .fb-field > input,
+    .fb-field > select { width: 100%; }
+    .fb-bottom {
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 8px; margin-top: 12px;
+      padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .fb-bottom:empty { display: none; }
+    .fb-bottom .ml { margin-left: auto; }
+
+    /* ── #3 SIDEBAR COLLAPSIBLE GROUPS ── */
+    .sb-section.sb-collapsible > .sb-sec-label {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: color .15s var(--ease);
+    }
+    .sb-section.sb-collapsible > .sb-sec-label::after {
+      content: '';
+      width: 8px; height: 8px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform .2s var(--ease);
+      opacity: .6;
+      margin-right: 4px;
+      margin-top: -3px;
+      flex-shrink: 0;
+    }
+    .sb-section.sb-collapsible.collapsed > .sb-sec-label::after {
+      transform: rotate(-45deg);
+      margin-top: 1px;
+    }
+    .sb-section.sb-collapsible > .nav-item {
+      max-height: 38px;
+      overflow: hidden;
+      transition: max-height .2s var(--ease), opacity .15s var(--ease), margin .15s var(--ease), padding .15s var(--ease);
+    }
+    .sb-section.sb-collapsible.collapsed > .nav-item {
+      max-height: 0 !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      opacity: 0;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      pointer-events: none;
+      visibility: hidden;
+      font-size: 0;
+      line-height: 0;
+    }
+
+    /* ── #4 STEPPER (multi-step workflow) ── */
+    .stepper {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 4px;
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+    .step {
+      flex: 1;
+      min-width: 150px;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-radius: 8px;
+      display: flex; align-items: flex-start; gap: 10px;
+      transition: background .15s var(--ease);
+      position: relative;
+      background: transparent;
+      border: 0;
+      text-align: left;
+      color: inherit;
+    }
+    .step:hover { background: var(--bg3); }
+    .step.active {
+      background: var(--primary-dim);
+      box-shadow: inset 0 -2px 0 0 var(--primary);
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--bg3);
+      color: var(--text-3);
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s var(--ease);
+    }
+    .step.active .step-num {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 0 3px rgba(91,108,255,.18);
+    }
+    .step.done .step-num { background: var(--green); color: #fff; }
+    .step.done .step-num::before { content: '\2713'; font-size: 13px; }
+    .step.done .step-num span { display: none; }
+    .step-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .step-title {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-2);
+      line-height: 1.2;
+    }
+    .step.active .step-title { color: var(--primary-2); }
+    .step-sub {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 2px;
+      line-height: 1.3;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ── #5 STACKED CELL (table 2-line) ── */
+    .cell-stack { display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
+    .cell-stack > .cs-main { font-size: 12px; font-weight: 600; color: var(--text); }
+    .cell-stack > .cs-sub  { font-size: 10.5px; color: var(--text-3); }
+
+    /* ── #6 BADGE-CHECK với icon SVG inline ── */
+    .badge-check {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px;
+      border-radius: var(--r-pill);
+      font-size: 10.5px; font-weight: 700;
+      line-height: 1.4;
+      white-space: nowrap;
+      background: var(--green-dim); color: var(--green);
+    }
+    .badge-check::before {
+      content: ''; width: 10px; height: 10px;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314b8a6' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+      background-size: contain; background-repeat: no-repeat;
+      flex-shrink: 0;
+    }
+    .badge-check.warn { background: var(--yellow-dim); color: var(--yellow); }
+    .badge-check.warn::before {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23eaa015' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M12 9v4'/><path d='M12 17h.01'/><path d='M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/></svg>");
+    }
+    .badge-check.err { background: var(--red-dim); color: var(--red); }
+    .badge-check.err::before {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e1455c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><line x1='15' y1='9' x2='9' y2='15'/><line x1='9' y1='9' x2='15' y2='15'/></svg>");
+    }
+    .badge-check.info { background: var(--primary-dim); color: var(--primary-2); }
+    .badge-check.info::before {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234451e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><circle cx='12' cy='8' r='.5' fill='%234451e6'/></svg>");
+    }
+
+    /* ── Font sans-serif đồng bộ toàn app — preserve icon fonts ── */
+    .bi, [class^="bi-"], [class*=" bi-"], i.bi, span.bi {
+      font-family: bootstrap-icons !important;
+    }
+    svg text {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, system-ui, sans-serif !important;
+    }
   </style>
 </head>
 
@@ -1951,8 +2177,8 @@
       </div>
 
       <!-- Nav: Quản lý -->
-      <div class="sb-section">
-        <span class="sb-sec-label blue">Quản lý</span>
+      <div class="sb-section sb-collapsible" data-sec-key="quanly">
+        <span class="sb-sec-label blue" onclick="toggleSbSection(this.parentElement)">Quản lý</span>
         <div class="nav-item active" id="nav-barges" onclick="nav('barges',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M3 17l2-8h14l2 8H3z"/><path d="M12 17v3m-4-3v3m8-3v3"/></svg>
           Quản lý sà lan
@@ -1964,8 +2190,8 @@
       </div>
 
       <!-- Nav: Theo dõi -->
-      <div class="sb-section">
-        <span class="sb-sec-label cyan">Theo dõi</span>
+      <div class="sb-section sb-collapsible" data-sec-key="theodoi">
+        <span class="sb-sec-label cyan" onclick="toggleSbSection(this.parentElement)">Theo dõi</span>
         <div class="nav-item" id="nav-kanban" onclick="nav('kanban',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7v7"/><path d="M16 7v4"/></svg>
           Theo dõi tiến độ
@@ -1977,8 +2203,8 @@
       </div>
 
       <!-- Nav: Báo cáo -->
-      <div class="sb-section">
-        <span class="sb-sec-label green">Báo cáo</span>
+      <div class="sb-section sb-collapsible" data-sec-key="baocao">
+        <span class="sb-sec-label green" onclick="toggleSbSection(this.parentElement)">Báo cáo</span>
         <div class="nav-item" id="nav-survey" onclick="nav('survey',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Báo cáo Survey
@@ -2006,8 +2232,8 @@
       </div>
 
       <!-- Nav: Hệ thống (admin only) -->
-      <div class="sb-section" id="nav-section-admin" style="display:none">
-        <span class="sb-sec-label yellow">Hệ thống</span>
+      <div class="sb-section sb-collapsible" id="nav-section-admin" data-sec-key="hethong" style="display:none">
+        <span class="sb-sec-label yellow" onclick="toggleSbSection(this.parentElement)">Hệ thống</span>
         <div class="nav-item" id="nav-users" onclick="nav('users',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Quản lý Users
@@ -2031,7 +2257,13 @@
     <!-- MAIN -->
     <div id="main">
       <div id="topbar">
-        <div class="tb-title" id="topbar-title">Quản lý sà lan</div>
+        <div class="tb-left" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+          <div class="tb-icon-box" id="topbar-icon"><i class="bi bi-truck"></i></div>
+          <div class="tb-title-wrap">
+            <div class="tb-title" id="topbar-title">Quản lý sà lan</div>
+            <div class="tb-subtitle" id="topbar-subtitle"></div>
+          </div>
+        </div>
         <div class="tb-right">
           <div class="tb-badge" id="topbar-badge">—</div>
         </div>
@@ -3347,6 +3579,28 @@
     </div>
   </div>
 
+  <!-- ══ MODAL CONFIRM AUTO HANDOVER ══ -->
+  <div class="ov" id="mcfauto">
+    <div class="modal modal-sm">
+      <div class="m-title">✓ Xác nhận bàn giao auto</div>
+      <div class="m-sub" id="cfa-info">—</div>
+      <input type="hidden" id="cfa-seq">
+      <div class="fg"><label class="fl">NV Giao (ca vừa xong) *</label>
+        <select class="fi" id="cfa-nv-giao"><option value="">-- Chọn NV --</option></select>
+      </div>
+      <div class="fg mt"><label class="fl">NV Nhận (ca kế tiếp) *</label>
+        <select class="fi" id="cfa-nv-nhan"><option value="">-- Chọn NV --</option></select>
+      </div>
+      <div class="fg mt"><label class="fl">Ghi chú (tùy chọn)</label>
+        <input class="fi" id="cfa-ghi-chu" placeholder="VD: Bàn giao bình thường">
+      </div>
+      <div class="mf">
+        <button class="btn btn-ghost" onclick="closeOv('mcfauto')">Huỷ</button>
+        <button class="btn btn-p" id="btn-cfa-save" onclick="doConfirmAutoHandover()">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ MODAL YARD MAP ══ -->
   <div class="ov" id="myard">
     <div class="modal" style="max-width:95vw;width:1100px;padding:0;overflow:hidden;border-radius:14px">
@@ -3458,18 +3712,19 @@
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbwTOQVHyAfhDUQPaAdN_qfTtqqbqQ9OIf67IOuHodcAZuQi9l5FjBj77ifX1bvVbpY2-A/exec';
 
+    // PortOps v2: mỗi screen có icon + subtitle hiển thị trên topbar.
     const SCREEN_META = {
-      barges: { title: 'Quản lý sà lan', badge: '' },
-      voyages: { title: 'Kế hoạch sà lan', badge: '' },
-      survey: { title: 'Báo cáo Survey', badge: '' },
-      kanban: { title: 'Theo dõi tiến độ', badge: '' },
-      report: { title: 'Báo cáo ca', badge: '' },
-      tonbai: { title: 'Tồn bãi', badge: '' },
-      slxd: { title: 'Sản lượng xếp dỡ', badge: '' },
-      yardmap: { title: 'Sơ đồ Bãi 3D', badge: '' },
-      seal: { title: 'Quản lý Seal', badge: '' },
-      users: { title: 'Quản lý Users', badge: '' },
-      actlog: { title: 'Nhật ký hoạt động', badge: '' }
+      barges:   { title: 'Quản lý sà lan',     icon: 'bi-truck',              subtitle: 'Danh sách & tình trạng đội sà lan' },
+      voyages:  { title: 'Kế hoạch sà lan',    icon: 'bi-calendar3',          subtitle: 'Chuyến tàu — ETA, ETD, làm hàng' },
+      survey:   { title: 'Báo cáo Survey',     icon: 'bi-file-earmark-text',  subtitle: 'Kết quả survey container' },
+      kanban:   { title: 'Theo dõi tiến độ',   icon: 'bi-kanban',             subtitle: 'Sà lan & công việc bãi' },
+      report:   { title: 'Báo cáo ca',         icon: 'bi-journals',           subtitle: 'Lịch sử báo cáo đã gửi' },
+      tonbai:   { title: 'Tồn bãi',            icon: 'bi-boxes',              subtitle: 'Container đang lưu bãi' },
+      slxd:     { title: 'Sản lượng xếp dỡ',   icon: 'bi-bar-chart-line',     subtitle: 'Sản lượng theo ca, tuần, tháng' },
+      yardmap:  { title: 'Sơ đồ Bãi 3D',       icon: 'bi-grid-3x3-gap-fill',  subtitle: 'Isometric 3D layout — tracking realtime' },
+      seal:     { title: 'Quản lý Seal',       icon: 'bi-shield-lock',        subtitle: 'Thùng seal, lịch sử cấp, bàn giao ca' },
+      users:    { title: 'Quản lý Users',      icon: 'bi-people',             subtitle: 'Tài khoản & phân quyền' },
+      actlog:   { title: 'Nhật ký hoạt động',  icon: 'bi-journal-text',       subtitle: 'Audit log toàn hệ thống' }
     };
 
     let S = { user: null, barges: [], voyages: [], surveys: [], tasks: [], users: [], tonbai: null, vf: 'all', importRows: [], yardConfig: [], yardSetup: [], slxdDaily: null, slxdImportLog: null, sealBoxes: [], sealUsageByBox: {}, sealDiscrepancies: [], sealHandovers: [], sealUsage: null, sealTab: 'overview', sealImportRows: [] };
@@ -3621,13 +3876,44 @@
       el.classList.add('active');
       document.getElementById('screen-' + screen).classList.add('active');
       const meta = SCREEN_META[screen] || {};
+      // PortOps v2 topbar: title + icon + subtitle
       document.getElementById('topbar-title').textContent = meta.title || screen;
+      const iconEl = document.getElementById('topbar-icon');
+      if (iconEl) iconEl.innerHTML = meta.icon ? '<i class="bi ' + meta.icon + '"></i>' : '';
+      const subEl = document.getElementById('topbar-subtitle');
+      if (subEl) subEl.textContent = meta.subtitle || '';
       if (screen === 'gantt') renderGantt();
       if (screen === 'yardmap') renderYardMap();
       if (screen === 'slxd') renderSlxd();
       if (screen === 'seal') renderSeal();
       if (screen === 'actlog') fetchActLog();
     }
+
+    // ── Sidebar collapsible group toggle ──
+    function toggleSbSection(sectionEl) {
+      if (!sectionEl) return;
+      sectionEl.classList.toggle('collapsed');
+      // Persist state vào localStorage để giữ qua reload
+      try {
+        var key = 'sb-collapsed-' + (sectionEl.dataset.secKey || '');
+        if (sectionEl.classList.contains('collapsed')) localStorage.setItem(key, '1');
+        else localStorage.removeItem(key);
+      } catch(_){}
+    }
+    // Restore collapsed state khi load
+    (function _restoreSbCollapsed() {
+      function apply() {
+        document.querySelectorAll('.sb-collapsible[data-sec-key]').forEach(function(sec) {
+          try {
+            if (localStorage.getItem('sb-collapsed-' + sec.dataset.secKey) === '1') {
+              sec.classList.add('collapsed');
+            }
+          } catch(_){}
+        });
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+      else apply();
+    })();
 
     // ══════════════════════════════════════════
     // ACTIVITY LOG (admin)
@@ -6010,6 +6296,27 @@
         }
       });
 
+      // ── Detect gap: 2 handover liên tiếp cùng box cách nhau > 13h → có thể thiếu 1 ca ──
+      // Mỗi ca dài 12h, cộng buffer 1h cho lệch giờ giao ca. Gap > 13h → highlight.
+      Object.keys(byBox).forEach(boxKey => {
+        const list = byBox[boxKey].slice().sort((a, b) => {
+          const ta = parseTimeOut(a.thoi_gian) || parseTimeOut(a.created_at);
+          const tb = parseTimeOut(b.thoi_gian) || parseTimeOut(b.created_at);
+          return (ta || 0) - (tb || 0);
+        });
+        for (let i = 1; i < list.length; i++) {
+          const tPrev = parseTimeOut(list[i - 1].thoi_gian) || parseTimeOut(list[i - 1].created_at);
+          const tCurr = parseTimeOut(list[i].thoi_gian)     || parseTimeOut(list[i].created_at);
+          if (!tPrev || !tCurr) continue;
+          const gapHours = (tCurr - tPrev) / 3600000;
+          if (gapHours > 13) {
+            list[i]._gap_warning = true;
+            list[i]._gap_hours   = Math.round(gapHours);
+            list[i]._gap_prev    = list[i - 1].thoi_gian;
+          }
+        }
+      });
+
       const recent = allHO.slice(0, 10);
       if (!recent.length) {
         listEl.innerHTML = `<div style="padding:8px;text-align:center;color:var(--text3);font-size:11px">Chưa có bàn giao nào</div>`;
@@ -6039,10 +6346,23 @@
             const delBtn = isAdmin
               ? `<td style="padding:4px 4px;text-align:center"><span onclick="deleteSealHandover('${esc(h.seq)}','${esc(delLabel)}')" title="Xoá bản ghi này (admin)" style="cursor:pointer;color:var(--red);opacity:.55;font-size:13px;padding:2px 5px;border-radius:4px" onmouseenter="this.style.opacity=1;this.style.background='rgba(225,69,92,.1)'" onmouseleave="this.style.opacity=.55;this.style.background=''">🗑</span></td>`
               : '';
-            return `<tr style="border-top:1px solid rgba(0,0,0,.04)">
-              <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${esc(h.thoi_gian)}</td>
+            const gapBadge = h._gap_warning
+              ? `<span title="Cách bàn giao trước ${h._gap_hours}h (${esc(h._gap_prev)}) — có thể thiếu 1 ca" style="display:inline-block;margin-left:5px;font-size:9px;font-weight:700;color:#dc2626;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);padding:1px 6px;border-radius:99px">⚠ Gap ${h._gap_hours}h</span>`
+              : '';
+            // AUTO: ghi_chu chứa "🤖" hoặc nv_nhan rỗng kèm "Auto" → row chờ xác nhận
+            const isAuto = String(h.ghi_chu || '').indexOf('🤖') >= 0;
+            const giaoNhanHtml = isAuto
+              ? `<b style="color:var(--text)">${esc(h.nv_giao) || '—'}</b> → <span onclick="openConfirmAutoHandover('${esc(h.seq)}','${esc(h.box_number)}','${esc(h.thoi_gian)}','${esc(h.ca)}','${esc(h.nv_giao||'')}')" style="cursor:pointer;font-size:9px;font-weight:700;color:#d97706;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);padding:2px 8px;border-radius:99px" title="Click để xác nhận NV nhận">⏳ Chờ xác nhận</span>`
+              : `<b style="color:var(--text)">${esc(h.nv_giao)}</b> → <b style="color:var(--cyan)">${esc(h.nv_nhan)}</b>`;
+            const rowStyle = h._gap_warning
+              ? 'border-top:2px solid #dc2626;background:rgba(239,68,68,.04)'
+              : isAuto
+                ? 'border-top:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.04)'
+                : 'border-top:1px solid rgba(0,0,0,.04)';
+            return `<tr style="${rowStyle}">
+              <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${esc(h.thoi_gian)}${gapBadge}</td>
               <td style="padding:4px 6px;color:var(--text2);white-space:nowrap">${caIcon} ${esc(h.ca)}</td>
-              <td style="padding:4px 6px"><b style="color:var(--text)">${esc(h.nv_giao)}</b> → <b style="color:var(--cyan)">${esc(h.nv_nhan)}</b></td>
+              <td style="padding:4px 6px">${giaoNhanHtml}</td>
               <td style="padding:4px 6px;color:var(--text2);font-family:monospace">${esc(h.box_number)}</td>
               <td style="padding:4px 6px;text-align:right;color:var(--text3)">${tonStr}</td>
               <td style="padding:4px 6px;text-align:right;color:${capColor};font-weight:600">${capStr}</td>
@@ -6838,6 +7158,44 @@
         closeOv('mhandover');
         await loadAll(); renderSeal();
       } finally { btn.disabled = false; btn.textContent = oldText; }
+    }
+
+    // Mở modal xác nhận record AUTO (do trigger báo cáo ca tạo)
+    function openConfirmAutoHandover(seq, boxNumber, thoiGian, ca, nvGiaoPre) {
+      _v('cfa-seq', seq);
+      document.getElementById('cfa-info').innerHTML =
+        '📦 <b>' + esc(boxNumber) + '</b> · ' + (ca === 'Sáng' ? '☀' : '🌙') + ' ' + esc(ca) + ' · ' + esc(thoiGian);
+      // Fill 2 dropdown từ S.users
+      const users = (S.users || []).filter(u => u.fullname);
+      const opts = '<option value="">-- Chọn NV --</option>' +
+        users.map(u => '<option value="' + esc(u.fullname) + '">' + esc(u.fullname) + (u.title ? ' — ' + esc(u.title) : '') + '</option>').join('');
+      const selGiao = document.getElementById('cfa-nv-giao');
+      const selNhan = document.getElementById('cfa-nv-nhan');
+      selGiao.innerHTML = opts;
+      selNhan.innerHTML = opts;
+      if (nvGiaoPre) selGiao.value = nvGiaoPre; // pre-fill từ ca trước
+      _v('cfa-ghi-chu', '');
+      openOv('mcfauto');
+    }
+
+    async function doConfirmAutoHandover() {
+      const seq = _g('cfa-seq');
+      const nvGiao = _g('cfa-nv-giao').trim();
+      const nvNhan = _g('cfa-nv-nhan').trim();
+      const ghiChu = _g('cfa-ghi-chu').trim();
+      if (!nvGiao || !nvNhan) { toast('Vui lòng chọn NV giao và NV nhận', 'err'); return; }
+      if (nvGiao === nvNhan)  { toast('NV giao và NV nhận không được trùng', 'err'); return; }
+      const btn = document.getElementById('btn-cfa-save');
+      btn.disabled = true; const oldText = btn.textContent; btn.textContent = '⏳ Đang lưu...';
+      try {
+        const res = await post({ action: 'confirmAutoHandover', seq, nv_giao: nvGiao, nv_nhan: nvNhan, ghi_chu: ghiChu });
+        if (res.success) {
+          toast('✓ Đã xác nhận bàn giao', 'ok');
+          closeOv('mcfauto');
+          await loadAll(); renderSeal();
+        } else toast(res.error || 'Lỗi', 'err');
+      } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+      finally { btn.disabled = false; btn.textContent = oldText; }
     }
 
     // Admin xoá 1 bàn giao seal (dùng để dọn record sai)
