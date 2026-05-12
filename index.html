@@ -2176,12 +2176,7 @@
       z-index: 5;
       box-shadow: inset 0 -1px 0 var(--border), 0 2px 4px rgba(15,23,42,.04);
     }
-    /* Sticky pagination bar — luôn nằm dưới cùng */
-    .pg-bar {
-      position: sticky;
-      bottom: 0;
-      z-index: 4;
-    }
+    /* pg-bar nằm tự nhiên dưới .tbl (KHÔNG sticky vì gây overlay khi scroll) */
 
     /* ── #8 fb-field focus ring (consistent w/ PortOps) ── */
     .fb-field > .fi:focus,
